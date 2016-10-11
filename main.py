@@ -44,8 +44,11 @@ class TVLinker(QDialog):
     def init_form(self) -> QHBoxLayout:
         self.search_combo = QComboBox()
         self.search_combo.setEditable(True)
+        self.search_combo.setMaxCount(10)
         self.search_combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.search_combo.currentIndexChanged.connect(self.filter_table_by_index)
         self.search_combo.currentTextChanged.connect(self.filter_table)
+        self.search_combo.editTextChanged.connect(self.filter_table)
         self.refresh_button = QPushButton('Refresh', cursor=Qt.PointingHandCursor, clicked=self.scrape_links)
         layout = QHBoxLayout()
         layout.addWidget(QLabel('Search:'))
@@ -128,20 +131,32 @@ class TVLinker(QDialog):
         self.table.setCursor(Qt.PointingHandCursor)
 
     @pyqtSlot(QModelIndex)
-    def open_link(self, index:QModelIndex) -> bool:
+    def open_link(self, index: QModelIndex) -> bool:
         return QDesktopServices.openUrl(QUrl(self.table.item(self.table.currentRow(), 1).text()))
 
-    @pyqtSlot(str)
-    def filter_table(self, text:str) -> None:
-        for item in self.table.findItems(text, Qt.MatchContains):
-            print(item.text())
+    @pyqtSlot(int)
+    def filter_table_by_index(self, index: int) -> None:
+        self.filter_table(self.search_combo.itemText(index))
 
-    def get_path(self, path:str=None) -> str:
+    @pyqtSlot(str)
+    def filter_table(self, text: str) -> None:
+        valid_rows = []
+        for item in self.table.findItems(text, Qt.MatchContains):
+            valid_rows.append(item.row())
+        for row in range(0, self.table.rowCount()):
+            if row not in valid_rows:
+                self.table.hideRow(row)
+            else:
+                self.table.showRow(row)
+        if self.search_combo.findText(text, Qt.MatchExactly) == -1:
+            self.search_combo.addItem(text)
+
+    def get_path(self, path: str = None) -> str:
         if getattr(sys, 'frozen', False):
             return os.path.join(sys._MEIPASS, path)
         return os.path.join(QFileInfo(__file__).absolutePath(), path)
 
-    def closeEvent(self, event:QCloseEvent) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:
         self.table.deleteLater()
         self.deleteLater()
         qApp.quit()
@@ -153,6 +168,7 @@ def main():
     app.setApplicationName('TVLinker')
     tv = TVLinker()
     sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()
