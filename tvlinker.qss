@@ -1,0 +1,12 @@
+QHeaderView::section, QTableCornerButton::section {
+    background: #CECECE;
+    color: #000;
+    font-weight: bold;
+    font-size: -1;
+}
+
+QTableView {
+    background: #FFF url(watermark.png) no-repeat center center;
+    background-attachment: fixed;
+    alternate-background-color: rgba(106, 69, 114, 0.1);
+}
