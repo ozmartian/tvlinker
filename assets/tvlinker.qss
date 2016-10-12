@@ -1,0 +1,25 @@
+* {
+    font-family: 'Open Sans', sans-serif;
+}
+
+QHeaderView::section, QTableCornerButton::section {
+    background-color: #65426D;
+    color: #FFF;
+    font-weight: bold;
+    font-size: -1;
+    padding: 4px;
+}
+
+QHeaderView::down-arrow {
+    image: url(:assets/down_arrow.png)
+}
+
+QHeaderView::up-arrow {
+    image: url(:assets/up_arrow.png)
+}
+
+QTableView {
+    background: #FFF url(:assets/watermark.png) no-repeat center center;
+    background-attachment: fixed;
+    alternate-background-color: rgba(106, 69, 114, 0.15);
+}

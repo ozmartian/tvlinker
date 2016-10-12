@@ -5,12 +5,14 @@ import os
 import sys
 from urllib.request import Request, urlopen
 
-from PyQt5.QtCore import QFile, QFileInfo, QModelIndex, QSettings, QTextStream, QUrl, Qt, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QIcon
-from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QDialog, QComboBox, QHeaderView, QHBoxLayout, QLabel,
+from PyQt5.QtCore import QFile, QModelIndex, QSettings, QSize, QTextStream, QUrl, Qt, pyqtSlot
+from PyQt5.QtGui import QCloseEvent, QColor, QDesktopServices, QFont, QFontDatabase, QIcon
+from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QDialog, QHeaderView, QHBoxLayout, QLabel, QLineEdit,
                              QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
 from bs4 import BeautifulSoup
 from waitingspinnerwidget import QtWaitingSpinner
+
+import assets
 
 
 class TVLinker(QDialog):
@@ -25,7 +27,7 @@ class TVLinker(QDialog):
         self.setLayout(layout)
         self.setWindowTitle(qApp.applicationName())
         self.setWindowIcon(QIcon(self.get_path('%s.png' % qApp.applicationName().lower())))
-        self.resize(1120, 800)
+        self.resize(1000, 800)
         self.show()
         self.scrape_links()
 
@@ -33,26 +35,26 @@ class TVLinker(QDialog):
         self.settings = QSettings(self.get_path('%s.ini' % qApp.applicationName().lower()), QSettings.IniFormat)
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
+        self.dl_pagecount = int(self.settings.value('dl_pagecount'))
 
     def init_stylesheet(self) -> None:
         qApp.setStyle('Fusion')
+        QFontDatabase.addApplicationFont(self.get_path('OpenSans.ttf'))
         qss = QFile(self.get_path('%s.qss' % qApp.applicationName().lower()))
         qss.open(QFile.ReadOnly | QFile.Text)
         stream = QTextStream(qss)
         qApp.setStyleSheet(stream.readAll())
 
     def init_form(self) -> QHBoxLayout:
-        self.search_combo = QComboBox()
-        self.search_combo.setEditable(True)
-        self.search_combo.setMaxCount(10)
-        self.search_combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        self.search_combo.currentIndexChanged.connect(self.filter_table_by_index)
-        self.search_combo.currentTextChanged.connect(self.filter_table)
-        self.search_combo.editTextChanged.connect(self.filter_table)
-        self.refresh_button = QPushButton('Refresh', cursor=Qt.PointingHandCursor, clicked=self.scrape_links)
+        self.search_field = QLineEdit(self, clearButtonEnabled=True,
+                                      placeholderText='Enter search criteria')
+        self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.search_field.textChanged.connect(self.filter_table)
+        self.refresh_button = QPushButton(QIcon.fromTheme('view-refresh'), ' Refresh', cursor=Qt.PointingHandCursor,
+                                          iconSize=QSize(12, 12), clicked=self.scrape_links)
         layout = QHBoxLayout()
         layout.addWidget(QLabel('Search:'))
-        layout.addWidget(self.search_combo)
+        layout.addWidget(self.search_field)
         layout.addWidget(self.refresh_button)
         return layout
 
@@ -66,7 +68,7 @@ class TVLinker(QDialog):
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.viewport().setAttribute(Qt.WA_Hover)
-        self.table.setHorizontalHeaderLabels(('Date', 'URL', 'Description', 'Category'))
+        self.table.setHorizontalHeaderLabels(('Date', 'URL', 'Description', 'Media'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.sortByColumn(0, Qt.DescendingOrder)
@@ -80,22 +82,22 @@ class TVLinker(QDialog):
         self.spinner.setMinimumTrailOpacity(5.0)
         self.spinner.setTrailFadePercentage(55.0)
         self.spinner.setNumberOfLines(50)
-        self.spinner.setLineLength(150)
+        self.spinner.setLineLength(120)
         self.spinner.setLineWidth(5)
         self.spinner.setInnerRadius(20)
         self.spinner.setRevolutionsPerSecond(1)
-        self.spinner.setColor(Qt.gray)
+        self.spinner.setColor(QColor(106, 69, 114))
 
     def scrape_links(self) -> str:
         self.spinner.start()
-        self.table.setCursor(Qt.BusyCursor)
+        self.setCursor(Qt.BusyCursor)
         if self.table.rowCount() > 0:
             self.table.clearContents()
             self.table.setRowCount(0)
         qApp.processEvents()
         self.table.setSortingEnabled(False)
         row = 0
-        for page in range(1, 10):
+        for page in range(1, self.dl_pagecount):
             url = self.source_url % page
             req = Request(url, headers={'User-agent': self.user_agent})
             res = urlopen(req)
@@ -115,9 +117,9 @@ class TVLinker(QDialog):
                 for item in table_row:
                     table_item = QTableWidgetItem(item)
                     table_item.setToolTip(table_row[1])
+                    table_item.setFont(QFont('Open Sans', weight=QFont.Normal))
                     if col == 2:
-                        table_item.setFont(QFont('Open Sans', weight=QFont.Bold))
-                        # table_item.setForeground(QColor(72, 25, 83))
+                        table_item.setFont(QFont('Open Sans', pointSize=11, weight=QFont.DemiBold))
                         table_item.setText('    ' + table_item.text())
                     elif col == 3:
                         table_item.setTextAlignment(Qt.AlignCenter)
@@ -128,15 +130,11 @@ class TVLinker(QDialog):
             qApp.processEvents()
         self.table.setSortingEnabled(True)
         self.spinner.stop()
-        self.table.setCursor(Qt.PointingHandCursor)
+        self.setCursor(Qt.PointingHandCursor)
 
     @pyqtSlot(QModelIndex)
     def open_link(self, index: QModelIndex) -> bool:
         return QDesktopServices.openUrl(QUrl(self.table.item(self.table.currentRow(), 1).text()))
-
-    @pyqtSlot(int)
-    def filter_table_by_index(self, index: int) -> None:
-        self.filter_table(self.search_combo.itemText(index))
 
     @pyqtSlot(str)
     def filter_table(self, text: str) -> None:
@@ -148,13 +146,12 @@ class TVLinker(QDialog):
                 self.table.hideRow(row)
             else:
                 self.table.showRow(row)
-        if self.search_combo.findText(text, Qt.MatchExactly) == -1:
-            self.search_combo.addItem(text)
 
     def get_path(self, path: str = None) -> str:
-        if getattr(sys, 'frozen', False):
-            return os.path.join(sys._MEIPASS, path)
-        return os.path.join(QFileInfo(__file__).absolutePath(), path)
+        return ':assets/%s' % path
+        # if getattr(sys, 'frozen', False):
+        #     return os.path.join(sys._MEIPASS, path)
+        # return os.path.join(QFileInfo(__file__).absolutePath(), path)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.table.deleteLater()
