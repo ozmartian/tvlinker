@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
-import sys
 from urllib.request import Request, urlopen
 
 from PyQt5.QtCore import QFile, QModelIndex, QSettings, QSize, QTextStream, QUrl, Qt, pyqtSlot
 from PyQt5.QtGui import QCloseEvent, QColor, QDesktopServices, QFont, QFontDatabase, QIcon
-from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QDialog, QHeaderView, QHBoxLayout, QLabel, QLineEdit,
-                             QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
+from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDialog, QHeaderView, QHBoxLayout, QLabel,
+                             QLineEdit, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
 from bs4 import BeautifulSoup
 from waitingspinnerwidget import QtWaitingSpinner
 
@@ -21,6 +19,7 @@ class TVLinker(QDialog):
         self.init_settings()
         self.init_stylesheet()
         layout = QVBoxLayout()
+        layout.setContentsMargins(10, 10, 10, 10)
         layout.addLayout(self.init_form())
         layout.addWidget(self.init_table())
         self.init_spinner()
@@ -52,9 +51,15 @@ class TVLinker(QDialog):
         self.search_field.textChanged.connect(self.filter_table)
         self.refresh_button = QPushButton(QIcon.fromTheme('view-refresh'), ' Refresh', cursor=Qt.PointingHandCursor,
                                           iconSize=QSize(12, 12), clicked=self.scrape_links)
+        self.dlpages_field = QComboBox(self, editable=False, cursor=Qt.PointingHandCursor)
+        self.dlpages_field.addItems(('10', '20', '30', '40'))
+        self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
+        self.dlpages_field.currentIndexChanged.connect(self.update_pagecount)
         layout = QHBoxLayout()
         layout.addWidget(QLabel('Search:'))
         layout.addWidget(self.search_field)
+        layout.addWidget(QLabel('Pages:'))
+        layout.addWidget(self.dlpages_field)
         layout.addWidget(self.refresh_button)
         return layout
 
@@ -64,7 +69,7 @@ class TVLinker(QDialog):
         self.table.setSortingEnabled(True)
         self.table.hideColumn(1)
         self.table.verticalHeader().hide()
-        self.table.setShowGrid(False)
+        # self.table.setShowGrid(False)
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.viewport().setAttribute(Qt.WA_Hover)
@@ -88,7 +93,11 @@ class TVLinker(QDialog):
         self.spinner.setRevolutionsPerSecond(1)
         self.spinner.setColor(QColor(106, 69, 114))
 
-    def scrape_links(self) -> str:
+    @pyqtSlot(int)
+    def update_pagecount(self, index: int) -> str:
+        return self.scrape_links(int(self.dlpages_field.itemText(index)))
+
+    def scrape_links(self, maxpages: int = 20) -> str:
         self.spinner.start()
         self.setCursor(Qt.BusyCursor)
         if self.table.rowCount() > 0:
@@ -97,11 +106,16 @@ class TVLinker(QDialog):
         qApp.processEvents()
         self.table.setSortingEnabled(False)
         row = 0
-        for page in range(1, self.dl_pagecount):
+        for page in range(1, maxpages):
             url = self.source_url % page
             req = Request(url, headers={'User-agent': self.user_agent})
             res = urlopen(req)
-            bs = BeautifulSoup(res.read(), 'lxml')
+
+            try:
+                bs = BeautifulSoup(res.read(), 'lxml')
+            except:
+                bs = BeautifulSoup(res.read(), 'html.parser')
+
             links = bs.find_all('table', class_='posts_table')
             self.table.setRowCount(self.table.rowCount() + len(links))
             for link_table in links:
@@ -119,8 +133,8 @@ class TVLinker(QDialog):
                     table_item.setToolTip(table_row[1])
                     table_item.setFont(QFont('Open Sans', weight=QFont.Normal))
                     if col == 2:
-                        table_item.setFont(QFont('Open Sans', pointSize=11, weight=QFont.DemiBold))
-                        table_item.setText('    ' + table_item.text())
+                        table_item.setFont(QFont('Open Sans', weight=QFont.DemiBold))
+                        table_item.setText('  ' + table_item.text())
                     elif col == 3:
                         table_item.setTextAlignment(Qt.AlignCenter)
                     self.table.setItem(row, col, table_item)
@@ -149,9 +163,6 @@ class TVLinker(QDialog):
 
     def get_path(self, path: str = None) -> str:
         return ':assets/%s' % path
-        # if getattr(sys, 'frozen', False):
-        #     return os.path.join(sys._MEIPASS, path)
-        # return os.path.join(QFileInfo(__file__).absolutePath(), path)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.table.deleteLater()
@@ -160,6 +171,7 @@ class TVLinker(QDialog):
 
 
 def main():
+    import sys
     app = QApplication(sys.argv)
     app.setOrganizationName('ozmartians.com')
     app.setApplicationName('TVLinker')

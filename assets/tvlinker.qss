@@ -19,6 +19,7 @@ QHeaderView::up-arrow {
 }
 
 QTableView {
+    margin-top: 8px;
     background: #FFF url(:assets/watermark.png) no-repeat center center;
     background-attachment: fixed;
     alternate-background-color: rgba(106, 69, 114, 0.15);
