@@ -23,6 +23,9 @@ __pycache__/
 .Python
 env/
 develop-eggs/
+build/build/
+build/dist/
+b
 dist/
 downloads/
 eggs/
@@ -100,3 +103,4 @@ ENV/
 .ropeproject
 
 .idea/
+/build/dist/
