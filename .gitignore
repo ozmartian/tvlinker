@@ -25,7 +25,6 @@ env/
 develop-eggs/
 build/build/
 build/dist/
-b
 dist/
 downloads/
 eggs/
@@ -103,4 +102,4 @@ ENV/
 .ropeproject
 
 .idea/
-/build/dist/
+build/dist/
