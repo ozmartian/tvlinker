@@ -4,24 +4,27 @@
 from urllib.request import Request, urlopen
 
 from PyQt5.QtCore import QFile, QModelIndex, QSettings, QSize, QTextStream, QUrl, Qt, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QColor, QDesktopServices, QFont, QFontDatabase, QIcon
+from PyQt5.QtGui import QCloseEvent, QColor, QDesktopServices, QFont, QFontDatabase, QIcon, QPalette
 from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDialog, QHeaderView, QHBoxLayout, QLabel,
-                             QLineEdit, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
+                             QLineEdit, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem,
+                             QVBoxLayout, qApp)
 from bs4 import BeautifulSoup
+
 from waitingspinnerwidget import QtWaitingSpinner
 
 import assets
 
 
 class TVLinker(QDialog):
-    def __init__(self, parent=None):
-        super(TVLinker, self).__init__(parent)
+    def __init__(self, parent=None, f=Qt.Window):
+        super(TVLinker, self).__init__(parent, f)
         self.init_settings()
         self.init_stylesheet()
         layout = QVBoxLayout()
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(10, 10, 10, 0)
         layout.addLayout(self.init_form())
         layout.addWidget(self.init_table())
+        layout.addWidget(self.init_metabar())
         self.init_spinner()
         self.setLayout(layout)
         self.setWindowTitle(qApp.applicationName())
@@ -35,6 +38,7 @@ class TVLinker(QDialog):
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
+        self.meta_template = self.settings.value('meta_template')
 
     def init_stylesheet(self) -> None:
         qApp.setStyle('Fusion')
@@ -69,13 +73,13 @@ class TVLinker(QDialog):
         self.table.setSortingEnabled(True)
         self.table.hideColumn(1)
         self.table.verticalHeader().hide()
-        # self.table.setShowGrid(False)
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.viewport().setAttribute(Qt.WA_Hover)
         self.table.setHorizontalHeaderLabels(('Date', 'URL', 'Description', 'Media'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.sortByColumn(0, Qt.DescendingOrder)
         self.table.doubleClicked.connect(self.open_link)
         return self.table
@@ -92,6 +96,19 @@ class TVLinker(QDialog):
         self.spinner.setInnerRadius(20)
         self.spinner.setRevolutionsPerSecond(1)
         self.spinner.setColor(QColor(106, 69, 114))
+
+    def init_metabar(self) -> QLabel:
+        self.meta_label = QLabel(textFormat=Qt.RichText, alignment=Qt.AlignRight, objectName='totals')
+        self.meta_label.setAutoFillBackground(True)
+        self.meta_label.setFixedHeight(30)
+        self.meta_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.update_metabar()
+        self.meta_label.setContentsMargins(0, 0, 0, 0)
+        return self.meta_label
+
+    def update_metabar(self) -> bool:
+        self.meta_label.setText(self.meta_template.replace('%s', str(self.table.rowCount())))
+        return True
 
     @pyqtSlot(int)
     def update_pagecount(self, index: int) -> str:
@@ -138,11 +155,13 @@ class TVLinker(QDialog):
                     elif col == 3:
                         table_item.setTextAlignment(Qt.AlignCenter)
                     self.table.setItem(row, col, table_item)
+                    self.update_metabar()
                     qApp.processEvents()
                     col += 1
                 row += 1
             qApp.processEvents()
         self.table.setSortingEnabled(True)
+        self.update_metabar()
         self.spinner.stop()
         self.setCursor(Qt.PointingHandCursor)
 
@@ -160,6 +179,7 @@ class TVLinker(QDialog):
                 self.table.hideRow(row)
             else:
                 self.table.showRow(row)
+        self.update_metabar()
 
     def get_path(self, path: str = None) -> str:
         return ':assets/%s' % path
@@ -175,9 +195,9 @@ def main():
     app = QApplication(sys.argv)
     app.setOrganizationName('ozmartians.com')
     app.setApplicationName('TVLinker')
+    app.setQuitOnLastWindowClosed(True)
     tv = TVLinker()
     sys.exit(app.exec_())
-
 
 if __name__ == '__main__':
     main()
