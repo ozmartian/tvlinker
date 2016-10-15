@@ -1,66 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
-
-from urllib.request import Request, urlopen
-
-from PyQt5.QtCore import QFile, QModelIndex, QSettings, QSize, QTextStream, QThread, QUrl, Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QFile, QModelIndex, QSettings, QSize, QTextStream, QUrl, Qt, pyqtSlot
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon
 from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDialog, QHeaderView, QHBoxLayout, QLabel,
                              QLineEdit, QProgressBar, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem,
-                             QVBoxLayout, qApp)
-from bs4 import BeautifulSoup
+                             QTreeWidget, QTreeWidgetItem, QVBoxLayout, qApp)
 
+from threads import ScrapeThread, HostersThread
 import assets
-
-
-class ScrapeThread(QThread):
-
-    addRow = pyqtSignal(list)
-
-    def __init__(self, maxpages:int):
-        QThread.__init__(self)
-        self.maxpages = maxpages
-
-    def __del__(self):
-        self.wait()
-
-    def init_settings(self) -> None:
-        self.settings = QSettings(TVLinker.get_path('%s.ini' % qApp.applicationName().lower()), QSettings.IniFormat)
-        self.source_url = self.settings.value('source_url')
-        self.user_agent = self.settings.value('user_agent')
-
-    @staticmethod
-    def get_html(link: str, user_agent: str) -> str:
-        req = Request(link, headers={'User-agent': user_agent})
-        res = urlopen(req)
-        return res.read()
-
-    def scrape_links(self) -> None:
-        row = 0
-        for page in range(1, self.maxpages+1):
-            url = self.source_url % page
-            content = self.get_html(url, self.user_agent)
-            if sys.platform == 'win32':
-                bs = BeautifulSoup(content, 'html.parser')
-            else:
-                bs = BeautifulSoup(content, 'lxml')
-            links = bs.find_all('table', class_='posts_table')
-            for link_table in links:
-                cols = link_table.tr.find_all('td')
-                table_row = [
-                    cols[2].get_text().replace('\n', '').strip(),
-                    cols[1].find('a').get('href').replace('\n', '').strip(),
-                    cols[1].find('a').get_text().replace('\n', '').strip(),
-                    cols[0].find('a').get_text().replace('TV-', '').replace('\n', '').strip()
-                ]
-                self.addRow.emit(table_row)
-                row += 1
-
-    def run(self):
-        self.init_settings()
-        self.scrape_links()
 
 
 class TVLinker(QDialog):
@@ -70,11 +18,7 @@ class TVLinker(QDialog):
         self.init_stylesheet()
         layout = QVBoxLayout()
         layout.setContentsMargins(10, 10, 10, 0)
-        self.settings = QSettings(self.get_path('%s.ini' % qApp.applicationName().lower()), QSettings.IniFormat)
-        self.user_agent = self.settings.value('user_agent')
-        self.dl_pagecount = int(self.settings.value('dl_pagecount'))
-        self.dl_pagelinks = int(self.settings.value('dl_pagelinks'))
-        self.meta_template = self.settings.value('meta_template')
+        self.init_settings()
         layout.addLayout(self.init_form())
         layout.addWidget(self.init_table())
         layout.addLayout(self.init_metabar())
@@ -92,6 +36,14 @@ class TVLinker(QDialog):
         qss.open(QFile.ReadOnly | QFile.Text)
         stream = QTextStream(qss)
         qApp.setStyleSheet(stream.readAll())
+
+    def init_settings(self):
+        self.settings = QSettings(self.get_path('%s.ini' % qApp.applicationName().lower()), QSettings.IniFormat)
+        self.source_url = self.settings.value('source_url')
+        self.user_agent = self.settings.value('user_agent')
+        self.dl_pagecount = int(self.settings.value('dl_pagecount'))
+        self.dl_pagelinks = int(self.settings.value('dl_pagelinks'))
+        self.meta_template = self.settings.value('meta_template')
 
     def init_form(self) -> QHBoxLayout:
         self.search_field = QLineEdit(self, clearButtonEnabled=True,
@@ -154,14 +106,12 @@ class TVLinker(QDialog):
             self.table.clearContents()
             self.table.setRowCount(0)
         self.table.setSortingEnabled(False)
-        self.scrape = ScrapeThread(maxpages)
+        self.scrape = ScrapeThread(settings=self.settings, maxpages=maxpages)
         self.scrape.addRow.connect(self.add_row)
-        self.progress.setValue(0)
         self.scrape.started.connect(self.progress.show)
-        self.scrape.finished.connect(self.progress.hide)
+        self.scrape.finished.connect(self.scrape_finished)
+        self.progress.setValue(0)
         self.scrape.start()
-        self.table.setSortingEnabled(True)
-        self.unsetCursor()
 
     @pyqtSlot(bool)
     def refresh_links(self):
@@ -170,6 +120,12 @@ class TVLinker(QDialog):
     @pyqtSlot(int)
     def update_pagecount(self, index: int):
         self.start_scraping(int(self.dlpages_field.itemText(index)))
+
+    @pyqtSlot()
+    def scrape_finished(self):
+        self.progress.hide()
+        self.table.setSortingEnabled(True)
+        self.unsetCursor()
 
     @pyqtSlot(list)
     def add_row(self, row: list) -> None:
@@ -226,6 +182,7 @@ class TVLinker(QDialog):
 
 
 def main():
+    import sys
     app = QApplication(sys.argv)
     app.setOrganizationName('ozmartians.com')
     app.setApplicationName('TVLinker')
