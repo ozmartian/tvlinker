@@ -43,10 +43,10 @@ class ScrapeThread(QThread):
             for link_table in links:
                 cols = link_table.tr.find_all('td')
                 table_row = [
-                    cols[2].get_text(),
-                    cols[1].find('a').get('href'),
-                    cols[1].find('a').get_text(),
-                    cols[0].find('a').get_text().replace('TV-', '')
+                    cols[2].get_text().replace('\n', '').strip(),
+                    cols[1].find('a').get('href').replace('\n', '').strip(),
+                    cols[1].find('a').get_text().replace('\n', '').strip(),
+                    cols[0].find('a').get_text().replace('TV-', '').replace('\n', '').strip()
                 ]
                 self.addRow.emit(table_row)
                 row += 1
@@ -91,7 +91,7 @@ class TVLinker(QDialog):
         self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.search_field.textChanged.connect(self.filter_table)
         self.refresh_button = QPushButton(QIcon.fromTheme('view-refresh'), ' Refresh', cursor=Qt.PointingHandCursor,
-                                          iconSize=QSize(12, 12), clicked=self.start_scraping)
+                                          iconSize=QSize(12, 12), clicked=self.refresh_links)
         self.dlpages_field = QComboBox(self, editable=False, cursor=Qt.PointingHandCursor)
         self.dlpages_field.addItems(('10', '20', '30', '40'))
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
@@ -109,10 +109,10 @@ class TVLinker(QDialog):
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.setSortingEnabled(True)
         self.table.hideColumn(1)
+        self.setCursor(Qt.PointingHandCursor)
         self.table.verticalHeader().hide()
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.viewport().setAttribute(Qt.WA_Hover)
         self.table.setHorizontalHeaderLabels(('Date', 'URL', 'Description', 'Format'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
@@ -122,7 +122,7 @@ class TVLinker(QDialog):
         return self.table
 
     def init_metabar(self) -> QHBoxLayout:
-        self.progress = QProgressBar(minimum=1, maximum=(self.dl_pagecount * self.dl_pagelinks),visible=False)
+        self.progress = QProgressBar(minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks),visible=False)
         self.meta_label = QLabel(textFormat=Qt.RichText, alignment=Qt.AlignRight, objectName='totals')
         self.meta_label.setFixedHeight(30)
         self.meta_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -147,12 +147,16 @@ class TVLinker(QDialog):
         self.table.setSortingEnabled(False)
         self.scrape = ScrapeThread(maxpages)
         self.scrape.addRow.connect(self.add_row)
+        self.progress.setValue(0)
         self.scrape.started.connect(self.progress.show)
         self.scrape.finished.connect(self.progress.hide)
         self.scrape.start()
         self.table.setSortingEnabled(True)
         self.unsetCursor()
-        self.table.setCursor(Qt.PointingHandCursor)
+
+    @pyqtSlot(bool)
+    def refresh_links(self):
+        self.start_scraping(int(self.dlpages_field.currentText()))
 
     @pyqtSlot(int)
     def update_pagecount(self, index: int):
