@@ -31,7 +31,7 @@ class ScrapeThread(QThread):
 
     def scrape_links(self) -> None:
         row = 0
-        for page in range(1, self.maxpages):
+        for page in range(1, self.maxpages+1):
             url = self.source_url % page
             req = Request(url, headers={'User-agent': self.user_agent})
             res = urlopen(req)
@@ -48,7 +48,6 @@ class ScrapeThread(QThread):
                     cols[1].find('a').get_text(),
                     cols[0].find('a').get_text().replace('TV-', '')
                 ]
-                # qApp.processEvents()
                 self.addRow.emit(table_row)
                 row += 1
 
@@ -66,10 +65,11 @@ class TVLinker(QDialog):
         layout.setContentsMargins(10, 10, 10, 0)
         self.settings = QSettings(self.get_path('%s.ini' % qApp.applicationName().lower()), QSettings.IniFormat)
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
+        self.dl_pagelinks = int(self.settings.value('dl_pagelinks'))
         self.meta_template = self.settings.value('meta_template')
         layout.addLayout(self.init_form())
         layout.addWidget(self.init_table())
-        layout.addWidget(self.init_metabar())
+        layout.addLayout(self.init_metabar())
         self.setLayout(layout)
         self.setWindowTitle(qApp.applicationName())
         self.setWindowIcon(QIcon(self.get_path('%s.png' % qApp.applicationName().lower())))
@@ -113,7 +113,7 @@ class TVLinker(QDialog):
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.viewport().setAttribute(Qt.WA_Hover)
-        self.table.setHorizontalHeaderLabels(('Date', 'URL', 'Description', 'Media'))
+        self.table.setHorizontalHeaderLabels(('Date', 'URL', 'Description', 'Format'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -121,37 +121,42 @@ class TVLinker(QDialog):
         self.table.doubleClicked.connect(self.open_link)
         return self.table
 
-    def init_metabar(self) -> QLabel:
+    def init_metabar(self) -> QHBoxLayout:
+        self.progress = QProgressBar(minimum=1, maximum=(self.dl_pagecount * self.dl_pagelinks),visible=False)
         self.meta_label = QLabel(textFormat=Qt.RichText, alignment=Qt.AlignRight, objectName='totals')
-        self.meta_label.setAutoFillBackground(True)
         self.meta_label.setFixedHeight(30)
         self.meta_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.update_metabar()
-        self.meta_label.setContentsMargins(0, 0, 0, 0)
-        return self.meta_label
+        layout = QHBoxLayout()
+        layout.addWidget(self.progress, Qt.AlignLeft)
+        layout.addWidget(self.meta_label, Qt.AlignRight)
+        return layout
 
     def update_metabar(self) -> bool:
-        self.meta_label.setText(self.meta_template.replace('%s', str(self.table.rowCount())))
+        rowcount = self.table.rowCount()
+        self.meta_label.setText(self.meta_template.replace('%s', str(rowcount)))
+        self.progress.setValue(rowcount)
         return True
 
-    def start_scraping(self, maxpages: int = 20) -> str:
+    def start_scraping(self, maxpages: int = 20):
         self.rows = 0
         self.setCursor(Qt.BusyCursor)
         if self.table.rowCount() > 0:
             self.table.clearContents()
             self.table.setRowCount(0)
-        qApp.processEvents()
         self.table.setSortingEnabled(False)
         self.scrape = ScrapeThread(maxpages)
-        self.scrape.start()
         self.scrape.addRow.connect(self.add_row)
+        self.scrape.started.connect(self.progress.show)
+        self.scrape.finished.connect(self.progress.hide)
+        self.scrape.start()
         self.table.setSortingEnabled(True)
-        self.update_metabar()
-        self.setCursor(Qt.PointingHandCursor)
+        self.unsetCursor()
+        self.table.setCursor(Qt.PointingHandCursor)
 
     @pyqtSlot(int)
-    def update_pagecount(self, index: int) -> str:
-        return self.start_scraping(int(self.dlpages_field.itemText(index)))
+    def update_pagecount(self, index: int):
+        self.start_scraping(int(self.dlpages_field.itemText(index)))
 
     @pyqtSlot(list)
     def add_row(self, row: list) -> None:
@@ -168,7 +173,6 @@ class TVLinker(QDialog):
                 table_item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(self.rows, self.cols, table_item)
             self.update_metabar()
-            # qApp.processEvents()
             self.cols += 1
         self.rows += 1
 
@@ -186,7 +190,6 @@ class TVLinker(QDialog):
                 self.table.hideRow(row)
             else:
                 self.table.showRow(row)
-        self.update_metabar()
 
     @staticmethod
     def get_path(path: str = None) -> str:
