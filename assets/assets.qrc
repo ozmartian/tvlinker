@@ -7,12 +7,5 @@
     <file>assets/tvlinker.qss</file>
     <file>assets/up_arrow.png</file>
     <file>assets/watermark.png</file>
-    <file>assets/hosters/filefactory.png</file>
-    <file>assets/hosters/oboom.png</file>
-    <file>assets/hosters/rapidgator.png</file>
-    <file>assets/hosters/turbobit.png</file>
-    <file>assets/hosters/uploaded.png</file>
-    <file>assets/hosters/uploadingsite.png</file>
-    <file>assets/hosters/uploadrocket.png</file>
   </qresource>
 </RCC>

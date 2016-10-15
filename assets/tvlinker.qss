@@ -27,6 +27,11 @@ QTableView {
     alternate-background-color: rgba(106, 69, 114, 0.15);
 }
 
+QTableView::item:selected {
+    background-color: #898989;
+    color: #FFF;
+}
+
 QLabel#totals {
     padding: 0;
     margin: 4px 8px 8px 8px;

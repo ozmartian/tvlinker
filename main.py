@@ -31,16 +31,21 @@ class ScrapeThread(QThread):
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
 
+    @staticmethod
+    def get_html(link: str, user_agent: str) -> str:
+        req = Request(link, headers={'User-agent': user_agent})
+        res = urlopen(req)
+        return res.read()
+
     def scrape_links(self) -> None:
         row = 0
         for page in range(1, self.maxpages+1):
             url = self.source_url % page
-            req = Request(url, headers={'User-agent': self.user_agent})
-            res = urlopen(req)
+            content = self.get_html(url, self.user_agent)
             if sys.platform == 'win32':
-                bs = BeautifulSoup(res.read(), 'html.parser')
+                bs = BeautifulSoup(content, 'html.parser')
             else:
-                bs = BeautifulSoup(res.read(), 'lxml')
+                bs = BeautifulSoup(content, 'lxml')
             links = bs.find_all('table', class_='posts_table')
             for link_table in links:
                 cols = link_table.tr.find_all('td')
@@ -66,6 +71,7 @@ class TVLinker(QDialog):
         layout = QVBoxLayout()
         layout.setContentsMargins(10, 10, 10, 0)
         self.settings = QSettings(self.get_path('%s.ini' % qApp.applicationName().lower()), QSettings.IniFormat)
+        self.user_agent = self.settings.value('user_agent')
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
         self.dl_pagelinks = int(self.settings.value('dl_pagelinks'))
         self.meta_template = self.settings.value('meta_template')
@@ -111,13 +117,14 @@ class TVLinker(QDialog):
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.setSortingEnabled(True)
         self.table.hideColumn(1)
-        self.setCursor(Qt.PointingHandCursor)
+        self.table.setCursor(Qt.PointingHandCursor)
         self.table.verticalHeader().hide()
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setHorizontalHeaderLabels(('Date', 'URL', 'Description', 'Format'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.table.horizontalHeader().setMinimumSectionSize(100)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.sortByColumn(0, Qt.DescendingOrder)
         self.table.doubleClicked.connect(self.open_link)
@@ -185,14 +192,25 @@ class TVLinker(QDialog):
     @pyqtSlot(QModelIndex)
     def open_link(self, index: QModelIndex) -> bool:
         return QDesktopServices.openUrl(QUrl(self.table.item(self.table.currentRow(), 1).text()))
+        # self.setCursor(Qt.BusyCursor)
+        # content = ScrapeThread.get_html(self.table.item(self.table.currentRow(), 1).text(), self.user_agent)
+        # if sys.platform == 'win32':
+        #     bs = BeautifulSoup(content, 'html.parser')
+        # else:
+        #     bs = BeautifulSoup(content, 'lxml')
+        # data = bs.find('table', class_='download_table')
+        # dls = data.find_all('td')
+        # print(dls)
+        # self.unsetCursor()
 
     @pyqtSlot(str)
     def filter_table(self, text: str) -> None:
         valid_rows = []
-        for item in self.table.findItems(text, Qt.MatchContains):
-            valid_rows.append(item.row())
+        if len(text) > 0:
+            for item in self.table.findItems(text, Qt.MatchContains):
+                valid_rows.append(item.row())
         for row in range(0, self.table.rowCount()):
-            if row not in valid_rows:
+            if len(text) > 0 and row not in valid_rows:
                 self.table.hideRow(row)
             else:
                 self.table.showRow(row)
