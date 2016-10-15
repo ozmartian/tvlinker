@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
+
 from urllib.request import Request, urlopen
 
 from PyQt5.QtCore import QFile, QModelIndex, QSettings, QSize, QTextStream, QThread, QUrl, Qt, pyqtSignal, pyqtSlot
@@ -35,10 +37,10 @@ class ScrapeThread(QThread):
             url = self.source_url % page
             req = Request(url, headers={'User-agent': self.user_agent})
             res = urlopen(req)
-            try:
-                bs = BeautifulSoup(res.read(), 'lxml')
-            except:
+            if sys.platform == 'win32':
                 bs = BeautifulSoup(res.read(), 'html.parser')
+            else:
+                bs = BeautifulSoup(res.read(), 'lxml')
             links = bs.find_all('table', class_='posts_table')
             for link_table in links:
                 cols = link_table.tr.find_all('td')
@@ -206,7 +208,6 @@ class TVLinker(QDialog):
 
 
 def main():
-    import sys
     app = QApplication(sys.argv)
     app.setOrganizationName('ozmartians.com')
     app.setApplicationName('TVLinker')
