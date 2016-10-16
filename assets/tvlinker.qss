@@ -22,7 +22,7 @@ QHeaderView::up-arrow {
 QTableView {
     margin-top: 8px;
     margin-bottom: 0;
-    background: #FFF url(:assets/watermark.png) no-repeat center center;
+    background: #FFF url(:assets/teevee.png) no-repeat center center;
     background-attachment: fixed;
     alternate-background-color: rgba(106, 69, 114, 0.15);
 }
@@ -39,3 +39,16 @@ QLabel#totals {
     font-weight: bold;
     border: none;
 }
+
+/*
+QProgressBar {
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    margin: 0.5px;
+    background-color: #898989;
+    border-radius: 3px;
+    width: 10px;
+}
+*/

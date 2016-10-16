@@ -8,9 +8,11 @@ import sys
 block_cipher = None
 
 a = Analysis(['..\\main.py'],
-             pathex=['%s\\Lib\\site-packages\\PyQt5\\Qt\\bin' % os.path.dirname(sys.executable),
-             'C:\\Program Files (x86)\\Windows Kits\\10\Redist\\ucrt\\DLLs\\x64',
-             '..'],
+             pathex=[
+                 '%s\\Lib\\site-packages\\PyQt5\\Qt\\bin' % os.path.dirname(sys.executable),
+                 # 'C:\\Program Files (x86)\\Windows Kits\\10\Redist\\ucrt\\DLLs\\x64',
+                 '..'
+             ],
              binaries=[],
              datas=[],
              hiddenimports=[],

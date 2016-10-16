@@ -8,7 +8,7 @@
 #
 
 from PyQt5.QtCore import QFile, QModelIndex, QSettings, QSize, QTextStream, QUrl, Qt, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon
+from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QHideEvent, QIcon, QPalette, QShowEvent
 from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QBoxLayout, QButtonGroup, QComboBox, QDialog, QFrame,
                              QHeaderView, QHBoxLayout, QLabel, QLineEdit, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
@@ -21,6 +21,7 @@ class HosterLinks(QDialog):
     def __init__(self, parent, f=Qt.Tool):
         super(HosterLinks, self).__init__(parent, f)
         self.setModal(True)
+        self.setWindowModality(Qt.ApplicationModal)
         self.hosters = []
         self.setContentsMargins(20, 20, 20, 20)
         self.layout = QVBoxLayout(spacing=25)
@@ -33,7 +34,7 @@ class HosterLinks(QDialog):
         self.open_group = QButtonGroup(exclusive=False)
         self.open_group.buttonClicked[int].connect(self.open_link)
         self.setWindowTitle('Hoster Links')
-        self.resize(QSize(1000, 250))
+        # self.resize(QSize(1000, 250))
 
     def clear_layout(self, layout: QBoxLayout = None) -> None:
         if layout is None:
@@ -54,16 +55,16 @@ class HosterLinks(QDialog):
 
     def show_hosters(self, hosters: list) -> None:
         self.hosters = hosters
+        self.clear_layout()
         index = 0
         for hoster in hosters:
-            content = QLabel(textFormat=Qt.RichText, openExternalLinks=True)
+            content = QLabel(textFormat=Qt.RichText, openExternalLinks=True, toolTip=hoster[1])
             content.setText('''<table border="0" cellpading="6">
                                 <tr nowrap valign="middle">
                                     <td align="right" width="160"><img src="%s" /></td>
                                     <td width="15">&nbsp;</td>
-                                    <td>%s</td>
                                 </tr>
-                              <table>''' % (TVLinker.get_path('/hosters/%s' % QUrl(hoster[0]).fileName()), hoster[1]))
+                              <table>''' % TVLinker.get_path('/hosters/%s' % QUrl(hoster[0]).fileName()))
             copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard', flat=False,
                                    cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
             copy_btn.setFixedSize(90, 30)
@@ -92,6 +93,16 @@ class HosterLinks(QDialog):
     def open_link(self, button_id: int) -> None:
         QDesktopServices.openUrl(QUrl(self.hosters[button_id][1]))
         self.hide()
+
+    def hideEvent(self, event: QHideEvent) -> None:
+        self.clear_layout()
+        super(HosterLinks, self).hideEvent(event)
+
+    def showEvent(self, event: QShowEvent) -> None:
+        self.busy_indicator = QProgressBar(parent=self, minimum=0, maximum=0)
+        self.layout.addWidget(self.busy_indicator)
+        self.setMinimumWidth(450)
+        super(HosterLinks, self).showEvent(event)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.hide()
@@ -171,7 +182,10 @@ class TVLinker(QDialog):
         return self.table
 
     def init_metabar(self) -> QHBoxLayout:
-        self.progress = QProgressBar(minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks),visible=False)
+        palette = QPalette()
+        palette.setColor(QPalette.Base, Qt.lightGray)
+        self.setPalette(palette)
+        self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks), visible=False)
         self.meta_label = QLabel(textFormat=Qt.RichText, alignment=Qt.AlignRight, objectName='totals')
         self.meta_label.setFixedHeight(30)
         self.meta_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -241,7 +255,6 @@ class TVLinker(QDialog):
 
     @pyqtSlot(QModelIndex)
     def show_hosters(self, index: QModelIndex) -> bool:
-        self.hosters_win.clear_layout()
         self.hosters_win.show()
         self.links = HostersThread(settings=self.settings, link_url=self.table.item(self.table.currentRow(), 1).text())
         self.links.setHosters.connect(self.add_hosters)
