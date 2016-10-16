@@ -74,14 +74,3 @@ class HostersThread(QThread):
 
     def run(self) -> None:
         self.get_hoster_links()
-
-# hosters = [
-#     [
-#         'http://tv-release.net/images/filefactory.png',
-#         'http://www.filefactory.com/file/60ud8qbv59rp'
-#     ],
-#     [
-#         'http://tv-release.net/images/uploaded.png',
-#         'http://ul.to/dmp8tbwt/cops.s29e16.480p.hdtv.x264.mkv'
-#     ]
-# ]

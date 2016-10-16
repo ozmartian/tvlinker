@@ -25,7 +25,7 @@ class HosterLinks(QDialog):
         self.setWindowTitle('Hoster Links')
         self.resize(QSize(1000, 250))
 
-    def clear_layout(self, layout: QBoxLayout = None):
+    def clear_layout(self, layout: QBoxLayout = None) -> None:
         if layout is None:
             layout = self.layout
         while layout.count():
@@ -35,7 +35,7 @@ class HosterLinks(QDialog):
             elif child.layout() is not None:
                 self.clear_layout(child.layout())
 
-    def get_separator(self):
+    def get_separator(self) -> QFrame:
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
         line.setFrameShadow(QFrame.Sunken)
