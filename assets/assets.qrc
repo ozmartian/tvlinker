@@ -1,11 +1,16 @@
 <RCC>
   <qresource>
-    <file>assets/down_arrow.png</file>
     <file>assets/OpenSans.ttf</file>
+    <file>assets/copy_icon.png</file>
+    <file>assets/down_arrow.png</file>
+    <file>assets/open_icon.png</file>
     <file>assets/tvlinker.ini</file>
     <file>assets/tvlinker.png</file>
     <file>assets/tvlinker.qss</file>
     <file>assets/up_arrow.png</file>
     <file>assets/watermark.png</file>
+    <file>assets/hosters/filefactory.png</file>
+    <file>assets/hosters/uploaded.png</file>
+    <file>assets/hosters/uploadingsite.png</file>
   </qresource>
 </RCC>

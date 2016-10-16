@@ -3,12 +3,88 @@
 
 from PyQt5.QtCore import QFile, QModelIndex, QSettings, QSize, QTextStream, QUrl, Qt, pyqtSlot
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon
-from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDialog, QHeaderView, QHBoxLayout, QLabel,
-                             QLineEdit, QProgressBar, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem,
-                             QTreeWidget, QTreeWidgetItem, QVBoxLayout, qApp)
+from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QBoxLayout, QComboBox, QDialog, QFrame,
+                             QHeaderView, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QLineEdit, QProgressBar,
+                             QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
 
 from threads import ScrapeThread, HostersThread
 import assets
+
+
+class HosterLinks(QDialog):
+    def __init__(self, parent, f=Qt.Tool):
+        super(HosterLinks, self).__init__(parent, f)
+        self.setModal(True)
+        self.hosters = []
+        self.setContentsMargins(20, 20, 20, 20)
+        self.layout = QVBoxLayout(spacing=25)
+        self.setLayout(self.layout)
+        self.copy_icon = QIcon(TVLinker.get_path('copy_icon.png'))
+        self.open_icon = QIcon(TVLinker.get_path('open_icon.png'))
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.setWindowTitle('Hoster Links')
+        self.resize(QSize(1000, 250))
+
+    def clear_layout(self, layout: QBoxLayout = None):
+        if layout is None:
+            layout = self.layout
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget() is not None:
+                child.widget().deleteLater()
+            elif child.layout() is not None:
+                self.clear_layout(child.layout())
+
+    def get_separator(self):
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        return line
+
+    def show_hosters(self, hosters: list) -> None:
+        self.hosters = hosters
+        self.clear_layout()
+        for hoster in hosters:
+            content = QLabel(textFormat=Qt.RichText, openExternalLinks=True)
+            content.setText('''<table border="0" cellpading="6">
+                                <tr nowrap valign="middle">
+                                    <td align="right" width="160"><img src="%s" /></td>
+                                    <td width="15">&nbsp;</td>
+                                    <td>%s</td>
+                                </tr>
+                              <table>''' % (TVLinker.get_path('/hosters/%s' % QUrl(hoster[0]).fileName()), hoster[1]))
+            copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard', flat=False,
+                                   cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16), clicked=self.copy_link)
+            copy_btn.setFixedSize(90, 30)
+            open_btn = QPushButton(self, icon=self.open_icon, text=' OPEN', toolTip='Open in browser', flat=False,
+                                   cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16), clicked=self.open_link)
+            open_btn.setFixedSize(90, 30)
+            layout = QHBoxLayout(spacing=10)
+            layout.addWidget(content)
+            layout.addWidget(copy_btn, Qt.AlignRight)
+            layout.addWidget(open_btn, Qt.AlignRight)
+            self.layout.addLayout(layout)
+            if self.layout.count() < len(hosters):
+                self.layout.addWidget(self.get_separator())
+        self.adjustSize()
+        self.show()
+
+    @pyqtSlot()
+    def copy_link(self) -> None:
+        rownum = 1
+        clip = qApp.clipboard()
+        clip.setText(self.hosters[rownum][1])
+        self.hide()
+
+    @pyqtSlot()
+    def open_link(self) -> None:
+        rownum = 1
+        QDesktopServices.openUrl(QUrl(self.hosters[rownum][1]))
+        self.hide()
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self.hide()
+        event.accept()
 
 
 class TVLinker(QDialog):
@@ -17,7 +93,7 @@ class TVLinker(QDialog):
         self.rows, self.cols = 0, 0
         self.init_stylesheet()
         layout = QVBoxLayout()
-        layout.setContentsMargins(10, 10, 10, 0)
+        layout.setContentsMargins(10, 10, 10, 10)
         self.init_settings()
         layout.addLayout(self.init_form())
         layout.addWidget(self.init_table())
@@ -28,6 +104,7 @@ class TVLinker(QDialog):
         self.resize(1000, 800)
         self.show()
         self.start_scraping()
+        self.hosters_win = None
 
     def init_stylesheet(self) -> None:
         qApp.setStyle('Fusion')
@@ -37,7 +114,7 @@ class TVLinker(QDialog):
         stream = QTextStream(qss)
         qApp.setStyleSheet(stream.readAll())
 
-    def init_settings(self):
+    def init_settings(self) -> None:
         self.settings = QSettings(self.get_path('%s.ini' % qApp.applicationName().lower()), QSettings.IniFormat)
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
@@ -67,11 +144,11 @@ class TVLinker(QDialog):
     def init_table(self) -> QTableWidget:
         self.table = QTableWidget(0, 4, self)
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.table.setSortingEnabled(True)
         self.table.hideColumn(1)
         self.table.setCursor(Qt.PointingHandCursor)
         self.table.verticalHeader().hide()
         self.table.setAlternatingRowColors(True)
+        self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setHorizontalHeaderLabels(('Date', 'URL', 'Description', 'Format'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
@@ -79,7 +156,8 @@ class TVLinker(QDialog):
         self.table.horizontalHeader().setMinimumSectionSize(100)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.sortByColumn(0, Qt.DescendingOrder)
-        self.table.doubleClicked.connect(self.open_link)
+        self.table.doubleClicked.connect(self.show_hosters)
+        self.hosters_win = HosterLinks(parent=self.table)
         return self.table
 
     def init_metabar(self) -> QHBoxLayout:
@@ -99,7 +177,7 @@ class TVLinker(QDialog):
         self.progress.setValue(rowcount)
         return True
 
-    def start_scraping(self, maxpages: int = 20):
+    def start_scraping(self, maxpages: int = 10) -> None:
         self.rows = 0
         self.setCursor(Qt.BusyCursor)
         if self.table.rowCount() > 0:
@@ -114,15 +192,17 @@ class TVLinker(QDialog):
         self.scrape.start()
 
     @pyqtSlot(bool)
-    def refresh_links(self):
+    def refresh_links(self) -> None:
         self.start_scraping(int(self.dlpages_field.currentText()))
 
     @pyqtSlot(int)
-    def update_pagecount(self, index: int):
-        self.start_scraping(int(self.dlpages_field.itemText(index)))
+    def update_pagecount(self, index: int) -> None:
+        pagecount = int(self.dlpages_field.itemText(index))
+        self.progress.setMaximum(pagecount * self.dl_pagelinks)
+        self.start_scraping(pagecount)
 
     @pyqtSlot()
-    def scrape_finished(self):
+    def scrape_finished(self) -> None:
         self.progress.hide()
         self.table.setSortingEnabled(True)
         self.unsetCursor()
@@ -145,19 +225,15 @@ class TVLinker(QDialog):
             self.cols += 1
         self.rows += 1
 
+    @pyqtSlot(list)
+    def add_hosters(self, hosters: list) -> None:
+        self.hosters_win.show_hosters(hosters)
+
     @pyqtSlot(QModelIndex)
-    def open_link(self, index: QModelIndex) -> bool:
-        return QDesktopServices.openUrl(QUrl(self.table.item(self.table.currentRow(), 1).text()))
-        # self.setCursor(Qt.BusyCursor)
-        # content = ScrapeThread.get_html(self.table.item(self.table.currentRow(), 1).text(), self.user_agent)
-        # if sys.platform == 'win32':
-        #     bs = BeautifulSoup(content, 'html.parser')
-        # else:
-        #     bs = BeautifulSoup(content, 'lxml')
-        # data = bs.find('table', class_='download_table')
-        # dls = data.find_all('td')
-        # print(dls)
-        # self.unsetCursor()
+    def show_hosters(self, index: QModelIndex) -> bool:
+        self.links = HostersThread(settings=self.settings, link_url=self.table.item(self.table.currentRow(), 1).text())
+        self.links.setHosters.connect(self.add_hosters)
+        self.links.start()
 
     @pyqtSlot(str)
     def filter_table(self, text: str) -> None:

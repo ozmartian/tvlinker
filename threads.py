@@ -12,13 +12,13 @@ class ScrapeThread(QThread):
 
     addRow = pyqtSignal(list)
 
-    def __init__(self, settings: QSettings, maxpages: int = 20):
+    def __init__(self, settings: QSettings, maxpages: int = 10):
         QThread.__init__(self)
         self.source_url = settings.value('source_url')
         self.user_agent = settings.value('user_agent')
         self.maxpages = maxpages
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.wait()
 
     def scrape_links(self) -> None:
@@ -43,17 +43,45 @@ class ScrapeThread(QThread):
                 self.addRow.emit(table_row)
                 row += 1
 
-    def run(self):
+    def run(self) -> None:
         self.scrape_links()
 
 
 class HostersThread(QThread):
-    def __init__(self, link_url: str):
+
+    setHosters = pyqtSignal(list)
+
+    def __init__(self, settings: QSettings, link_url: str):
         QThread.__init__(self)
+        self.user_agent = settings.value('user_agent')
         self.link_url = link_url
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.wait()
 
-    def run(self):
-        pass
+    def get_hoster_links(self) -> None:
+        hosters = []
+        req = Request(self.link_url, headers={'User-agent': self.user_agent})
+        res = urlopen(req)
+        if sys.platform == 'win32':
+            bs = BeautifulSoup(res.read(), 'html.parser')
+        else:
+            bs = BeautifulSoup(res.read(), 'lxml')
+        dltable = bs.find('table', id='download_table').find_all('tr')
+        for hoster_html in dltable:
+            hosters.append([hoster_html.td.img.get('src'), hoster_html.find('td', class_='td_cols').a.get('href')])
+        self.setHosters.emit(hosters)
+
+    def run(self) -> None:
+        self.get_hoster_links()
+
+# hosters = [
+#     [
+#         'http://tv-release.net/images/filefactory.png',
+#         'http://www.filefactory.com/file/60ud8qbv59rp'
+#     ],
+#     [
+#         'http://tv-release.net/images/uploaded.png',
+#         'http://ul.to/dmp8tbwt/cops.s29e16.480p.hdtv.x264.mkv'
+#     ]
+# ]

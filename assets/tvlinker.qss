@@ -33,9 +33,8 @@ QTableView::item:selected {
 }
 
 QLabel#totals {
-    padding: 0;
-    margin: 4px 8px 8px 8px;
     color: #65426D;
+    font-size: 11pt;
     font-weight: bold;
     border: none;
 }
