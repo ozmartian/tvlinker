@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+#
+# TODO : Integrate with KDE API to queue downloads within KGet download manager
+# TODO : Investigte real-debrid Chrome extension for possible API pathways to automate link generation
+# TODO : Add progress bar to hoster links dialog so users is aware content is downloading
+#
+
 from PyQt5.QtCore import QFile, QModelIndex, QSettings, QSize, QTextStream, QUrl, Qt, pyqtSlot
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon
 from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QBoxLayout, QButtonGroup, QComboBox, QDialog, QFrame,
