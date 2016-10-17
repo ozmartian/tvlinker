@@ -39,6 +39,8 @@ class HosterLinks(QDialog):
         self.copy_group.buttonClicked[int].connect(self.copy_link)
         self.open_group = QButtonGroup(exclusive=False)
         self.open_group.buttonClicked[int].connect(self.open_link)
+        self.download_group = QButtonGroup(exclusive=False)
+        self.download_group.buttonClicked[int].connect(self.download_link)
         self.setWindowTitle('Hoster Links')
         # self.resize(QSize(1000, 250))
 
@@ -79,8 +81,11 @@ class HosterLinks(QDialog):
             open_btn = QPushButton(self, icon=self.open_icon, text=' OPEN', toolTip='Open in browser', flat=False,
                                    cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
             open_btn.setFixedSize(90, 30)
-            download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download link '
             self.open_group.addButton(open_btn, index)
+            download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download unrestricted link',
+                                            flat=False, cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
+            download_btn.setFixedSize(90, 30)
+            self.download_group.addButton(download_btn, index)
             layout = QHBoxLayout(spacing=10)
             layout.addWidget(content)
             layout.addWidget(copy_btn, Qt.AlignRight)
@@ -102,6 +107,10 @@ class HosterLinks(QDialog):
         QDesktopServices.openUrl(QUrl(self.hosters[button_id][1]))
         self.hide()
 
+    @pyqtSlot(int)
+    def download_link(self, button_id: int) -> None:
+        pass
+
     def hideEvent(self, event: QHideEvent) -> None:
         self.clear_layout()
         super(HosterLinks, self).hideEvent(event)
@@ -109,9 +118,7 @@ class HosterLinks(QDialog):
     def showEvent(self, event: QShowEvent) -> None:
         busy_label = QLabel('Retrieiving hoster links...', alignment=Qt.AlignCenter)
         busy_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        busy_label.setStyleSheet('padding:0; margin:0;')
         busy_indicator = QProgressBar(parent=self, minimum=0, maximum=0)
-        busy_indicator.setStyleSheet('padding:0; margin:0;')
         self.layout.setSpacing(10)
         self.layout.addWidget(busy_label)
         self.layout.addWidget(busy_indicator)
