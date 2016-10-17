@@ -1,20 +1,25 @@
-#!/usr/bin/env python3
+#!/usr/bin/env ipython
 # -*- coding: utf-8 -*-
 
-#
 # TODO : Integrate with KDE API to queue downloads within KGet download manager
 # TODO : Investigte real-debrid Chrome extension for possible API pathways to automate link generation
 # TODO : Add progress bar to hoster links dialog so users is aware content is downloading
-#
 
-from PyQt5.QtCore import QFile, QModelIndex, QSettings, QSize, QTextStream, QUrl, Qt, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QHideEvent, QIcon, QPalette, QShowEvent
-from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QBoxLayout, QButtonGroup, QComboBox, QDialog, QFrame,
-                             QHeaderView, QHBoxLayout, QLabel, QLineEdit, QProgressBar, QPushButton,
-                             QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
+import http.client
+from urllib.parse import quote_plus
 
-from threads import ScrapeThread, HostersThread
+from PyQt5.QtCore import (QFile, QJsonDocument, QModelIndex, QSettings, QSize, Qt,
+                          QTextStream, QUrl, pyqtSlot)
+from PyQt5.QtGui import (QCloseEvent, QDesktopServices, QFont, QFontDatabase,
+                         QHideEvent, QIcon, QPalette, QShowEvent)
+from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QBoxLayout,
+                             QButtonGroup, QComboBox, QDialog, QFrame,
+                             QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+                             QProgressBar, QPushButton, QSizePolicy,
+                             QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
+
 import assets
+from threads import HostersThread, ScrapeThread
 
 
 class HosterLinks(QDialog):
@@ -28,6 +33,7 @@ class HosterLinks(QDialog):
         self.setLayout(self.layout)
         self.copy_icon = QIcon(TVLinker.get_path('copy_icon.png'))
         self.open_icon = QIcon(TVLinker.get_path('open_icon.png'))
+        self.download_icon = QIcon(TVLinker.get_path('download_icon.png'))
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.copy_group = QButtonGroup(exclusive=False)
         self.copy_group.buttonClicked[int].connect(self.copy_link)
@@ -45,6 +51,7 @@ class HosterLinks(QDialog):
                 child.widget().deleteLater()
             elif child.layout() is not None:
                 self.clear_layout(child.layout())
+        self.layout.setSpacing(25)
 
     @staticmethod
     def get_separator() -> QFrame:
@@ -58,10 +65,10 @@ class HosterLinks(QDialog):
         self.clear_layout()
         index = 0
         for hoster in hosters:
-            content = QLabel(textFormat=Qt.RichText, openExternalLinks=True, toolTip=hoster[1])
+            content = QLabel(textFormat=Qt.RichText, toolTip=hoster[1])
             content.setText('''<table border="0" cellpading="6">
                                 <tr nowrap valign="middle">
-                                    <td align="right" width="160"><img src="%s" /></td>
+                                    <td align="center" width="160"><img src="%s" /></td>
                                     <td width="15">&nbsp;</td>
                                 </tr>
                               <table>''' % TVLinker.get_path('/hosters/%s' % QUrl(hoster[0]).fileName()))
@@ -72,6 +79,7 @@ class HosterLinks(QDialog):
             open_btn = QPushButton(self, icon=self.open_icon, text=' OPEN', toolTip='Open in browser', flat=False,
                                    cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
             open_btn.setFixedSize(90, 30)
+            download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download link '
             self.open_group.addButton(open_btn, index)
             layout = QHBoxLayout(spacing=10)
             layout.addWidget(content)
@@ -81,7 +89,7 @@ class HosterLinks(QDialog):
             if self.layout.count() <= len(hosters):
                 self.layout.addWidget(self.get_separator())
             index += 1
-        self.adjustSize()
+        self.update()
 
     @pyqtSlot(int)
     def copy_link(self, button_id: int) -> None:
@@ -99,9 +107,15 @@ class HosterLinks(QDialog):
         super(HosterLinks, self).hideEvent(event)
 
     def showEvent(self, event: QShowEvent) -> None:
-        self.busy_indicator = QProgressBar(parent=self, minimum=0, maximum=0)
-        self.layout.addWidget(self.busy_indicator)
-        self.setMinimumWidth(450)
+        busy_label = QLabel('Retrieiving hoster links...', alignment=Qt.AlignCenter)
+        busy_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        busy_label.setStyleSheet('padding:0; margin:0;')
+        busy_indicator = QProgressBar(parent=self, minimum=0, maximum=0)
+        busy_indicator.setStyleSheet('padding:0; margin:0;')
+        self.layout.setSpacing(10)
+        self.layout.addWidget(busy_label)
+        self.layout.addWidget(busy_indicator)
+        self.setMinimumWidth(485)
         super(HosterLinks, self).showEvent(event)
 
     def closeEvent(self, event: QCloseEvent) -> None:
@@ -122,7 +136,7 @@ class TVLinker(QDialog):
         layout.addLayout(self.init_metabar())
         self.setLayout(layout)
         self.setWindowTitle(qApp.applicationName())
-        self.setWindowIcon(QIcon(self.get_path('%s.png' % qApp.applicationName().lower())))
+        self.setWindowIcon(QIcon(self.get_path('teevee-app-icon.png')))
         self.resize(1000, 800)
         self.show()
         self.start_scraping()
@@ -143,6 +157,7 @@ class TVLinker(QDialog):
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
         self.dl_pagelinks = int(self.settings.value('dl_pagelinks'))
         self.meta_template = self.settings.value('meta_template')
+        self.realdebrid_api_token = self.settings.value('realdebrid_api_token')
 
     def init_form(self) -> QHBoxLayout:
         self.search_field = QLineEdit(self, clearButtonEnabled=True,
@@ -271,6 +286,25 @@ class TVLinker(QDialog):
                 self.table.hideRow(row)
             else:
                 self.table.showRow(row)
+
+    @staticmethod
+    def unrestrict_link(api_token: str, link: str) -> str:
+        dl_link = ''
+        conn = http.client.HTTPSConnection('api.real-debrid.com')
+        payload = 'link=%s' % quote_plus(link)
+        headers = {
+            'Authorization': 'Bearer %s' % api_token, 
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cache-Control': 'no-cache'
+        }
+        conn.request('POST', '/rest/1.0/unrestrict/link', payload, headers)
+        res = conn.getresponse()
+        data = res.read()
+        jsondoc = QJsonDocument.fromJson(data)
+        if jsondoc.isObject():
+            api_result = jsondoc.object()
+            dl_link = api_result['download'].toString()
+        return dl_link
 
     @staticmethod
     def get_path(path: str = None) -> str:

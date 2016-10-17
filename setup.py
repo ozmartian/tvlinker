@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env ipython
 # -*- coding: utf-8 -*-
 
 from setuptools import setup
