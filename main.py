@@ -1,4 +1,5 @@
-#!/usr/bin/env ipython
+#!/usr/bin/env python3
+
 # -*- coding: utf-8 -*-
 
 # TODO : Integrate with KDE API to queue downloads within KGet download manager
@@ -8,13 +9,13 @@
 import http.client
 from urllib.parse import quote_plus
 
-from PyQt5.QtCore import (QFile, QJsonDocument, QModelIndex, QSettings, QSize, Qt,
-                          QTextStream, QUrl, pyqtSlot)
+from PyQt5.QtCore import (QFile, QJsonDocument, QModelIndex, QSettings, QSize,
+                          Qt, QTextStream, QUrl, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import (QCloseEvent, QDesktopServices, QFont, QFontDatabase,
                          QHideEvent, QIcon, QPalette, QShowEvent)
 from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QBoxLayout,
                              QButtonGroup, QComboBox, QDialog, QFrame,
-                             QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+                             QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMessageBox,
                              QProgressBar, QPushButton, QSizePolicy,
                              QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
 
@@ -23,9 +24,11 @@ from threads import HostersThread, ScrapeThread
 
 
 class HosterLinks(QDialog):
+
+    unrestrictLink = pyqtSignal(str)
+
     def __init__(self, parent, f=Qt.Tool):
         super(HosterLinks, self).__init__(parent, f)
-        self.setModal(True)
         self.setWindowModality(Qt.ApplicationModal)
         self.hosters = []
         self.setContentsMargins(20, 20, 20, 20)
@@ -42,7 +45,6 @@ class HosterLinks(QDialog):
         self.download_group = QButtonGroup(exclusive=False)
         self.download_group.buttonClicked[int].connect(self.download_link)
         self.setWindowTitle('Hoster Links')
-        # self.resize(QSize(1000, 250))
 
     def clear_layout(self, layout: QBoxLayout = None) -> None:
         if layout is None:
@@ -90,6 +92,7 @@ class HosterLinks(QDialog):
             layout.addWidget(content)
             layout.addWidget(copy_btn, Qt.AlignRight)
             layout.addWidget(open_btn, Qt.AlignRight)
+            layout.addWidget(download_btn, Qt.AlignRight)
             self.layout.addLayout(layout)
             if self.layout.count() <= len(hosters):
                 self.layout.addWidget(self.get_separator())
@@ -109,7 +112,12 @@ class HosterLinks(QDialog):
 
     @pyqtSlot(int)
     def download_link(self, button_id: int) -> None:
-        pass
+        self.unrestrictLink.emit(self.hosters[button_id][1])
+
+    def handle_download(self, unrestricted_link: str) -> None:
+        message = QMessageBox.information(self, 'Download Manager Integrator',
+                                          '%s\n\nhas been added to your download manager queue' % unrestricted_link,
+                                          QMessageBox.Ok)
 
     def hideEvent(self, event: QHideEvent) -> None:
         self.clear_layout()
@@ -148,6 +156,7 @@ class TVLinker(QDialog):
         self.show()
         self.start_scraping()
         self.hosters_win = HosterLinks(parent=self)
+        self.hosters_win.unrestrictLink.connect(self.unrestrict_link)
 
     def init_stylesheet(self) -> None:
         qApp.setStyle('Fusion')
@@ -204,10 +213,9 @@ class TVLinker(QDialog):
         return self.table
 
     def init_metabar(self) -> QHBoxLayout:
-        palette = QPalette()
-        palette.setColor(QPalette.Base, Qt.lightGray)
-        self.setPalette(palette)
         self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks), visible=False)
+        palette = self.progress.palette()
+        palette.setColor(QPalette.Base, Qt.lightGray)
         self.meta_label = QLabel(textFormat=Qt.RichText, alignment=Qt.AlignRight, objectName='totals')
         self.meta_label.setFixedHeight(30)
         self.meta_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -278,6 +286,7 @@ class TVLinker(QDialog):
     @pyqtSlot(QModelIndex)
     def show_hosters(self, index: QModelIndex) -> bool:
         self.hosters_win.show()
+        self.hosters_win.activateWindow()
         self.links = HostersThread(settings=self.settings, link_url=self.table.item(self.table.currentRow(), 1).text())
         self.links.setHosters.connect(self.add_hosters)
         self.links.start()
@@ -294,13 +303,12 @@ class TVLinker(QDialog):
             else:
                 self.table.showRow(row)
 
-    @staticmethod
-    def unrestrict_link(api_token: str, link: str) -> str:
-        dl_link = ''
+    @pyqtSlot(str)
+    def unrestrict_link(self, link: str) -> None:
         conn = http.client.HTTPSConnection('api.real-debrid.com')
         payload = 'link=%s' % quote_plus(link)
         headers = {
-            'Authorization': 'Bearer %s' % api_token, 
+            'Authorization': 'Bearer %s' % self.realdebrid_api_token,
             'Content-Type': 'application/x-www-form-urlencoded',
             'Cache-Control': 'no-cache'
         }
@@ -310,8 +318,9 @@ class TVLinker(QDialog):
         jsondoc = QJsonDocument.fromJson(data)
         if jsondoc.isObject():
             api_result = jsondoc.object()
-            dl_link = api_result['download'].toString()
-        return dl_link
+            if 'download' in api_result.keys():
+                dl_link = api_result['download'].toString()
+                self.hosters_win.handle_download(dl_link)
 
     @staticmethod
     def get_path(path: str = None) -> str:
