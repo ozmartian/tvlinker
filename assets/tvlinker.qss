@@ -12,17 +12,17 @@ QHeaderView::section, QTableCornerButton::section {
 }
 
 QHeaderView::down-arrow {
-    image: url(:assets/down_arrow.png)
+    image: url(:assets/images/down_arrow.png)
 }
 
 QHeaderView::up-arrow {
-    image: url(:assets/up_arrow.png)
+    image: url(:assets/images/up_arrow.png)
 }
 
 QTableView {
     margin-top: 8px;
     margin-bottom: 0;
-    background: #FFF url(:assets/teevee.png) no-repeat center center;
+    background: #FFF url(:assets/images/watermark.png) no-repeat center center;
     background-attachment: fixed;
     alternate-background-color: rgba(106, 69, 114, 0.15);
 }

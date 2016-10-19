@@ -27,7 +27,7 @@ class ScrapeThread(QThread):
             url = self.source_url % page
             req = Request(url, headers={'User-Agent': self.user_agent})
             res = urlopen(req)
-            if sys.platform() == 'win32':
+            if sys.platform == 'win32':
                 bs = BeautifulSoup(res.read(), 'html.parser')
             else:
                 try:
@@ -66,7 +66,7 @@ class HostersThread(QThread):
         hosters = []
         req = Request(self.link_url, headers={'User-Agent': self.user_agent})
         res = urlopen(req)
-        if sys.platform() == 'win32':
+        if sys.platform == 'win32':
             bs = BeautifulSoup(res.read(), 'html.parser')
         else:
             try:

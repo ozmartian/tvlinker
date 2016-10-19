@@ -1,0 +1,19 @@
+<RCC>
+  <qresource>
+    <file>assets/fonts/OpenSans.ttf</file>
+    <file>assets/images/copy_icon.png</file>
+    <file>assets/images/down_arrow.png</file>
+    <file>assets/images/download_icon.png</file>
+    <file>assets/images/hoster_filefactory.png</file>
+    <file>assets/images/hoster_uploaded.png</file>
+    <file>assets/images/hoster_uploadingsite.png</file>
+    <file>assets/images/open_icon.png</file>
+    <file>assets/images/tvlinker.ico</file>
+    <file>assets/images/tvlinker.png</file>
+    <file>assets/images/tvrelease.png</file>
+    <file>assets/images/up_arrow.png</file>
+    <file>assets/images/watermark.png</file>
+    <file>assets/tvlinker.ini</file>
+    <file>assets/tvlinker.qss</file>
+  </qresource>
+</RCC>

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 # -*- coding: utf-8 -*-
 
 # TODO : Integrate with KDE API to queue downloads within KGet download manager
@@ -21,6 +20,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QBoxLayout,
 
 import assets
 from threads import HostersThread, ScrapeThread
+from pyload import PyloadConnection, PyloadConfig
 
 
 class HosterLinks(QDialog):
@@ -34,9 +34,9 @@ class HosterLinks(QDialog):
         self.setContentsMargins(20, 20, 20, 20)
         self.layout = QVBoxLayout(spacing=25)
         self.setLayout(self.layout)
-        self.copy_icon = QIcon(TVLinker.get_path('copy_icon.png'))
-        self.open_icon = QIcon(TVLinker.get_path('open_icon.png'))
-        self.download_icon = QIcon(TVLinker.get_path('download_icon.png'))
+        self.copy_icon = QIcon(TVLinker.get_path('images/copy_icon.png'))
+        self.open_icon = QIcon(TVLinker.get_path('images/open_icon.png'))
+        self.download_icon = QIcon(TVLinker.get_path('images/download_icon.png'))
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.copy_group = QButtonGroup(exclusive=False)
         self.copy_group.buttonClicked[int].connect(self.copy_link)
@@ -86,7 +86,7 @@ class HosterLinks(QDialog):
             self.open_group.addButton(open_btn, index)
             download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download unrestricted link',
                                             flat=False, cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
-            download_btn.setFixedSize(90, 30)
+            download_btn.setFixedSize(110, 30)
             self.download_group.addButton(download_btn, index)
             layout = QHBoxLayout(spacing=10)
             layout.addWidget(content)
@@ -116,8 +116,10 @@ class HosterLinks(QDialog):
 
     def handle_download(self, unrestricted_link: str) -> None:
         message = QMessageBox.information(self, 'Download Manager Integrator',
-                                          '%s\n\nhas been added to your download manager queue' % unrestricted_link,
+                                          '%s\n\nhas been copied to clipboard' % unrestricted_link,
                                           QMessageBox.Ok)
+        clip = qApp.clipboard()
+        clip.setText(unrestricted_link)
 
     def hideEvent(self, event: QHideEvent) -> None:
         self.clear_layout()
@@ -151,7 +153,7 @@ class TVLinker(QDialog):
         layout.addLayout(self.init_metabar())
         self.setLayout(layout)
         self.setWindowTitle(qApp.applicationName())
-        self.setWindowIcon(QIcon(self.get_path('teevee-app-icon.png')))
+        self.setWindowIcon(QIcon(self.get_path('images/tvlinker.png')))
         self.resize(1000, 800)
         self.show()
         self.start_scraping()
@@ -160,7 +162,7 @@ class TVLinker(QDialog):
 
     def init_stylesheet(self) -> None:
         qApp.setStyle('Fusion')
-        QFontDatabase.addApplicationFont(self.get_path('OpenSans.ttf'))
+        QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
         qss = QFile(self.get_path('%s.qss' % qApp.applicationName().lower()))
         qss.open(QFile.ReadOnly | QFile.Text)
         stream = QTextStream(qss)
@@ -173,7 +175,10 @@ class TVLinker(QDialog):
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
         self.dl_pagelinks = int(self.settings.value('dl_pagelinks'))
         self.meta_template = self.settings.value('meta_template')
-        self.realdebrid_api_token = self.settings.value('realdebrid_api_token')
+        self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
+        # self.pyload_config = PyloadConfig(host=self.settings.value('pyload_host'),
+        #                                   username=self.settings.value('pyload_username'),
+        #                                   password=self.settings.value('pyload_password'))
 
     def init_form(self) -> QHBoxLayout:
         self.search_field = QLineEdit(self, clearButtonEnabled=True,
@@ -320,6 +325,7 @@ class TVLinker(QDialog):
             api_result = jsondoc.object()
             if 'download' in api_result.keys():
                 dl_link = api_result['download'].toString()
+                # self.pyload_conn = PyloadConnection(config=self.pyload_config)
                 self.hosters_win.handle_download(dl_link)
 
     @staticmethod
