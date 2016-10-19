@@ -73,7 +73,7 @@ class HosterLinks(QDialog):
                                     <td align="center" width="160"><img src="%s" /></td>
                                     <td width="15">&nbsp;</td>
                                 </tr>
-                              <table>''' % TVLinker.get_path('/hosters/%s' % QUrl(hoster[0]).fileName()))
+                              <table>''' % TVLinker.get_path('/images/hoster_%s.png' % QUrl(hoster[0]).fileName()))
             copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard', flat=False,
                                    cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
             copy_btn.setFixedSize(90, 30)
@@ -176,9 +176,11 @@ class TVLinker(QDialog):
         self.dl_pagelinks = int(self.settings.value('dl_pagelinks'))
         self.meta_template = self.settings.value('meta_template')
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
-        self.pyload_config = PyloadConfig(host=self.settings.value('pyload_host'),
-                                          username=self.settings.value('pyload_username'),
-                                          password=self.settings.value('pyload_password'))
+        if sys.platform != 'win32':
+            self.pyload_config = PyloadConfig()
+            self.pyload_config.host = self.settings.value('pyload_host')
+            self.pyload_config.username = self.settings.value('pyload_username')
+            self.pyload_config.password = self.settings.value('pyload_password')
 
     def init_form(self) -> QHBoxLayout:
         self.search_field = QLineEdit(self, clearButtonEnabled=True,
