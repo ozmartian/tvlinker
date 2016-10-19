@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# TODO : Integrate with KDE API to queue downloads within KGet download manager
-# TODO : Investigte real-debrid Chrome extension for possible API pathways to automate link generation
-# TODO : Add progress bar to hoster links dialog so users is aware content is downloading
-
 import http.client
 from urllib.parse import quote_plus
 
@@ -18,9 +14,9 @@ from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QBoxLayout,
                              QProgressBar, QPushButton, QSizePolicy,
                              QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
 
-import assets
 from threads import HostersThread, ScrapeThread
 from pyload import PyloadConnection, PyloadConfig
+import assets
 
 
 class HosterLinks(QDialog):
