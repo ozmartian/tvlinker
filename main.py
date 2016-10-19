@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import http.client
+import sys
 from urllib.parse import quote_plus
 
 from PyQt5.QtCore import (QFile, QJsonDocument, QModelIndex, QSettings, QSize,
@@ -309,11 +310,23 @@ class TVLinker(QDialog):
 
     @pyqtSlot(str)
     def download_link(self, link: str) -> None:
-        self.pyload_conn = PyloadConnection(config=self.pyload_config)
-        pid = self.pyload_conn.addPackage(name='TVLinker', links=[link])
-        message = QMessageBox.information(self, 'pyload Download Manager',
-                                          'Download link has been successfully queued:\n\n PackageID: %s' % pid,
-                                          QMessageBox.Ok)
+        if sys.platform == 'win32':
+            import os, shlex, subprocess
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            cmd = 'C:\\Program Files (x86)\\Internet Download Manager\\IDMan.exe /n /d %s' % link
+            proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
+            proc.wait()
+            message = QMessageBox.information(self, 'Internet Download Manager',
+                                              'Download link has been successfully queued in IDM',
+                                              QMessageBox.Ok)
+        else:
+            self.pyload_conn = PyloadConnection(config=self.pyload_config)
+            pid = self.pyload_conn.addPackage(name='TVLinker', links=[link])
+            message = QMessageBox.information(self, 'pyload Download Manager',
+                                              'Download link has been successfully queued:\n\n PackageID: %s' % pid,
+                                              QMessageBox.Ok)
 
     @pyqtSlot(str)
     def unrestrict_link(self, link: str) -> None:
