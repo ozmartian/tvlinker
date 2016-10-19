@@ -26,6 +26,7 @@ from pyload import PyloadConnection, PyloadConfig
 class HosterLinks(QDialog):
 
     unrestrictLink = pyqtSignal(str)
+    downloadLink = pyqtSignal(str)
 
     def __init__(self, parent, f=Qt.Tool):
         super(HosterLinks, self).__init__(parent, f)
@@ -112,7 +113,8 @@ class HosterLinks(QDialog):
 
     @pyqtSlot(int)
     def download_link(self, button_id: int) -> None:
-        self.unrestrictLink.emit(self.hosters[button_id][1])
+        self.downloadLink.emit(self.hosters[button_id][1])
+        # self.unrestrictLink.emit(self.hosters[button_id][1])
 
     def handle_download(self, unrestricted_link: str) -> None:
         message = QMessageBox.information(self, 'Download Manager Integrator',
@@ -159,6 +161,7 @@ class TVLinker(QDialog):
         self.start_scraping()
         self.hosters_win = HosterLinks(parent=self)
         self.hosters_win.unrestrictLink.connect(self.unrestrict_link)
+        self.hosters_win.downloadLink.connect(self.download_link)
 
     def init_stylesheet(self) -> None:
         qApp.setStyle('Fusion')
@@ -176,9 +179,9 @@ class TVLinker(QDialog):
         self.dl_pagelinks = int(self.settings.value('dl_pagelinks'))
         self.meta_template = self.settings.value('meta_template')
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
-        # self.pyload_config = PyloadConfig(host=self.settings.value('pyload_host'),
-        #                                   username=self.settings.value('pyload_username'),
-        #                                   password=self.settings.value('pyload_password'))
+        self.pyload_config = PyloadConfig(host=self.settings.value('pyload_host'),
+                                          username=self.settings.value('pyload_username'),
+                                          password=self.settings.value('pyload_password'))
 
     def init_form(self) -> QHBoxLayout:
         self.search_field = QLineEdit(self, clearButtonEnabled=True,
@@ -309,6 +312,14 @@ class TVLinker(QDialog):
                 self.table.showRow(row)
 
     @pyqtSlot(str)
+    def download_link(self, link: str) -> None:
+        self.pyload_conn = PyloadConnection(config=self.pyload_config)
+        pid = self.pyload_conn.addPackage(name='TVLinker', links=[link])
+        message = QMessageBox.information(self, 'pyload Download Manager',
+                                          'Download link has been successfully queued:\n\n PackageID: %s' % pid,
+                                          QMessageBox.Ok)
+
+    @pyqtSlot(str)
     def unrestrict_link(self, link: str) -> None:
         conn = http.client.HTTPSConnection('api.real-debrid.com')
         payload = 'link=%s' % quote_plus(link)
@@ -325,7 +336,6 @@ class TVLinker(QDialog):
             api_result = jsondoc.object()
             if 'download' in api_result.keys():
                 dl_link = api_result['download'].toString()
-                # self.pyload_conn = PyloadConnection(config=self.pyload_config)
                 self.hosters_win.handle_download(dl_link)
 
     @staticmethod
