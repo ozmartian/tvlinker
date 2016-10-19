@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 # -*- mode: python -*-
 
-import os
-import sys
+import site
 
 
 block_cipher = None
 
 a = Analysis(['..\\main.py'],
              pathex=[
-                 '%s\\Lib\\site-packages\\PyQt5\\Qt\\bin' % os.path.dirname(sys.executable),
+                 '%s\\PyQt5\\Qt\\bin' % site.getsitepackages(),
                  # 'C:\\Program Files (x86)\\Windows Kits\\10\Redist\\ucrt\\DLLs\\x64',
                  '..'
-             ],
+             ], 
              binaries=[],
              datas=[],
              hiddenimports=[],
