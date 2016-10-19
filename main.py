@@ -73,7 +73,7 @@ class HosterLinks(QDialog):
                                     <td align="center" width="160"><img src="%s" /></td>
                                     <td width="15">&nbsp;</td>
                                 </tr>
-                              <table>''' % TVLinker.get_path('/images/hoster_%s.png' % QUrl(hoster[0]).fileName()))
+                              <table>''' % TVLinker.get_path('images/hoster_%s' % QUrl(hoster[0]).fileName()))
             copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard', flat=False,
                                    cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
             copy_btn.setFixedSize(90, 30)
@@ -96,6 +96,7 @@ class HosterLinks(QDialog):
                 self.layout.addWidget(self.get_separator())
             index += 1
         self.update()
+        self.setMinimumWidth(585)
 
     @pyqtSlot(int)
     def copy_link(self, button_id: int) -> None:
@@ -316,7 +317,8 @@ class TVLinker(QDialog):
             import os, shlex, subprocess
             si = subprocess.STARTUPINFO()
             si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            cmd = 'C:\\Program Files (x86)\\Internet Download Manager\\IDMan.exe /n /d %s' % link
+            link = self.unrestrict_link(link)
+            cmd = '"C:\\Program Files (x86)\\Internet Download Manager\\IDMan.exe" /n /d "%s"' % link
             proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
             proc.wait()
@@ -331,7 +333,7 @@ class TVLinker(QDialog):
                                               QMessageBox.Ok)
 
     @pyqtSlot(str)
-    def unrestrict_link(self, link: str) -> None:
+    def unrestrict_link(self, link: str) -> str:
         conn = http.client.HTTPSConnection('api.real-debrid.com')
         payload = 'link=%s' % quote_plus(link)
         headers = {
@@ -347,7 +349,8 @@ class TVLinker(QDialog):
             api_result = jsondoc.object()
             if 'download' in api_result.keys():
                 dl_link = api_result['download'].toString()
-                self.hosters_win.handle_download(dl_link)
+                return dl_link
+                # self.hosters_win.handle_download(dl_link)
 
     @staticmethod
     def get_path(path: str = None) -> str:
