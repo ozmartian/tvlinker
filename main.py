@@ -22,7 +22,6 @@ import assets
 
 class HosterLinks(QDialog):
 
-    unrestrictLink = pyqtSignal(str)
     downloadLink = pyqtSignal(str)
 
     def __init__(self, parent, f=Qt.Tool):
@@ -112,14 +111,7 @@ class HosterLinks(QDialog):
     @pyqtSlot(int)
     def download_link(self, button_id: int) -> None:
         self.downloadLink.emit(self.hosters[button_id][1])
-        # self.unrestrictLink.emit(self.hosters[button_id][1])
-
-    def handle_download(self, unrestricted_link: str) -> None:
-        message = QMessageBox.information(self, 'Download Manager Integrator',
-                                          '%s\n\nhas been copied to clipboard' % unrestricted_link,
-                                          QMessageBox.Ok)
-        clip = qApp.clipboard()
-        clip.setText(unrestricted_link)
+        self.hide()
 
     def hideEvent(self, event: QHideEvent) -> None:
         self.clear_layout()
@@ -313,11 +305,11 @@ class TVLinker(QDialog):
 
     @pyqtSlot(str)
     def download_link(self, link: str) -> None:
+        link = self.unrestrict_link(link)
         if sys.platform == 'win32':
             import os, shlex, subprocess
             si = subprocess.STARTUPINFO()
             si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            link = self.unrestrict_link(link)
             cmd = '"C:\\Program Files (x86)\\Internet Download Manager\\IDMan.exe" /n /d "%s"' % link
             proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
@@ -329,10 +321,14 @@ class TVLinker(QDialog):
             self.pyload_conn = PyloadConnection(config=self.pyload_config)
             pid = self.pyload_conn.addPackage(name='TVLinker', links=[link])
             message = QMessageBox.information(self, 'pyload Download Manager',
-                                              'Download link has been successfully queued:\n\n PackageID: %s' % pid,
+                                              'Download link has been successfully queued',
                                               QMessageBox.Ok)
+            open_pyload = message.addButton('Open pyLoad', QMessageBox.AcceptRole)
+            open_pyload.clicked.connect(self.open_pyload)
 
-    @pyqtSlot(str)
+    def open_pyload(self):
+        QDesktopServices.openUrl(QUrl('http://%s' % self.pyload_config.host))
+
     def unrestrict_link(self, link: str) -> str:
         conn = http.client.HTTPSConnection('api.real-debrid.com')
         payload = 'link=%s' % quote_plus(link)
@@ -350,7 +346,6 @@ class TVLinker(QDialog):
             if 'download' in api_result.keys():
                 dl_link = api_result['download'].toString()
                 return dl_link
-                # self.hosters_win.handle_download(dl_link)
 
     @staticmethod
     def get_path(path: str = None) -> str:
