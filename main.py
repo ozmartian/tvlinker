@@ -8,7 +8,7 @@ from urllib.parse import quote_plus
 from PyQt5.QtCore import (QFile, QJsonDocument, QModelIndex, QSettings, QSize,
                           Qt, QTextStream, QUrl, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import (QCloseEvent, QDesktopServices, QFont, QFontDatabase,
-                         QHideEvent, QIcon, QPalette, QShowEvent)
+                         QHideEvent, QIcon, QPalette, QPixmap, QShowEvent)
 from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QBoxLayout,
                              QButtonGroup, QComboBox, QDialog, QFrame,
                              QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMessageBox,
@@ -175,9 +175,10 @@ class TVLinker(QDialog):
             self.pyload_config.password = self.settings.value('pyload_password')
 
     def init_form(self) -> QHBoxLayout:
+        logo = QPixmap(self.get_path('images/tvrelease.png'))
         self.search_field = QLineEdit(self, clearButtonEnabled=True,
                                       placeholderText='Enter search criteria')
-        self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.search_field.textChanged.connect(self.filter_table)
         self.refresh_button = QPushButton(QIcon.fromTheme('view-refresh'), ' Refresh', cursor=Qt.PointingHandCursor,
                                           iconSize=QSize(12, 12), clicked=self.refresh_links)
@@ -186,7 +187,7 @@ class TVLinker(QDialog):
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
         self.dlpages_field.currentIndexChanged.connect(self.update_pagecount)
         layout = QHBoxLayout()
-        layout.addWidget(QLabel('Search:'))
+        layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
         layout.addWidget(self.search_field)
         layout.addWidget(QLabel('Pages:'))
         layout.addWidget(self.dlpages_field)
