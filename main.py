@@ -150,7 +150,6 @@ class TVLinker(QDialog):
         self.show()
         self.start_scraping()
         self.hosters_win = HosterLinks(parent=self)
-        self.hosters_win.unrestrictLink.connect(self.unrestrict_link)
         self.hosters_win.downloadLink.connect(self.download_link)
 
     def init_stylesheet(self) -> None:
