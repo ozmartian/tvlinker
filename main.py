@@ -96,6 +96,7 @@ class HosterLinks(QDialog):
             index += 1
         self.update()
         self.setMinimumWidth(585)
+        qApp.restoreOverrideCursor()
 
     @pyqtSlot(int)
     def copy_link(self, button_id: int) -> None:
@@ -233,7 +234,7 @@ class TVLinker(QDialog):
 
     def start_scraping(self, maxpages: int = 10) -> None:
         self.rows = 0
-        self.setCursor(Qt.BusyCursor)
+        qApp.setOverrideCursor(Qt.WaitCursor)
         if self.table.rowCount() > 0:
             self.table.clearContents()
             self.table.setRowCount(0)
@@ -259,7 +260,7 @@ class TVLinker(QDialog):
     def scrape_finished(self) -> None:
         self.progress.hide()
         self.table.setSortingEnabled(True)
-        self.unsetCursor()
+        qApp.restoreOverrideCursor()
 
     @pyqtSlot(list)
     def add_row(self, row: list) -> None:
@@ -285,6 +286,7 @@ class TVLinker(QDialog):
 
     @pyqtSlot(QModelIndex)
     def show_hosters(self, index: QModelIndex) -> bool:
+        qApp.setOverrideCursor(Qt.BusyCursor)
         self.hosters_win.show()
         self.hosters_win.activateWindow()
         self.links = HostersThread(settings=self.settings, link_url=self.table.item(self.table.currentRow(), 1).text())
