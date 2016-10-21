@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import http.client
+import os
 import sys
 from urllib.parse import quote_plus
 
-from PyQt5.QtCore import (QFile, QJsonDocument, QModelIndex, QSettings, QSize,
+from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex, QSettings, QSize,
                           Qt, QTextStream, QUrl, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import (QCloseEvent, QDesktopServices, QFont, QFontDatabase,
                          QHideEvent, QIcon, QPalette, QPixmap, QShowEvent)
@@ -162,7 +163,10 @@ class TVLinker(QDialog):
         qApp.setStyleSheet(stream.readAll())
 
     def init_settings(self) -> None:
-        self.settings = QSettings(self.get_path('%s.ini' % qApp.applicationName().lower()), QSettings.IniFormat)
+        self.settings_ini = self.get_path('%s.ini' % qApp.applicationName().lower())
+        self.settings_ini_secret = self.get_path('%s.ini.secret' % qApp.applicationName().lower())
+        self.settings_path = self.settings_ini_secret if os.path.exists(self.settings_ini_secret) else self.settings_ini
+        self.settings = QSettings(self.settings_path, QSettings.IniFormat)
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
@@ -350,7 +354,9 @@ class TVLinker(QDialog):
                 return dl_link
 
     @staticmethod
-    def get_path(path: str = None) -> str:
+    def get_path(path: str = None, override: bool = False) -> str:
+        if override:
+            return os.path.join(QFileInfo(__file__).absolutePath(), path)
         return ':assets/%s' % path
 
     def closeEvent(self, event: QCloseEvent) -> None:

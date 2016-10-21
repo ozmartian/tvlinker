@@ -103,3 +103,6 @@ ENV/
 
 .idea/
 build/dist/
+
+# Personal configuration secrets
+tvlinker.ini.secret
