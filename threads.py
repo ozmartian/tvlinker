@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import json
 from urllib.request import Request, urlopen
 
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
@@ -80,3 +81,38 @@ class HostersThread(QThread):
 
     def run(self) -> None:
         self.get_hoster_links()
+
+
+class Aria2Thread(QThread):
+
+    aria2Confirmation = pyqtSignal(bool)
+
+    def __init__(self, settings: QSettings, link_url: str):
+        QThread.__init__(self)
+        self.rpc_host = settings.value('aria2_rpc_host')
+        self.rpc_port = settings.value('aria2_rpc_port')
+        self.rpc_secret = settings.value('aria2_rpc_secret')
+        self.rpc_username = settings.value('aria2_rpc_username')
+        self.rpc_password = settings.value('aria2_rpc_password')
+        self.link_url = link_url
+
+    def __del__(self) -> None:
+        self.wait()
+
+    def add_uri(self) -> None:
+        try:
+            jsonreq = json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'aria2.addUri',
+                                  'params': ['token:%s' % self.rpc_secret, [self.link_url]]})
+            conn = urlopen('%s:%s/jsonrpc' % (self.rpc_host, self.rpc_port), jsonreq.encode('utf-8'))
+            jsonres = json.loads(conn.read().decode('utf-8'))
+            if 'result' in jsonres.keys():
+                if len(jsonres['result']) > 0:
+                    self.aria2Confirmation.emit(True)
+                    return
+            self.aria2Confirmation.emit(False)
+        except:
+            print(sys.exc_info()[0])
+            self.aria2Confirmation.emit(False)
+
+    def run(self) -> None:
+        self.add_uri()

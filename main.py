@@ -8,7 +8,7 @@ from urllib.parse import quote_plus
 
 from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex, QSettings, QSize,
                           Qt, QTextStream, QUrl, pyqtSignal, pyqtSlot)
-from PyQt5.QtGui import (QCloseEvent, QDesktopServices, QFont, QFontDatabase,
+from PyQt5.QtGui import (QCloseEvent, QColor, QDesktopServices, QFont, QFontDatabase,
                          QHideEvent, QIcon, QPalette, QPixmap, QShowEvent)
 from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QBoxLayout,
                              QButtonGroup, QComboBox, QDialog, QFrame,
@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QBoxLayout,
                              QProgressBar, QPushButton, QSizePolicy,
                              QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
 
-from threads import HostersThread, ScrapeThread
+from threads import HostersThread, ScrapeThread, Aria2Thread
 from pyload import PyloadConnection, PyloadConfig
 import assets
 
@@ -24,6 +24,7 @@ import assets
 class HosterLinks(QDialog):
 
     downloadLink = pyqtSignal(str)
+    copyLink = pyqtSignal(str)
 
     def __init__(self, parent, f=Qt.Tool):
         super(HosterLinks, self).__init__(parent, f)
@@ -82,7 +83,7 @@ class HosterLinks(QDialog):
                                    cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
             open_btn.setFixedSize(90, 30)
             self.open_group.addButton(open_btn, index)
-            download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download unrestricted link',
+            download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download link',
                                             flat=False, cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
             download_btn.setFixedSize(110, 30)
             self.download_group.addButton(download_btn, index)
@@ -101,9 +102,7 @@ class HosterLinks(QDialog):
 
     @pyqtSlot(int)
     def copy_link(self, button_id: int) -> None:
-        clip = qApp.clipboard()
-        clip.setText(self.hosters[button_id][1])
-        self.hide()
+        self.copyLink.emit(self.hosters[button_id][1])
 
     @pyqtSlot(int)
     def open_link(self, button_id: int) -> None:
@@ -120,7 +119,7 @@ class HosterLinks(QDialog):
         super(HosterLinks, self).hideEvent(event)
 
     def showEvent(self, event: QShowEvent) -> None:
-        busy_label = QLabel('Retrieiving hoster links...', alignment=Qt.AlignCenter)
+        busy_label = QLabel('Retrieving hoster links...', alignment=Qt.AlignCenter)
         busy_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         busy_indicator = QProgressBar(parent=self, minimum=0, maximum=0)
         self.layout.setSpacing(10)
@@ -148,11 +147,12 @@ class TVLinker(QDialog):
         self.setLayout(layout)
         self.setWindowTitle(qApp.applicationName())
         self.setWindowIcon(QIcon(self.get_path('images/tvlinker.png')))
-        self.resize(1000, 800)
+        self.resize(1000, 750)
         self.show()
         self.start_scraping()
         self.hosters_win = HosterLinks(parent=self)
         self.hosters_win.downloadLink.connect(self.download_link)
+        self.hosters_win.copyLink.connect(self.copy_download_link)
 
     def init_stylesheet(self) -> None:
         qApp.setStyle('Fusion')
@@ -163,21 +163,23 @@ class TVLinker(QDialog):
         qApp.setStyleSheet(stream.readAll())
 
     def init_settings(self) -> None:
-        self.settings_ini = self.get_path('%s.ini' % qApp.applicationName().lower())
-        self.settings_ini_secret = self.get_path('%s.ini.secret' % qApp.applicationName().lower())
+        self.settings_ini = self.get_path(path='%s.ini' % qApp.applicationName().lower(), override=True)
+        self.settings_ini_secret = self.get_path(path='%s.ini.secret' % qApp.applicationName().lower(), override=True)
         self.settings_path = self.settings_ini_secret if os.path.exists(self.settings_ini_secret) else self.settings_ini
         self.settings = QSettings(self.settings_path, QSettings.IniFormat)
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
         self.dl_pagelinks = int(self.settings.value('dl_pagelinks'))
-        self.meta_template = self.settings.value('meta_template')
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
-        if sys.platform != 'win32':
+        self.download_manager = self.settings.value('download_manager')
+        if self.download_manager == 'pyload':
             self.pyload_config = PyloadConfig()
             self.pyload_config.host = self.settings.value('pyload_host')
             self.pyload_config.username = self.settings.value('pyload_username')
             self.pyload_config.password = self.settings.value('pyload_password')
+        elif self.download_manager == 'idm':
+            self.idm_install_path = self.settings.value('idm_install_path')
 
     def init_form(self) -> QHBoxLayout:
         logo = QPixmap(self.get_path('images/tvrelease.png'))
@@ -218,9 +220,12 @@ class TVLinker(QDialog):
         return self.table
 
     def init_metabar(self) -> QHBoxLayout:
+        self.meta_template = '<div>Total number of links retrieved: <b>%s</b></div>'
         self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks), visible=False)
         palette = self.progress.palette()
-        palette.setColor(QPalette.Base, Qt.lightGray)
+        palette.setColor(QPalette.Base, Qt.white)
+        palette.setColor(QPalette.Foreground, QColor(119, 89, 127))
+        self.progress.setPalette(palette)
         self.meta_label = QLabel(textFormat=Qt.RichText, alignment=Qt.AlignRight, objectName='totals')
         self.meta_label.setFixedHeight(30)
         self.meta_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -309,21 +314,25 @@ class TVLinker(QDialog):
             else:
                 self.table.showRow(row)
 
+    @pyqtSlot(bool)
+    def aria2_confirmation(self, success: bool) -> None:
+        if success:
+            message = QMessageBox.information(self, 'Aria2 RPC Daemon',
+                                              'Download link has been successfully queued',
+                                              QMessageBox.Ok)
+        else:
+            message = QMessageBox.critical(self, 'Aria2 RPC Daemon',
+                                              'Could not queue download link with the Aria2 RPC Daemon. Check your settings in tvlinker.ini',
+                                              QMessageBox.Ok)
+
     @pyqtSlot(str)
     def download_link(self, link: str) -> None:
         link = self.unrestrict_link(link)
-        if sys.platform == 'win32':
-            import os, shlex, subprocess
-            si = subprocess.STARTUPINFO()
-            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            cmd = '"C:\\Program Files (x86)\\Internet Download Manager\\IDMan.exe" /n /d "%s"' % link
-            proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                    stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
-            proc.wait()
-            message = QMessageBox.information(self, 'Internet Download Manager',
-                                              'Download link has been successfully queued in IDM',
-                                              QMessageBox.Ok)
-        else:
+        if self.download_manager == 'aria2':
+            self.aria2 = Aria2Thread(settings=self.settings, link_url=link)
+            self.aria2.aria2Confirmation.connect(self.aria2_confirmation)
+            self.aria2.start()
+        elif self.download_manager == 'pyload':
             self.pyload_conn = PyloadConnection(config=self.pyload_config)
             pid = self.pyload_conn.addPackage(name='TVLinker', links=[link])
             message = QMessageBox.information(self, 'pyload Download Manager',
@@ -331,9 +340,29 @@ class TVLinker(QDialog):
                                               QMessageBox.Ok)
             open_pyload = message.addButton('Open pyLoad', QMessageBox.AcceptRole)
             open_pyload.clicked.connect(self.open_pyload)
+        elif self.download_manager == 'idm':
+            import os, shlex, subprocess
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            cmd = '"%s" /n /d "%s"' % (self.idm_install_path, link)
+            proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
+            proc.wait()
+            message = QMessageBox.information(self, 'Internet Download Manager',
+                                              'Download link has been successfully queued in IDM',
+                                              QMessageBox.Ok)
+        else:
+            pass
 
     def open_pyload(self):
         QDesktopServices.openUrl(QUrl('http://%s' % self.pyload_config.host))
+
+    @pyqtSlot(str)
+    def copy_download_link(self, link: str) -> None:
+        unrestricted_link = self.unrestrict_link(link)
+        clip = qApp.clipboard()
+        clip.setText(unrestricted_link)
+        self.hosters_win.hide()
 
     def unrestrict_link(self, link: str) -> str:
         conn = http.client.HTTPSConnection('api.real-debrid.com')

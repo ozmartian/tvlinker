@@ -13,7 +13,6 @@
     <file>assets/images/tvrelease.png</file>
     <file>assets/images/up_arrow.png</file>
     <file>assets/images/watermark.png</file>
-    <file>assets/tvlinker.ini</file>
     <file>assets/tvlinker.qss</file>
   </qresource>
 </RCC>

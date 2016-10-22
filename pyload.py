@@ -14,7 +14,7 @@ class PyloadConfig:
 
 class PyloadConnection:
     def __init__(self, config: PyloadConfig):
-        self.url_base = urljoin('http://%s' % config.host, 'api/')
+        self.url_base = urljoin('%s' % config.host, 'api/')
         username, password = config.username, config.password
         self.session = self._call('login', {'username': username, 'password': password}, False)
 
