@@ -68,13 +68,9 @@ class HosterLinks(QDialog):
         self.clear_layout()
         index = 0
         for hoster in hosters:
-            content = QLabel(textFormat=Qt.RichText, toolTip=hoster[1])
-            content.setText('''<table border="0" cellpading="6">
-                                <tr nowrap valign="middle">
-                                    <td align="center" width="160"><img src="%s" /></td>
-                                    <td width="15">&nbsp;</td>
-                                </tr>
-                              <table>''' % TVLinker.get_path('images/hoster_%s' % QUrl(hoster[0]).fileName()))
+            hoster_logo = QLabel(pixmap=QPixmap(TVLinker.get_path('images/hoster_%s' % QUrl(hoster[0]).fileName())), toolTip=hoster[1])
+            hoster_logo.setMinimumWidth(160)
+            hoster_logo.setAlignment(Qt.AlignCenter)
             copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard', flat=False,
                                    cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
             copy_btn.setFixedSize(90, 30)
@@ -88,7 +84,7 @@ class HosterLinks(QDialog):
             download_btn.setFixedSize(110, 30)
             self.download_group.addButton(download_btn, index)
             layout = QHBoxLayout(spacing=10)
-            layout.addWidget(content)
+            layout.addWidget(hoster_logo)
             layout.addWidget(copy_btn, Qt.AlignRight)
             layout.addWidget(open_btn, Qt.AlignRight)
             layout.addWidget(download_btn, Qt.AlignRight)
@@ -96,9 +92,9 @@ class HosterLinks(QDialog):
             if self.layout.count() <= len(hosters):
                 self.layout.addWidget(self.get_separator())
             index += 1
-        self.update()
-        self.setMinimumWidth(585)
         qApp.restoreOverrideCursor()
+        qApp.processEvents()
+        self.adjustSize()
 
     @pyqtSlot(int)
     def copy_link(self, button_id: int) -> None:
@@ -112,7 +108,6 @@ class HosterLinks(QDialog):
     @pyqtSlot(int)
     def download_link(self, button_id: int) -> None:
         self.downloadLink.emit(self.hosters[button_id][1])
-        self.hide()
 
     def hideEvent(self, event: QHideEvent) -> None:
         self.clear_layout()
@@ -125,6 +120,7 @@ class HosterLinks(QDialog):
         self.layout.setSpacing(10)
         self.layout.addWidget(busy_label)
         self.layout.addWidget(busy_indicator)
+        self.adjustSize()
         self.setMinimumWidth(485)
         super(HosterLinks, self).showEvent(event)
 
@@ -327,7 +323,8 @@ class TVLinker(QDialog):
 
     @pyqtSlot(str)
     def download_link(self, link: str) -> None:
-        link = self.unrestrict_link(link)
+        if len(self.realdebrid_api_token) > 0:
+            link = self.unrestrict_link(link)
         if self.download_manager == 'aria2':
             self.aria2 = Aria2Thread(settings=self.settings, link_url=link)
             self.aria2.aria2Confirmation.connect(self.aria2_confirmation)
@@ -353,15 +350,17 @@ class TVLinker(QDialog):
                                               QMessageBox.Ok)
         else:
             pass
+        self.hosters_win.hide()
 
     def open_pyload(self):
-        QDesktopServices.openUrl(QUrl('http://%s' % self.pyload_config.host))
+        QDesktopServices.openUrl(QUrl(self.pyload_config.host))
 
     @pyqtSlot(str)
     def copy_download_link(self, link: str) -> None:
-        unrestricted_link = self.unrestrict_link(link)
+        if len(self.realdebrid_api_token) > 0:
+            link = self.unrestrict_link(link)
         clip = qApp.clipboard()
-        clip.setText(unrestricted_link)
+        clip.setText(link)
         self.hosters_win.hide()
 
     def unrestrict_link(self, link: str) -> str:
