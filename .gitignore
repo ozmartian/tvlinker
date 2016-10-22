@@ -23,8 +23,10 @@ __pycache__/
 .Python
 env/
 develop-eggs/
-build/build/
-build/dist/
+_build/build/
+_build/dist/
+build/
+dist/
 dist/
 downloads/
 eggs/
