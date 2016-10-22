@@ -32,4 +32,4 @@ exe = EXE(pyz,
           debug=False,
           strip=False,
           upx=False,
-          console=False , icon='..\\assets\\tvlinker.ico')
+          console=False , icon='..\\assets\\images\\tvlinker.ico')
