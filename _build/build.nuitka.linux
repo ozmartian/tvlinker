@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd ..
+nuitka --recurse-all --remove-output main.py
+mv main.exe tvlinker
