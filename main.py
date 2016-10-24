@@ -216,8 +216,9 @@ class TVLinker(QDialog):
                                               QMessageBox.Ok)
         else:
             message = QMessageBox.critical(self, 'Aria2 RPC Daemon',
-                                              'Could not queue download link with the Aria2 RPC Daemon. Check your settings in tvlinker.ini',
-                                              QMessageBox.Ok)
+                                           'Could not queue download link with the Aria2 RPC Daemon. ' +
+                                           'Check your settings in tvlinker.ini',
+                                           QMessageBox.Ok)
 
     @pyqtSlot(str)
     def download_link(self, link: str) -> None:
