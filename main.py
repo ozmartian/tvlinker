@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDialog
 
 from hosters import HosterLinks
 from pyload import PyloadConnection, PyloadConfig
+from settings import Settings
 from threads import HostersThread, ScrapeThread, Aria2Thread
 import assets
 
@@ -57,7 +58,7 @@ class TVLinker(QDialog):
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
-        self.dl_pagelinks = int(self.settings.value('dl_pagelinks'))
+        self.dl_pagelinks = 30
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
         self.download_manager = self.settings.value('download_manager')
         if self.download_manager == 'pyload':
@@ -65,8 +66,8 @@ class TVLinker(QDialog):
             self.pyload_config.host = self.settings.value('pyload_host')
             self.pyload_config.username = self.settings.value('pyload_username')
             self.pyload_config.password = self.settings.value('pyload_password')
-        elif self.download_manager == 'idm':
-            self.idm_install_path = self.settings.value('idm_install_path')
+        elif self.download_manager == 'IDM':
+            self.idm_exe_path = self.settings.value('idm_exe_path')
 
     def init_form(self) -> QHBoxLayout:
         logo = QPixmap(self.get_path('images/tvrelease.png'))
@@ -127,7 +128,8 @@ class TVLinker(QDialog):
 
     @pyqtSlot()
     def show_settings(self) -> None:
-        pass
+        settings_win = Settings(self, self.settings)
+        settings_win.show()
 
     def update_metabar(self) -> bool:
         rowcount = self.table.rowCount()
@@ -240,7 +242,7 @@ class TVLinker(QDialog):
             import os, shlex, subprocess
             si = subprocess.STARTUPINFO()
             si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            cmd = '"%s" /n /d "%s"' % (self.idm_install_path, link)
+            cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
             proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
             proc.wait()
