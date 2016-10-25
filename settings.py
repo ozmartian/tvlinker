@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtCore import QSettings, Qt, pyqtSlot
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QComboBox, QDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel,
-                             QLineEdit, QPushButton, qApp)
+                             QLineEdit, QPushButton, QSizePolicy, qApp)
 
 
 class Settings(QDialog):
@@ -51,7 +52,15 @@ class Settings(QDialog):
             str(self.settings.value('download_manager')), Qt.MatchFixedString))
         self.dlmanager_comboBox.currentIndexChanged.connect(self.update_dlmanager_form)
         dlmanager_formLayout.addRow('Download Manager:', self.dlmanager_comboBox)
-        dlmanagerGroup.setLayout(dlmanager_formLayout)
+        dlmanager_layout = QHBoxLayout()
+        dlmanager_layout.addLayout(dlmanager_formLayout)
+        self.dlmanager_logo = QLabel()
+        self.dlmanager_logo.setAlignment(Qt.AlignCenter)
+        self.dlmanager_logo.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        dlmanager_layout.addWidget(self.dlmanager_logo)
+        dlmanagerGroup.setLayout(dlmanager_layout)
+
+        self.update_dlmanager_logo()
 
         self.dlmanagersettings_formLayout = QFormLayout()
         self.dlmanagersettingsGroup = QGroupBox()
@@ -71,6 +80,13 @@ class Settings(QDialog):
         formLayout.addRow(self.dlmanagersettingsGroup)
         formLayout.addRow(button_layout)
         return formLayout
+
+    def update_dlmanager_logo(self):
+        if self.dlmanager_comboBox.currentText() in ('aria2', 'pyLoad', 'IDM'):
+            self.dlmanager_logo.setPixmap(QPixmap(self.parent.get_path(
+                'images/%s.png' % self.dlmanager_comboBox.currentText().lower())))
+        else:
+            pass
 
     @pyqtSlot(int)
     def update_dlmanager_form(self, index: int) -> None:
@@ -127,6 +143,7 @@ class Settings(QDialog):
             directdl_label.setAlignment(Qt.AlignCenter)
             self.dlmanagersettings_formLayout.addWidget(directdl_label)
         qApp.processEvents()
+        self.update_dlmanager_logo()
         self.adjustSize()
 
     def clear_layout(self, layout: QFormLayout = None) -> None:

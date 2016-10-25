@@ -1,13 +1,16 @@
 <RCC>
   <qresource>
     <file>assets/fonts/OpenSans.ttf</file>
+    <file>assets/images/aria2.png</file>
     <file>assets/images/copy_icon.png</file>
     <file>assets/images/down_arrow.png</file>
     <file>assets/images/download_icon.png</file>
     <file>assets/images/hoster_filefactory.png</file>
     <file>assets/images/hoster_uploaded.png</file>
     <file>assets/images/hoster_uploadingsite.png</file>
+    <file>assets/images/idm.png</file>
     <file>assets/images/open_icon.png</file>
+    <file>assets/images/pyload.png</file>
     <file>assets/images/settings.png</file>
     <file>assets/images/tvlinker.ico</file>
     <file>assets/images/tvlinker.png</file>
