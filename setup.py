@@ -49,7 +49,7 @@ setup(
 
     entry_points={
         'gui_scripts': [
-            'tvlinker = tvlinker.main:main'
+            'tvlinker = tvlinker.tvlinker:main'
         ]
     },
 
