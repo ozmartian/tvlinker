@@ -2,7 +2,7 @@
 [Desktop Entry]
 Categories=Qt;KDE;Network;
 Comment=Link scraper and searcher for tv-release.net on your desktop
-Exec=python3 /home/ozmartian/Projects/tvlinker/main.py
+Exec=python3 /home/ozmartian/Projects/tvlinker/tvlinker.py
 GenericName=TVLinker
 Icon=tvlinker
 Keywords=scraper;tv;tvrelease;downloads;beautifulsoup;qt;python;pyqt;

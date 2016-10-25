@@ -1,5 +1,4 @@
 @echo off
 
 cd ..
-nuitka --recurse-all --remove-output --windows-disable-console --windows-icon=assets\images\tvlinker.ico main.py
-mv main.exe tvlinker.exe
+nuitka --recurse-all --remove-output --windows-disable-console --windows-icon=assets\images\tvlinker.ico tvlinker.py

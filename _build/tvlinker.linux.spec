@@ -3,7 +3,7 @@
 
 block_cipher = None
 
-a = Analysis(['../main.py'],
+a = Analysis(['../tvlinker.py'],
             pathex=['..'],
             binaries=[],
             datas=[],

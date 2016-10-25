@@ -3,7 +3,7 @@
 
 block_cipher = None
 
-a = Analysis(['..\\main.py'],
+a = Analysis(['..\\tvlinker.py'],
              pathex=[
                  'C:\\Python35\\lib\\site-packages\\PyQt5\\Qt\\bin',
                  'C:\\Program Files (x86)\\Windows Kits\\10\Redist\\ucrt\\DLLs\\x64',
