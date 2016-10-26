@@ -2,3 +2,4 @@
 
 rm -rf build dist
 python3 -m PyInstaller --clean tvlinker.linux.spec
+copy ..\tvlinker.ini* dist\

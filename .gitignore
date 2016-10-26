@@ -27,7 +27,6 @@ _build/build/
 _build/dist/
 build/
 dist/
-dist/
 downloads/
 eggs/
 .eggs/
