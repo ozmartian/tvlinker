@@ -135,8 +135,8 @@ class Settings(QDialog):
             self.idmexepath_lineEdit.setFixedWidth(500)
             self.dlmanagersettings_formLayout.addRow('IDM Executable (EXE) Path:', self.idmexepath_lineEdit)
         elif dlmanager == 'direct':
-            directdl_label = QLabel('No settings for direct download to desktop')
-            directdl_label.setStyleSheet('font-style:italic;')
+            directdl_label = QLabel('No settings for direct downloads')
+            directdl_label.setStyleSheet('color:#333; font-weight:300;')
             directdl_label.setAlignment(Qt.AlignCenter)
             self.dlmanagersettings_formLayout.addWidget(directdl_label)
         qApp.processEvents()
