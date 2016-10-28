@@ -102,8 +102,15 @@ class Aria2Thread(QThread):
 
     def add_uri(self) -> None:
         try:
+            user, passwd = '', ''
+            if len(self.rpc_username) > 0 and len(self.rpc_password) > 0:
+                user = self.rpc_username
+                passwd = self.rpc_password
+            elif len(self.rpc_secret) > 0:
+                user = 'token'
+                passwd = self.rpc_secret
             jsonreq = json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'aria2.addUri',
-                                  'params': ['token:%s' % self.rpc_secret, [self.link_url]]})
+                                  'params': ['%s:%s' % (user, passwd), [self.link_url]]})
             conn = urlopen('%s:%s/jsonrpc' % (self.rpc_host, self.rpc_port), jsonreq.encode('utf-8'))
             jsonres = json.loads(conn.read().decode('utf-8'))
             if 'result' in jsonres.keys():
