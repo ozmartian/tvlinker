@@ -140,23 +140,25 @@ class DownloadThread(QThread):
     def __del__(self) -> None:
         self.wait()
 
-    def run(self) -> None:
-        url = self.download_link
-        rq = urlopen(url)
-        fSize = int(rq.info()['Content-Length'])
+    def download_file(self) -> None:
+        conn = urlopen(self.download_link)
+        fileSize = int(conn.info()['Content-Length'])
         fileName = os.path.basename(self.download_path)
         downloadedChunk = 0
         blockSize = 2048
         with open(self.download_path, 'wb') as sura:
             while True:
-                chunk = rq.read(blockSize)
+                chunk = conn.read(blockSize)
                 if not chunk:
                     break
                 downloadedChunk += len(chunk)
                 sura.write(chunk)
-                progress = float(downloadedChunk) / fSize
+                progress = float(downloadedChunk) / fileSize
                 self.dlProgress.emit(progress * 100)
-                progressTxt = '<b>Saving {0}</b>: {1} [{2:.2%}] <b>of</b> {3} <b>bytes</b>.'\
-                    . format(fileName, downloadedChunk, progress, fSize)
+                progressTxt = '<b>Downloading {0}</b>:<br/>{1} [{2:.2%}] <b>of</b> {3} <b>bytes</b>.'\
+                    . format(fileName, downloadedChunk, progress, fileSize)
                 self.dlProgressTxt.emit(progressTxt)
         self.dlComplete.emit()
+
+    def run(self) -> None:
+        self.download_file()

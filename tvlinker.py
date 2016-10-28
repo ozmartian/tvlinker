@@ -52,12 +52,17 @@ class DirectDownload(QDialog):
 
     @pyqtSlot(str)
     def update_progress_label(self, progress_txt: str) -> None:
+        adjustsize_flag = False if self.progress_label.text() is not '' else True
         self.progress_label.setText(progress_txt)
+        if adjustsize_flag:
+            qApp.processEvents()
+            self.adjustSize()
 
     @pyqtSlot()
     def download_complete(self) -> None:
         QMessageBox.information(self.parent, 'Download complete', QMessageBox.Ok)
         self.close()
+        self.deleteLater()
 
 
 class TVLinker(QDialog):
