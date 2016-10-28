@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
 import json
+import os
+import sys
 from urllib.request import Request, urlopen
 
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
@@ -116,3 +117,39 @@ class Aria2Thread(QThread):
 
     def run(self) -> None:
         self.add_uri()
+
+
+class DownloadThread(QThread):
+
+    dlComplete = pyqtSignal()
+    dlProgress = pyqtSignal(int)
+    dlProgressTxt = pyqtSignal(str)
+
+    def __init__(self, link_url: str, dl_path: str):
+        QThread.__init__(self)
+        self.download_link = link_url
+        self.download_path = dl_path
+
+    def __del__(self) -> None:
+        self.wait()
+
+    def run(self) -> None:
+        url = self.download_link
+        rq = urlopen(url)
+        fSize = int(rq.info()['Content-Length'])
+        fileName = os.path.basename(self.download_path)
+        downloadedChunk = 0
+        blockSize = 2048
+        with open(self.download_path, 'wb') as sura:
+            while True:
+                chunk = rq.read(blockSize)
+                if not chunk:
+                    break
+                downloadedChunk += len(chunk)
+                sura.write(chunk)
+                progress = float(downloadedChunk) / fSize
+                self.dlProgress.emit(progress * 100)
+                progressTxt = '<b>Saving {0}</b>: {1} [{2:.2%}] <b>of</b> {3} <b>bytes</b>.'\
+                    . format(fileName, downloadedChunk, progress, fSize)
+                self.dlProgressTxt.emit(progressTxt)
+        self.dlComplete.emit()

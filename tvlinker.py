@@ -5,20 +5,48 @@ import http.client
 import os
 from urllib.parse import quote_plus
 
-from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex, QSettings, QSize,
-                          Qt, QTextStream, QUrl, pyqtSlot)
-from PyQt5.QtGui import (QCloseEvent, QColor, QDesktopServices, QFont, QFontDatabase,
-                         QIcon, QPalette, QPixmap)
-from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDialog, QHBoxLayout,
-                             QHeaderView, QLabel, QLineEdit, QMessageBox,
-                             QProgressBar, QPushButton, QSizePolicy,
+from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex, QSettings, QSize, Qt, QTextStream,
+                          QUrl, pyqtSlot)
+from PyQt5.QtGui import QCloseEvent, QColor, QDesktopServices, QFont, QFontDatabase, QIcon, QPalette, QPixmap
+from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout,
+                             QHeaderView, QLabel, QLineEdit, QMessageBox, QProgressBar, QPushButton, QSizePolicy,
                              QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
 
 from hosters import HosterLinks
 from pyload import PyloadConnection, PyloadConfig
 from settings import Settings
-from threads import HostersThread, ScrapeThread, Aria2Thread
+from threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
 import assets
+
+
+class FixedSettings:
+    organizationName = 'ozmartians.com'
+    applicationName = 'TVLinker'
+    windowSize = QSize(1000, 750)
+    linksPerPage = 30
+    realdebrid_api_url = 'api.real-debrid.com'
+
+
+class DirectDownload(QDialog):
+    def __init__(self, parent, f=Qt.Tool):
+        super(QDialog, self).__init__(parent, f)
+        self.parent = parent
+        self.setContentsMargins(20, 20, 20, 20)
+        self.progress = 0
+        self.progress_label = QLabel()
+
+    @pyqtSlot(int)
+    def update_progress(self, progress: int) -> None:
+        self.progress = progress
+
+    @pyqtSlot(str)
+    def update_progress_label(self, progress_txt: str) -> None:
+        self.progress_label.setText(progress_txt)
+
+    @pyqtSlot()
+    def download_complete(self) -> None:
+        QMessageBox.information(self.parent, 'Download complete', QMessageBox.Ok)
+        self.close()
 
 
 class TVLinker(QDialog):
@@ -35,8 +63,7 @@ class TVLinker(QDialog):
         self.setLayout(layout)
         self.setWindowTitle(qApp.applicationName())
         self.setWindowIcon(QIcon(self.get_path('images/tvlinker.png')))
-        self.resize(1000, 750)
-        self.show()
+        self.resize(FixedSettings.windowSize)
         self.start_scraping()
         self.hosters_win = HosterLinks(parent=self)
         self.hosters_win.downloadLink.connect(self.download_link)
@@ -58,7 +85,7 @@ class TVLinker(QDialog):
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
-        self.dl_pagelinks = 30
+        self.dl_pagelinks = FixedSettings.linksPerPage
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
         self.download_manager = self.settings.value('download_manager')
         if self.download_manager == 'pyload':
@@ -79,8 +106,9 @@ class TVLinker(QDialog):
         self.dlpages_field.addItems(('10', '20', '30', '40'))
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
         self.dlpages_field.currentIndexChanged.connect(self.update_pagecount)
-        self.refresh_button = QPushButton(QIcon.fromTheme('view-refresh'), ' Refresh', cursor=Qt.PointingHandCursor,
-                                          toolTip='Refresh', iconSize=QSize(12, 12), clicked=self.refresh_links)
+        self.refresh_button = QPushButton(self, flat=False, icon=QIcon(self.get_path('images/refresh.png')),
+                                          text=' Refresh', toolTip='Refresh', cursor=Qt.PointingHandCursor,
+                                          clicked=self.refresh_links)
         self.settings_button = QPushButton(self, flat=False, icon=QIcon(self.get_path('images/settings.png')),
                                            toolTip='Settings', cursor=Qt.PointingHandCursor, clicked=self.show_settings)
         layout = QHBoxLayout()
@@ -213,14 +241,12 @@ class TVLinker(QDialog):
     @pyqtSlot(bool)
     def aria2_confirmation(self, success: bool) -> None:
         if success:
-            message = QMessageBox.information(self, 'Aria2 RPC Daemon',
-                                              'Download link has been successfully queued',
-                                              QMessageBox.Ok)
+            QMessageBox.information(self, 'Aria2 RPC Daemon',
+                                    'Download link has been successfully queued', QMessageBox.Ok)
         else:
-            message = QMessageBox.critical(self, 'Aria2 RPC Daemon',
-                                           'Could not queue download link with the Aria2 RPC Daemon. ' +
-                                           'Check your settings in tvlinker.ini',
-                                           QMessageBox.Ok)
+            QMessageBox.critical(self, 'Aria2 RPC Daemon',
+                                 'Could not queue download link with Aria2 RPC Daemon. ' +
+                                 'Check your %s settings and try again.' % qApp.applicationName(), QMessageBox.Ok)
 
     @pyqtSlot(str)
     def download_link(self, link: str) -> None:
@@ -230,15 +256,14 @@ class TVLinker(QDialog):
             self.aria2 = Aria2Thread(settings=self.settings, link_url=link)
             self.aria2.aria2Confirmation.connect(self.aria2_confirmation)
             self.aria2.start()
-        elif self.download_manager == 'pyload':
+        elif self.download_manager == 'pyLoad':
             self.pyload_conn = PyloadConnection(config=self.pyload_config)
             pid = self.pyload_conn.addPackage(name='TVLinker', links=[link])
-            message = QMessageBox.information(self, 'pyload Download Manager',
-                                              'Download link has been successfully queued',
-                                              QMessageBox.Ok)
-            open_pyload = message.addButton('Open pyLoad', QMessageBox.AcceptRole)
+            msgbox = QMessageBox.information(self, 'pyLoad Download Manager',
+                                             'Download link has been successfully queued', QMessageBox.Ok)
+            open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
             open_pyload.clicked.connect(self.open_pyload)
-        elif self.download_manager == 'idm':
+        elif self.download_manager == 'IDM':
             import os, shlex, subprocess
             si = subprocess.STARTUPINFO()
             si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -246,11 +271,16 @@ class TVLinker(QDialog):
             proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
             proc.wait()
-            message = QMessageBox.information(self, 'Internet Download Manager',
-                                              'Download link has been successfully queued in IDM',
-                                              QMessageBox.Ok)
+            QMessageBox.information(self, 'Internet Download Manager',
+                                    'The download link has been successfully queued in IDM', QMessageBox.Ok)
         else:
-            pass
+            dlpath, _ = QFileDialog.getSaveFileName(self, 'Save File', link.split('/')[-1])
+            self.directdl_win = DirectDownload(self)
+            self.directdl = DownloadThread(link_url=link, dl_path=dlpath)
+            self.directdl.dlComplete.connect(self.directdl_win.download_complete)
+            self.directdl.dlProgress.connect(self.directdl_win.update_progress)
+            self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
+            self.directdl.start()
         self.hosters_win.hide()
 
     def open_pyload(self):
@@ -265,7 +295,7 @@ class TVLinker(QDialog):
         self.hosters_win.hide()
 
     def unrestrict_link(self, link: str) -> str:
-        conn = http.client.HTTPSConnection('api.real-debrid.com')
+        conn = http.client.HTTPSConnection(FixedSettings.realdebrid_api_url)
         payload = 'link=%s' % quote_plus(link)
         headers = {
             'Authorization': 'Bearer %s' % self.realdebrid_api_token,
@@ -297,10 +327,11 @@ class TVLinker(QDialog):
 def main():
     import sys
     app = QApplication(sys.argv)
-    app.setOrganizationName('ozmartians.com')
-    app.setApplicationName('TVLinker')
+    app.setOrganizationName(FixedSettings.organizationName)
+    app.setApplicationName(FixedSettings.applicationName)
     app.setQuitOnLastWindowClosed(True)
-    tv = TVLinker()
+    tvlinker = TVLinker()
+    tvlinker.show()
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
