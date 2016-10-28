@@ -1,0 +1,6 @@
+{
+  "name": "TVLinker",
+  "tagline": "tv-release.net link scraper integrated with real-debrid to unrestrict links and aria2, pyLoad or direct download manager options",
+  "body": "![TVLinker](https://raw.githubusercontent.com/ozmartian/tvlinker/master/assets/images/tvlinker.png)\r\n\r\nQt5 based desktop widget for scraping and organising links from various download feeds/sites. \r\n\r\nCurrently supporting tv-release.net link scraping together with integrating with real-debrid to\r\nunrestrict links (a valid real-debrid account and api_token is necessary).\r\n\r\nFinally, integration with Aria2 RPC Daemon (windows/linux), pyLoad (linux), IDM (Internet Download Manager; windows only) or built-in direct download to your desktop is all included and easy to configure from the GUI.",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
