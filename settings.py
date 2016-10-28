@@ -82,11 +82,8 @@ class Settings(QDialog):
         return formLayout
 
     def update_dlmanager_logo(self):
-        if self.dlmanager_comboBox.currentText() in ('aria2', 'pyLoad', 'IDM'):
-            self.dlmanager_logo.setPixmap(QPixmap(self.parent.get_path(
-                'images/%s.png' % self.dlmanager_comboBox.currentText().lower())))
-        else:
-            pass
+        self.dlmanager_logo.setPixmap(QPixmap(self.parent.get_path('images/%s.png'
+                                                                   % self.dlmanager_comboBox.currentText().lower())))
 
     @pyqtSlot(int)
     def update_dlmanager_form(self, index: int) -> None:
