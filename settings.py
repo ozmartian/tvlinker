@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
+
 from PyQt5.QtCore import QSettings, Qt, pyqtSlot
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import (QComboBox, QDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel,
                              QLineEdit, QPushButton, QSizePolicy, qApp)
 
@@ -15,6 +17,7 @@ class Settings(QDialog):
         self.setLayout(self.init_form())
         self.update_dlmanager_form(self.dlmanager_comboBox.currentIndex())
         self.setWindowTitle('%s Settings' % qApp.applicationName())
+        self.setWindowIcon(QIcon(self.parent.get_path('images/settings.png')))
 
     def init_form(self) -> QFormLayout:
         generalGroup = QGroupBox()
@@ -47,7 +50,11 @@ class Settings(QDialog):
         self.dlmanager_comboBox = QComboBox(self, editable=False, cursor=Qt.PointingHandCursor)
         self.dlmanager_comboBox.setAutoFillBackground(True)
         self.dlmanager_comboBox.setFixedWidth(85)
-        self.dlmanager_comboBox.addItems(('direct', 'aria2', 'pyLoad', 'IDM'))
+        self.dlmanager_comboBox.addItems(('direct', 'aria2'))
+        if sys.platform == 'win32':
+            self.dlmanager_comboBox.addItem('IDM')
+        else:
+            self.dlmanager_comboBox.addItem('pyLoad')
         self.dlmanager_comboBox.setCurrentIndex(self.dlmanager_comboBox.findText(
             str(self.settings.value('download_manager')), Qt.MatchFixedString))
         self.dlmanager_comboBox.currentIndexChanged.connect(self.update_dlmanager_form)

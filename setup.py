@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import sys
-
-from setuptools import setup, find_packages
 from codecs import open
 from os import path
 from re import match
 
+from setuptools import setup
 
 here = path.abspath(path.dirname(__file__))
+
 
 def get_version(filename='__init__.py'):
     with open(path.join(here, filename), encoding='utf-8') as initfile:
@@ -18,9 +18,11 @@ def get_version(filename='__init__.py'):
             if m:
                 return m.group(1)
 
+
 def get_description(filename='README.md'):
     with open(path.join(here, filename), encoding='utf-8') as f:
         return f.read()
+
 
 setup(
     name='tvlinker',
@@ -35,14 +37,14 @@ setup(
     packages=['tvlinker'],
 
     package_dir={'tvlinker': '.'},
-    
+
     setup_requires=['setuptools >= 28.1.0'],
-    
+
     install_requires=[
-        'PyQt5 >= 5.7',
-        'beautifulsoup4 >= 4.5.1',
-    ] + ['lxml >= 3.6.4'] if 'win32' not in sys.platform else [],
-    
+                         'PyQt5 >= 5.7',
+                         'beautifulsoup4 >= 4.5.1',
+                     ] + ['lxml >= 3.6.4'] if 'win32' not in sys.platform else [],
+
     package_data={
         'tvlinker': ['tvlinker.ini']
     },
@@ -69,5 +71,4 @@ setup(
         'Programming Language :: Python :: 3.5'
     ],
     keywords='tvlinker scraping tv-release filesharing'
-
 )

@@ -3,14 +3,15 @@
 
 import http.client
 import os
+import platform
 from urllib.parse import quote_plus
 
 from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex, QSettings, QSize, Qt, QTextStream,
                           QUrl, pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QColor, QDesktopServices, QFont, QFontDatabase, QIcon, QPalette, QPixmap
-from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout,
-                             QHeaderView, QLabel, QLineEdit, QMessageBox, QProgressBar, QPushButton, QSizePolicy,
-                             QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
+from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout,
+                             QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
+                             QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
 
 from hosters import HosterLinks
 from pyload import PyloadConnection, PyloadConfig
@@ -19,8 +20,11 @@ from threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
 import assets
 
 
+__version__ = '1.0b'
+
+
 class FixedSettings:
-    organizationName = 'ozmartians.com'
+    organizationDomain = 'http://tvlinker.ozmartians.com'
     applicationName = 'TVLinker'
     windowSize = QSize(1000, 750)
     linksPerPage = 30
@@ -105,8 +109,7 @@ class TVLinker(QDialog):
 
     def init_form(self) -> QHBoxLayout:
         logo = QPixmap(self.get_path('images/tvrelease.png'))
-        self.search_field = QLineEdit(self, clearButtonEnabled=True,
-                                      placeholderText='Enter search criteria')
+        self.search_field = QLineEdit(self, clearButtonEnabled=True, placeholderText='Enter search criteria')
         self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.search_field.textChanged.connect(self.filter_table)
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
@@ -117,7 +120,8 @@ class TVLinker(QDialog):
                                           text=' Refresh', toolTip='Refresh', cursor=Qt.PointingHandCursor,
                                           clicked=self.refresh_links)
         self.settings_button = QPushButton(self, flat=False, icon=QIcon(self.get_path('images/settings.png')),
-                                           toolTip='Settings', cursor=Qt.PointingHandCursor, clicked=self.show_settings)
+                                           toolTip='Settings', cursor=Qt.PointingHandCursor)
+        self.settings_button.setMenu(self.settings_menu())
         layout = QHBoxLayout()
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
         layout.addWidget(self.search_field)
@@ -126,6 +130,19 @@ class TVLinker(QDialog):
         layout.addWidget(self.refresh_button)
         layout.addWidget(self.settings_button)
         return layout
+
+    def settings_menu(self) -> QMenu:
+        settings_action = QAction(QIcon(self.get_path('images/settings.png')), 'Settings...', self,
+                                  toolTip='Settings',  triggered=self.show_settings)
+        aboutQt_action = QAction('About Qt', self, toolTip='About Qt', triggered=qApp.aboutQt)
+        about_action = QAction('About %s' % qApp.applicationName(), self, toolTip='About %s' % qApp.applicationName(),
+                               triggered=self.about_app)
+        menu = QMenu()
+        menu.addAction(settings_action)
+        menu.addSeparator()
+        menu.addAction(aboutQt_action)
+        menu.addAction(about_action)
+        return menu
 
     def init_table(self) -> QTableWidget:
         self.table = QTableWidget(0, 4, self)
@@ -186,6 +203,31 @@ class TVLinker(QDialog):
         self.scrape.finished.connect(self.scrape_finished)
         self.progress.setValue(0)
         self.scrape.start()
+
+    @pyqtSlot()
+    def about_app(self) -> None:
+        about_html = '''<style>
+        a { color:#441d4e; text-decoration:none; font-weight:bold; }
+        a:hover { text-decoration:underline; }
+    </style>
+    <p style="font-size:26pt; font-weight:bold;">%s</p>
+    <p>
+        <span style="font-size:13pt;"><b>Version: %s</b></span>
+        <span style="font-size:10pt;position:relative;left:5px;">( %s )</span>
+    </p>
+    <p style="font-size:13px;">
+        Copyright &copy; 2016 <a href="mailto:pete@ozmartians.com">Pete Alexandrou</a>
+        <br/>
+        Web: <a href="%s">%s</a>
+    </p>
+    <p style="font-size:11px;">
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License
+        as published by the Free Software Foundation; either version 2
+        of the License, or (at your option) any later version.
+    </p>''' % (qApp.applicationName(), qApp.applicationVersion(), platform.architecture()[0],
+               qApp.organizationDomain(), qApp.organizationDomain())
+        QMessageBox.about(self, 'About %s' % qApp.applicationName(), about_html)
 
     @pyqtSlot(bool)
     def refresh_links(self) -> None:
@@ -336,8 +378,9 @@ class TVLinker(QDialog):
 def main():
     import sys
     app = QApplication(sys.argv)
-    app.setOrganizationName(FixedSettings.organizationName)
+    app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationName(FixedSettings.applicationName)
+    app.setApplicationVersion(__version__)
     app.setQuitOnLastWindowClosed(True)
     tvlinker = TVLinker()
     tvlinker.show()

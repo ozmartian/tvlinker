@@ -81,7 +81,7 @@ class HosterLinks(QDialog):
             index += 1
         qApp.restoreOverrideCursor()
         qApp.processEvents()
-        self.adjustSize()
+        self.adju()
 
     @pyqtSlot(int)
     def copy_link(self, button_id: int) -> None:

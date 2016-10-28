@@ -1,4 +1,4 @@
-![VidCutter](https://raw.githubusercontent.com/ozmartian/tvlinker/master/assets/images/tvlinker.png)
+![TVLinker](https://raw.githubusercontent.com/ozmartian/tvlinker/master/assets/images/tvlinker.png)
 <h2>TVLinker</h2>
 
 Qt5 based desktop widget for scraping and organising links from various download feeds/sites. 
