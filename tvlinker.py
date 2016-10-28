@@ -31,13 +31,20 @@ class DirectDownload(QDialog):
     def __init__(self, parent, f=Qt.Tool):
         super(QDialog, self).__init__(parent, f)
         self.parent = parent
+        self.setWindowModality(Qt.ApplicationModal)
+        self.setMinimumWidth(485)
         self.setContentsMargins(20, 20, 20, 20)
-        self.progress = 0
-        self.progress_label = QLabel()
+        layout = QVBoxLayout()
+        self.progress_label = QLabel(alignment=Qt.AlignCenter)
+        self.progress = QProgressBar(self.parent, minimum=0, maximum=100)
+        layout.addWidget(self.progress_label)
+        layout.addWidget(self.progress)
+        self.setLayout(layout)
+        self.setWindowTitle('Download Progress')
 
     @pyqtSlot(int)
     def update_progress(self, progress: int) -> None:
-        self.progress = progress
+        self.progress.setValue(progress)
 
     @pyqtSlot(str)
     def update_progress_label(self, progress_txt: str) -> None:
@@ -140,7 +147,8 @@ class TVLinker(QDialog):
 
     def init_metabar(self) -> QHBoxLayout:
         self.meta_template = '<div>Total number of links retrieved: <b>%s</b></div>'
-        self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks), visible=False)
+        self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks),
+                                     visible=False)
         palette = self.progress.palette()
         palette.setColor(QPalette.Base, Qt.white)
         palette.setColor(QPalette.Foreground, QColor(119, 89, 127))
@@ -281,6 +289,7 @@ class TVLinker(QDialog):
             self.directdl.dlProgress.connect(self.directdl_win.update_progress)
             self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
             self.directdl.start()
+            self.directdl_win.show()
         self.hosters_win.hide()
 
     def open_pyload(self):
