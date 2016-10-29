@@ -1,0 +1,27 @@
+# Maintainer: Pete Alexandrou <pete@ozmartians.com>
+pkgname=tvlinker
+pkgver=1.0b
+pkgrel=1
+pkgdesc="tv-release.net link scraper intgrated w/ real-debrid to unrstrict links and various d/l managers for seamless leeching."
+arch=(any)
+url="http://tvlinker.ozmartians.com"
+license=('GPL3')
+groups=()
+depends=('python', 'python-pyqt5', 'python-beautifulsoup4', 'python-setuptools')
+makedepends=('git')
+provides=('tvlinker')
+conflicts=()
+replaces=()
+backup=()
+options=(strip, emptydirs, !libtool, !staticlibs, purge, !upx, !debug)
+install=
+source=()
+md5sums=()
+
+package() {
+
+  cd "$srcdir/$pkgname-$pkgver"
+  python3 setup.py install --root="$pkgdir/" --prefix=/usr --optimize=1
+}
+
+# vim:set ts=2 sw=2 et:

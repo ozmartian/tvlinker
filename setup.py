@@ -29,7 +29,9 @@ setup(
     version=get_version(),
     author='Pete Alexandrou',
     author_email='pete@ozmartians.com',
-    description='tv-release.net scraper integrated with real-debrid and various Linux & Windows download managers',
+    description='''tv-release.net link scraper integrated with real-debrid to unrestrict links + supporting
+                   Aria2 RPC Daemon (windows/linux), pyLoad (windows/linux), Internet Download Manager (windows only).
+                   A built-in download accelerator is also available by default.''',
     long_description=get_description(),
     url='https://github.com/ozmartian/tvlinker',
     license='GPLv3+',
