@@ -12,20 +12,18 @@ from PyQt5.QtGui import QCloseEvent, QColor, QDesktopServices, QFont, QFontDatab
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout,
                              QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, qApp)
-
-from hosters import HosterLinks
-from pyload import PyloadConnection, PyloadConfig
-from settings import Settings
-from threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
-import assets
-
-
-__version__ = '1.0b'
+from tvlinker.hosters import HosterLinks
+from tvlinker.pyload import PyloadConnection, PyloadConfig
+from tvlinker.settings import Settings
+from tvlinker.threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
+import tvlinker.assets
 
 
 class FixedSettings:
-    organizationDomain = 'http://tvlinker.ozmartians.com'
     applicationName = 'TVLinker'
+    applicationVersion = '1.0b'
+    applicationStyle = 'Fusion'
+    organizationDomain = 'http://tvlinker.ozmartians.com'
     windowSize = QSize(1000, 750)
     linksPerPage = 30
     realdebrid_api_url = 'api.real-debrid.com'
@@ -60,7 +58,7 @@ class DirectDownload(QDialog):
 
     @pyqtSlot()
     def download_complete(self) -> None:
-        QMessageBox.information(self.parent, 'Download complete', QMessageBox.Ok)
+        QMessageBox.information(self.parent, 'Download complete...', QMessageBox.Ok)
         self.close()
         self.deleteLater()
 
@@ -86,7 +84,7 @@ class TVLinker(QDialog):
         self.hosters_win.copyLink.connect(self.copy_download_link)
 
     def init_stylesheet(self) -> None:
-        qApp.setStyle('Fusion')
+        # qApp.setStyle(FixedSettings.applicationStyle)
         QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
         qss = QFile(self.get_path('%s.qss' % qApp.applicationName().lower()))
         qss.open(QFile.ReadOnly | QFile.Text)
@@ -124,8 +122,8 @@ class TVLinker(QDialog):
         self.refresh_button = QPushButton(self, flat=False, icon=QIcon(self.get_path('images/refresh.png')),
                                           text=' Refresh', toolTip='Refresh', cursor=Qt.PointingHandCursor,
                                           clicked=self.refresh_links)
-        self.settings_button = QPushButton(self, flat=False, icon=QIcon(self.get_path('images/settings.png')),
-                                           toolTip='Settings', cursor=Qt.PointingHandCursor)
+        self.settings_button = QPushButton(self, flat=False, icon=QIcon(self.get_path('images/menu.png')),
+                                           toolTip='Options Menu', cursor=Qt.PointingHandCursor)
         self.settings_button.setMenu(self.settings_menu())
         layout = QHBoxLayout()
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
@@ -137,11 +135,12 @@ class TVLinker(QDialog):
         return layout
 
     def settings_menu(self) -> QMenu:
-        settings_action = QAction(QIcon(self.get_path('images/settings.png')), 'Settings...', self,
-                                  toolTip='Settings',  triggered=self.show_settings)
-        aboutQt_action = QAction('About Qt', self, toolTip='About Qt', triggered=qApp.aboutQt)
-        about_action = QAction('About %s' % qApp.applicationName(), self, toolTip='About %s' % qApp.applicationName(),
-                               triggered=self.about_app)
+        settings_action = QAction(QIcon(self.get_path('images/settings.png')), 'Configure %s...'
+                                  % qApp.applicationName(), self, toolTip='Settings',  triggered=self.show_settings)
+        aboutQt_action = QAction(QIcon(self.get_path('images/qt.png')), 'About Qt', self,
+                                 toolTip='About Qt', triggered=qApp.aboutQt)
+        about_action = QAction(QIcon(self.get_path('images/tvlinker.png')), 'About %s' % qApp.applicationName(), self,
+                               toolTip='About %s' % qApp.applicationName(), triggered=self.about_app)
         menu = QMenu()
         menu.addAction(settings_action)
         menu.addSeparator()
@@ -383,12 +382,13 @@ class TVLinker(QDialog):
 def main():
     import sys
     app = QApplication(sys.argv)
-    app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationName(FixedSettings.applicationName)
-    app.setApplicationVersion(__version__)
+    app.setOrganizationName(FixedSettings.applicationName)
+    app.setOrganizationDomain(FixedSettings.organizationDomain)
+    app.setApplicationVersion(FixedSettings.applicationVersion)
     app.setQuitOnLastWindowClosed(True)
-    tvlinker = TVLinker()
-    tvlinker.show()
+    instance = TVLinker()
+    instance.show()
     sys.exit(app.exec_())
 
 if __name__ == '__main__':

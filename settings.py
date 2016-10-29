@@ -50,11 +50,9 @@ class Settings(QDialog):
         self.dlmanager_comboBox = QComboBox(self, editable=False, cursor=Qt.PointingHandCursor)
         self.dlmanager_comboBox.setAutoFillBackground(True)
         self.dlmanager_comboBox.setFixedWidth(85)
-        self.dlmanager_comboBox.addItems(('direct', 'aria2'))
+        self.dlmanager_comboBox.addItems(('built-in', 'aria2', 'pyLoad'))
         if sys.platform == 'win32':
             self.dlmanager_comboBox.addItem('IDM')
-        else:
-            self.dlmanager_comboBox.addItem('pyLoad')
         self.dlmanager_comboBox.setCurrentIndex(self.dlmanager_comboBox.findText(
             str(self.settings.value('download_manager')), Qt.MatchFixedString))
         self.dlmanager_comboBox.currentIndexChanged.connect(self.update_dlmanager_form)
@@ -141,8 +139,8 @@ class Settings(QDialog):
             self.idmexepath_lineEdit = QLineEdit(self, text=self.settings.value('idm_exe_path'))
             self.idmexepath_lineEdit.setFixedWidth(500)
             self.dlmanagersettings_formLayout.addRow('IDM Executable (EXE) Path:', self.idmexepath_lineEdit)
-        elif dlmanager == 'direct':
-            directdl_label = QLabel('No settings for direct downloads')
+        elif dlmanager == 'built-in':
+            directdl_label = QLabel('Built-in download option has no configurable settings')
             directdl_label.setStyleSheet('color:#333; font-weight:300;')
             directdl_label.setAlignment(Qt.AlignCenter)
             self.dlmanagersettings_formLayout.addWidget(directdl_label)
