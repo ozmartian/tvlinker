@@ -26,7 +26,7 @@ import tvlinker.assets
 
 class FixedSettings:
     applicationName = 'TVLinker'
-    applicationVersion = '1.0b0'
+    applicationVersion = '2.0.2'
     applicationStyle = 'Fusion'
     organizationDomain = 'http://tvlinker.ozmartians.com'
     windowSize = QSize(1000, 750)
