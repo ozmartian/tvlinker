@@ -102,24 +102,16 @@ class Settings(QDialog):
         self.dlmanagersettingsGroup = QGroupBox()
         self.dlmanagersettingsGroup.setLayout(self.dlmanagersettings_formLayout)
 
-        button_layout = QHBoxLayout()
-        button_layout.setAlignment(Qt.AlignRight)
-        save_button = QPushButton(self, text='Save', clicked=self.save_settings)
-        cancel_button = QPushButton(self, text='Cancel', clicked=self.close)
-        button_layout.addWidget(save_button)
-        button_layout.addWidget(cancel_button)
-
-        button_box = QDialogButtonBox(buttons=QDialogButtonBox.Save | QDialogButtonBox.Cancel,
-                                          Qt.Horizontal, )
-        button_box.setOrientation(QtCore.Qt.Horizontal)
-        button_box.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        button_box = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, Qt.Horizontal, self)
+        button_box.accepted.connect(self.save_settings)
+        button_box.rejected.connect(self.close)
 
         formLayout = QFormLayout()
         formLayout.addWidget(generalGroup)
         formLayout.addWidget(debridGroup)
         formLayout.addRow(dlmanagerGroup)
         formLayout.addRow(self.dlmanagersettingsGroup)
-        formLayout.addRow(button_layout)
+        formLayout.addRow(button_box)
         return formLayout
 
     def update_dlmanager_logo(self):

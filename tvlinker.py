@@ -21,6 +21,7 @@ from tvlinker.pyload import PyloadConnection, PyloadConfig
 from tvlinker.settings import Settings
 from tvlinker.threads import (HostersThread, ScrapeThread, Aria2Thread,
                               DownloadThread)
+import tvlinker.assets
 
 
 class FixedSettings:
