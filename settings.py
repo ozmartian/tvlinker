@@ -5,15 +5,17 @@ import sys
 
 from PyQt5.QtCore import QSettings, Qt, pyqtSlot
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import (QComboBox, QDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel,
-                             QLineEdit, QPushButton, QSizePolicy, qApp)
+from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
+                                 QFormLayout, QGroupBox, QHBoxLayout, QLabel,
+                                 QLineEdit, QPushButton, QSizePolicy, qApp)
 
 
 class Settings(QDialog):
-    def __init__(self, parent, settings: QSettings, f=Qt.Tool):
+    def __init__(self, parent, settings: QSettings, f=Qt.Tool | Qt.WindowStaysOnTopHint):
         super(QDialog, self).__init__(parent, f)
         self.parent = parent
         self.settings = settings
+        self.setWindowModality(Qt.ApplicationModal | Qt.WindowModal)
         self.setLayout(self.init_form())
         self.update_dlmanager_form(self.dlmanager_comboBox.currentIndex())
         self.setWindowTitle('%s Settings' % qApp.applicationName())
@@ -23,10 +25,11 @@ class Settings(QDialog):
         generalGroup = QGroupBox()
         general_formLayout = QFormLayout()
         self.sourceUrl_lineEdit = QLineEdit(self, text=self.settings.value('source_url'))
-        self.sourceUrl_lineEdit.setFixedWidth(300)
+        self.sourceUrl_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.sourceUrl_lineEdit.setMinimumWidth(500)
         general_formLayout.addRow('Source URL:', self.sourceUrl_lineEdit)
         self.useragent_lineEdit = QLineEdit(self, text=self.settings.value('user_agent'))
-        self.useragent_lineEdit.setFixedWidth(500)
+        self.useragent_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         general_formLayout.addRow('User Agent:', self.useragent_lineEdit)
         self.dlpagecount_comboBox = QComboBox(self, toolTip='Default Page Count', editable=False,
                                          cursor=Qt.PointingHandCursor)
@@ -39,14 +42,42 @@ class Settings(QDialog):
         generalGroup.setLayout(general_formLayout)
 
         debridGroup = QGroupBox()
-        debrid_formLayout = QFormLayout()
-        self.realdebridtoken_lineEdit = QLineEdit(self, text=self.settings.value('realdebrid_apitoken'))
-        self.realdebridtoken_lineEdit.setFixedWidth(250)
-        debrid_formLayout.addRow('real-debrid.com API Token:', self.realdebridtoken_lineEdit)
-        debridGroup.setLayout(debrid_formLayout)
+        realdebrid_formLayout = QFormLayout()
+        realdebrid_apitoken_link = '''<tr>
+                                        <td colspan="2" align="right">
+                                            <a href="https://real-debrid.com/apitoken" title="https://real-debrid.com/apitoken" target="_blank">
+                                                access your API token settings
+                                            </a>
+                                        </td>
+                                    </tr>''' if len(self.settings.value('realdebrid_apitoken')) == 0 else ''
+        realdebrid_label = QLabel(textFormat=Qt.RichText, alignment=Qt.AlignVCenter, openExternalLinks=True)
+        realdebrid_label.setText('''<style>
+                                           a {
+                                               text-decoration: none;
+                                               font-size: 8pt;
+                                               font-weight: 500;
+                                               color: #481953;
+                                           }
+                                       </style>
+                                       <table border="0" cellspacing="0" cellpadding="2">
+                                           <tr valign="middle" align="left">
+                                              <td>
+                                                  <img src="%s" style="width:128px; height:26px;" />
+                                               </td>
+                                               <td>
+                                                   API Token:
+                                               </td>
+                                           </tr>
+                                           %s
+                                       </table>''' % (self.parent.get_path('images/realdebrid.png'), realdebrid_apitoken_link))
+        self.realdebridtoken_lineEdit = QLineEdit(self, text=self.settings.value('realdebrid_apitoken'), alignment=Qt.AlignVCenter)
+        self.realdebridtoken_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        realdebrid_formLayout.addRow(realdebrid_label, self.realdebridtoken_lineEdit)
+        debridGroup.setLayout(realdebrid_formLayout)
 
         dlmanagerGroup = QGroupBox()
         dlmanager_formLayout = QFormLayout()
+        dlmanager_formLayout.setAlignment(Qt.AlignVCenter)
         self.dlmanager_comboBox = QComboBox(self, editable=False, cursor=Qt.PointingHandCursor)
         self.dlmanager_comboBox.setAutoFillBackground(True)
         self.dlmanager_comboBox.setFixedWidth(85)
@@ -60,7 +91,7 @@ class Settings(QDialog):
         dlmanager_layout = QHBoxLayout()
         dlmanager_layout.addLayout(dlmanager_formLayout)
         self.dlmanager_logo = QLabel()
-        self.dlmanager_logo.setAlignment(Qt.AlignCenter)
+        self.dlmanager_logo.setAlignment(Qt.AlignLeft)
         self.dlmanager_logo.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         dlmanager_layout.addWidget(self.dlmanager_logo)
         dlmanagerGroup.setLayout(dlmanager_layout)
@@ -77,6 +108,11 @@ class Settings(QDialog):
         cancel_button = QPushButton(self, text='Cancel', clicked=self.close)
         button_layout.addWidget(save_button)
         button_layout.addWidget(cancel_button)
+
+        button_box = QDialogButtonBox(buttons=QDialogButtonBox.Save | QDialogButtonBox.Cancel,
+                                          Qt.Horizontal, )
+        button_box.setOrientation(QtCore.Qt.Horizontal)
+        button_box.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
 
         formLayout = QFormLayout()
         formLayout.addWidget(generalGroup)
@@ -105,13 +141,13 @@ class Settings(QDialog):
             self.aria2rpcuser_lineEdit.setFixedWidth(150)
             self.aria2rpcpass_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_password'))
             self.aria2rpcpass_lineEdit.setFixedWidth(150)
-            aria2rpchost_infotext = QLabel('(default: http://localhost)')
-            aria2rpchost_infotext.setStyleSheet('font-style:italic;')
+            aria2rpchost_infotext = QLabel('default: http://localhost')
+            aria2rpchost_infotext.setStyleSheet('font-weight:300;')
             aria2rpchost_layout = QHBoxLayout()
             aria2rpchost_layout.addWidget(self.aria2rpchost_lineEdit)
             aria2rpchost_layout.addWidget(aria2rpchost_infotext)
-            aria2rpcport_infotext = QLabel('(default: 6800)')
-            aria2rpcport_infotext.setStyleSheet('font-style:italic;')
+            aria2rpcport_infotext = QLabel('default: 6800')
+            aria2rpcport_infotext.setStyleSheet('font-weight:300;')
             aria2rpcport_layout = QHBoxLayout()
             aria2rpcport_layout.addWidget(self.aria2rpcport_lineEdit)
             aria2rpcport_layout.addWidget(aria2rpcport_infotext)
@@ -127,8 +163,8 @@ class Settings(QDialog):
             self.pyloaduser_lineEdit.setFixedWidth(150)
             self.pyloadpass_lineEdit = QLineEdit(self, text=self.settings.value('pyload_password'))
             self.pyloadpass_lineEdit.setFixedWidth(150)
-            pyloadhost_infotext = QLabel('(default: http://localhost:8000)')
-            pyloadhost_infotext.setStyleSheet('font-style:italic;')
+            pyloadhost_infotext = QLabel('default: http://localhost:8000')
+            pyloadhost_infotext.setStyleSheet('font-weight:300;')
             pyloadhost_layout = QHBoxLayout()
             pyloadhost_layout.addWidget(self.pyloadhost_lineEdit)
             pyloadhost_layout.addWidget(pyloadhost_infotext)
@@ -140,13 +176,14 @@ class Settings(QDialog):
             self.idmexepath_lineEdit.setFixedWidth(500)
             self.dlmanagersettings_formLayout.addRow('IDM Executable (EXE) Path:', self.idmexepath_lineEdit)
         elif dlmanager == 'built-in':
-            directdl_label = QLabel('Built-in download option has no configurable settings')
-            directdl_label.setStyleSheet('color:#333; font-weight:300;')
+            directdl_label = QLabel('No settings available for built-in downloader')
+            directdl_label.setStyleSheet('font-weight:300; text-align:center;')
             directdl_label.setAlignment(Qt.AlignCenter)
             self.dlmanagersettings_formLayout.addWidget(directdl_label)
         qApp.processEvents()
         self.update_dlmanager_logo()
         self.adjustSize()
+        self.raise_()
 
     def clear_layout(self, layout: QFormLayout = None) -> None:
         if layout is None:
