@@ -87,7 +87,7 @@ class TVLinker(QDialog):
         self.hosters_win.copyLink.connect(self.copy_download_link)
 
     def init_stylesheet(self) -> None:
-        # qApp.setStyle(FixedSettings.applicationStyle)
+        qApp.setStyle(FixedSettings.applicationStyle)
         QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
         qss = QFile(self.get_path('%s.qss' % qApp.applicationName().lower()))
         qss.open(QFile.ReadOnly | QFile.Text)

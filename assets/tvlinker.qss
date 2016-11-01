@@ -1,7 +1,6 @@
 * {
     font-family: 'Open Sans';
     font-size: 10pt;
-    font-weight: normal;
 }
 
 QHeaderView::section, QTableCornerButton::section {
