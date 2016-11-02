@@ -315,6 +315,7 @@ class TVLinker(QDialog):
 
     @pyqtSlot(str)
     def download_link(self, link: str) -> None:
+        self.hosters_win.close()
         if len(self.realdebrid_api_token) > 0:
             link = self.unrestrict_link(link)
         if self.download_manager == 'aria2':
@@ -339,7 +340,7 @@ class TVLinker(QDialog):
                                     stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
             proc.wait()
             QMessageBox.information(self, 'Internet Download Manager',
-                                    'The download link has been successfully queued in IDM.', QMessageBox.Ok)
+                                    'The download link has been queued in IDM.', QMessageBox.Ok)
         else:
             dlpath, _ = QFileDialog.getSaveFileName(self, 'Save File', link.split('/')[-1])
             self.directdl_win = DirectDownload(self)
@@ -349,7 +350,6 @@ class TVLinker(QDialog):
             self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
             self.directdl.start()
             self.directdl_win.show()
-        self.hosters_win.close()
 
     def open_pyload(self):
         QDesktopServices.openUrl(QUrl(self.pyload_config.host))
