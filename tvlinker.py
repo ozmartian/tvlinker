@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import codecs
 import http.client
 import os
 import platform
+import re
 import sys
 from urllib.parse import quote_plus
 
 from PyQt5.QtCore import (QDir, QFile, QFileInfo, QJsonDocument, QModelIndex,
-                          QSettings, QSize, Qt, QTextStream, QUrl, pyqtSlot)
+                          QSettings, QSize, QStandardPaths, Qt, QTextStream, QUrl, pyqtSlot)
 from PyQt5.QtGui import (QCloseEvent, QColor, QDesktopServices,
                          QFont, QFontDatabase, QIcon, QPalette, QPixmap)
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
@@ -24,9 +26,18 @@ from tvlinker.threads import (HostersThread, ScrapeThread, Aria2Thread, Download
 import tvlinker.assets
 
 
+def get_version(filename='__init__.py'):
+    here = os.path.abspath(os.path.dirname(__file__))
+    with codecs.open(os.path.join(here, filename), encoding='utf-8') as initfile:
+        for line in initfile.readlines():
+            m = re.match('__version__ *= *[\'](.*)[\']', line)
+            if m:
+                return m.group(1)
+
+
 class FixedSettings:
     applicationName = 'TVLinker'
-    applicationVersion = '2.6.0'
+    applicationVersion = get_version()
     applicationStyle = 'Fusion'
     organizationDomain = 'http://tvlinker.ozmartians.com'
     windowSize = QSize(1000, 750)
@@ -61,6 +72,7 @@ class DirectDownload(QDialog):
 
     @pyqtSlot()
     def download_complete(self) -> None:
+        qApp.restoreOverrideCursor()
         QMessageBox.information(self.parent, 'Download complete...', QMessageBox.Ok)
         self.close()
         self.deleteLater()
@@ -94,14 +106,12 @@ class TVLinker(QDialog):
         qApp.setStyleSheet(stream.readAll())
 
     def init_settings(self) -> None:
-        self.config_path = os.path.join(QDir.homePath(), '.%s' % qApp.applicationName().lower())
-        self.settings_ini = self.get_path(path=os.path.join(self.config_path, '%s.ini'
-                                                            % qApp.applicationName().lower()), override=True)
+        self.config_path = QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation)
+        self.settings_ini = os.path.join(self.config_path, '%s.ini' % qApp.applicationName().lower())
         if not os.path.exists(self.settings_ini):
             os.makedirs(self.config_path, exist_ok=True)
             QFile.copy(self.get_path(path='%s.ini' % qApp.applicationName().lower(), override=True), self.settings_ini)
-        self.settings_ini_secret = self.get_path(path=os.path.join(self.config_path, '%s.ini.secret'
-                                                                   % qApp.applicationName().lower()), override=True)
+        self.settings_ini_secret = os.path.join(self.config_path, '%s.ini.secret' % qApp.applicationName().lower())
         self.settings_path = self.settings_ini_secret if os.path.exists(self.settings_ini_secret) else self.settings_ini
         self.settings = QSettings(self.settings_path, QSettings.IniFormat)
         self.source_url = self.settings.value('source_url')
@@ -122,6 +132,7 @@ class TVLinker(QDialog):
         logo = QPixmap(self.get_path('images/tvrelease.png'))
         self.search_field = QLineEdit(self, clearButtonEnabled=True, placeholderText='Enter search criteria')
         self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.search_field.setFocus()
         self.search_field.textChanged.connect(self.filter_table)
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
         self.dlpages_field.addItems(('10', '20', '30', '40'))
@@ -315,9 +326,10 @@ class TVLinker(QDialog):
 
     @pyqtSlot(str)
     def download_link(self, link: str) -> None:
-        self.hosters_win.close()
+        qApp.setOverrideCursor(Qt.BusyCursor)
         if len(self.realdebrid_api_token) > 0:
             link = self.unrestrict_link(link)
+        self.hosters_win.close()
         if self.download_manager == 'aria2':
             self.aria2 = Aria2Thread(settings=self.settings, link_url=link)
             self.aria2.aria2Confirmation.connect(self.aria2_confirmation)
@@ -325,6 +337,7 @@ class TVLinker(QDialog):
         elif self.download_manager == 'pyLoad':
             self.pyload_conn = PyloadConnection(config=self.pyload_config)
             pid = self.pyload_conn.addPackage(name='TVLinker', links=[link])
+            qApp.restoreOverrideCursor()
             msgbox = QMessageBox.information(self, 'pyLoad Download Manager',
                                              'Download link has been successfully queued in pyLoad.', QMessageBox.Ok)
             open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
@@ -339,6 +352,7 @@ class TVLinker(QDialog):
             proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
             proc.wait()
+            qApp.restoreOverrideCursor()
             QMessageBox.information(self, 'Internet Download Manager',
                                     'The download link has been queued in IDM.', QMessageBox.Ok)
         else:
@@ -353,7 +367,6 @@ class TVLinker(QDialog):
 
     def open_pyload(self):
         QDesktopServices.openUrl(QUrl(self.pyload_config.host))
-        self.hosters_win.close()
 
     @pyqtSlot(str)
     def copy_download_link(self, link: str) -> None:
@@ -396,7 +409,6 @@ class TVLinker(QDialog):
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName(FixedSettings.applicationName)
-    app.setOrganizationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)
     app.setQuitOnLastWindowClosed(True)

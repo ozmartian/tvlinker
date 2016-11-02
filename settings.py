@@ -102,7 +102,7 @@ class Settings(QDialog):
         self.dlmanagersettingsGroup = QGroupBox()
         self.dlmanagersettingsGroup.setLayout(self.dlmanagersettings_formLayout)
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close, Qt.Horizontal, self)
         button_box.accepted.connect(self.save_settings)
         button_box.rejected.connect(self.close)
 
