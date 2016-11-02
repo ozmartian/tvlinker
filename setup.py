@@ -38,9 +38,8 @@ setup(
     packages=['tvlinker'],
     package_dir={'tvlinker': '.'},
     setup_requires=['setuptools >= 28.1.0'],
-    install_requires=['PyQt5 >= 5.7', 'beautifulsoup4 >= 4.5.1'] + (
-        ['lxml >= 3.6.4'] if 'win' not in sys.platform else []
-    ),
+    install_requires=['PyQt5 >= 5.7', 'beautifulsoup4 >= 4.5.1'],
+    extras_require={':sys_platform!="win32"': ['lxml >= 3.6.4']},
     package_data={'tvlinker': ['tvlinker.ini']},
     entry_points={'gui_scripts': ['tvlinker = tvlinker.tvlinker:main']},
     keywords='tvlinker scraping tv-release filesharing',
