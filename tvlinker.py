@@ -26,7 +26,7 @@ import tvlinker.assets
 
 class FixedSettings:
     applicationName = 'TVLinker'
-    applicationVersion = '2.6.5'
+    applicationVersion = '2.7.0'
     applicationStyle = 'Fusion'
     organizationDomain = 'http://tvlinker.ozmartians.com'
     windowSize = QSize(1000, 750)
@@ -315,9 +315,9 @@ class TVLinker(QDialog):
 
     @pyqtSlot(str)
     def download_link(self, link: str) -> None:
-        self.hosters_win.close()
         if len(self.realdebrid_api_token) > 0:
             link = self.unrestrict_link(link)
+        self.hosters_win.close()
         if self.download_manager == 'aria2':
             self.aria2 = Aria2Thread(settings=self.settings, link_url=link)
             self.aria2.aria2Confirmation.connect(self.aria2_confirmation)
