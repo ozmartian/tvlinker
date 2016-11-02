@@ -85,8 +85,8 @@ class TVLinker(QDialog):
         self.start_scraping()
 
     def init_stylesheet(self) -> None:
-        # if sys.platform == 'win32':
-        #     qApp.setStyle(FixedSettings.applicationStyle)
+        if sys.platform == 'win32':
+            qApp.setStyle(FixedSettings.applicationStyle)
         QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
         qss = QFile(self.get_path('%s.qss' % qApp.applicationName().lower()))
         qss.open(QFile.ReadOnly | QFile.Text)
