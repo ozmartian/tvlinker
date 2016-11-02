@@ -4,9 +4,10 @@
 import http.client
 import os
 import platform
+import sys
 from urllib.parse import quote_plus
 
-from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex,
+from PyQt5.QtCore import (QDir, QFile, QFileInfo, QJsonDocument, QModelIndex,
                           QSettings, QSize, Qt, QTextStream, QUrl, pyqtSlot)
 from PyQt5.QtGui import (QCloseEvent, QColor, QDesktopServices,
                          QFont, QFontDatabase, QIcon, QPalette, QPixmap)
@@ -19,14 +20,13 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
 from tvlinker.hosters import HosterLinks
 from tvlinker.pyload import PyloadConnection, PyloadConfig
 from tvlinker.settings import Settings
-from tvlinker.threads import (HostersThread, ScrapeThread, Aria2Thread,
-                              DownloadThread)
+from tvlinker.threads import (HostersThread, ScrapeThread, Aria2Thread, DownloadThread)
 import tvlinker.assets
 
 
 class FixedSettings:
     applicationName = 'TVLinker'
-    applicationVersion = '2.0.2'
+    applicationVersion = '2.5.0'
     applicationStyle = 'Fusion'
     organizationDomain = 'http://tvlinker.ozmartians.com'
     windowSize = QSize(1000, 750)
@@ -35,10 +35,10 @@ class FixedSettings:
 
 
 class DirectDownload(QDialog):
-    def __init__(self, parent, f=Qt.Tool):
+    def __init__(self, parent, f=Qt.Window | Qt.WindowStaysOnTopHint):
         super(QDialog, self).__init__(parent, f)
         self.parent = parent
-        self.setWindowModality(Qt.ApplicationModal)
+        self.setWindowModality(Qt.ApplicationModal | Qt.WindowModal)
         self.setMinimumWidth(485)
         self.setContentsMargins(20, 20, 20, 20)
         layout = QVBoxLayout()
@@ -81,13 +81,12 @@ class TVLinker(QDialog):
         self.setWindowTitle(qApp.applicationName())
         self.setWindowIcon(QIcon(self.get_path('images/tvlinker.png')))
         self.resize(FixedSettings.windowSize)
+        self.show()
         self.start_scraping()
-        self.hosters_win = HosterLinks(parent=self)
-        self.hosters_win.downloadLink.connect(self.download_link)
-        self.hosters_win.copyLink.connect(self.copy_download_link)
 
     def init_stylesheet(self) -> None:
-        qApp.setStyle(FixedSettings.applicationStyle)
+        # if sys.platform == 'win32':
+        #     qApp.setStyle(FixedSettings.applicationStyle)
         QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
         qss = QFile(self.get_path('%s.qss' % qApp.applicationName().lower()))
         qss.open(QFile.ReadOnly | QFile.Text)
@@ -95,8 +94,14 @@ class TVLinker(QDialog):
         qApp.setStyleSheet(stream.readAll())
 
     def init_settings(self) -> None:
-        self.settings_ini = self.get_path(path='%s.ini' % qApp.applicationName().lower(), override=True)
-        self.settings_ini_secret = self.get_path(path='%s.ini.secret' % qApp.applicationName().lower(), override=True)
+        self.config_path = os.path.join(QDir.homePath(), '.%s' % qApp.applicationName().lower())
+        self.settings_ini = self.get_path(path=os.path.join(self.config_path, '%s.ini'
+                                                            % qApp.applicationName().lower()), override=True)
+        if not os.path.exists(self.settings_ini):
+            os.makedirs(self.config_path, exist_ok=True)
+            QFile.copy(self.get_path(path='%s.ini' % qApp.applicationName().lower(), override=True), self.settings_ini)
+        self.settings_ini_secret = self.get_path(path=os.path.join(self.config_path, '%s.ini.secret'
+                                                                   % qApp.applicationName().lower()), override=True)
         self.settings_path = self.settings_ini_secret if os.path.exists(self.settings_ini_secret) else self.settings_ini
         self.settings = QSettings(self.settings_path, QSettings.IniFormat)
         self.source_url = self.settings.value('source_url')
@@ -277,8 +282,10 @@ class TVLinker(QDialog):
     @pyqtSlot(QModelIndex)
     def show_hosters(self, index: QModelIndex) -> bool:
         qApp.setOverrideCursor(Qt.BusyCursor)
+        self.hosters_win = HosterLinks(parent=self)
+        self.hosters_win.downloadLink.connect(self.download_link)
+        self.hosters_win.copyLink.connect(self.copy_download_link)
         self.hosters_win.show()
-        self.hosters_win.activateWindow()
         self.links = HostersThread(settings=self.settings, link_url=self.table.item(self.table.currentRow(), 1).text())
         self.links.setHosters.connect(self.add_hosters)
         self.links.start()
@@ -342,10 +349,11 @@ class TVLinker(QDialog):
             self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
             self.directdl.start()
             self.directdl_win.show()
-        self.hosters_win.hide()
+        self.hosters_win.close()
 
     def open_pyload(self):
         QDesktopServices.openUrl(QUrl(self.pyload_config.host))
+        self.hosters_win.close()
 
     @pyqtSlot(str)
     def copy_download_link(self, link: str) -> None:
@@ -353,7 +361,7 @@ class TVLinker(QDialog):
             link = self.unrestrict_link(link)
         clip = qApp.clipboard()
         clip.setText(link)
-        self.hosters_win.hide()
+        self.hosters_win.close()
 
     def unrestrict_link(self, link: str) -> str:
         conn = http.client.HTTPSConnection(FixedSettings.realdebrid_api_url)
@@ -386,15 +394,13 @@ class TVLinker(QDialog):
 
 
 def main():
-    import sys
     app = QApplication(sys.argv)
     app.setApplicationName(FixedSettings.applicationName)
     app.setOrganizationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)
     app.setQuitOnLastWindowClosed(True)
-    instance = TVLinker()
-    instance.show()
+    linker = TVLinker()
     sys.exit(app.exec_())
 
 

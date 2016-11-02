@@ -6,12 +6,12 @@ import sys
 from PyQt5.QtCore import QSettings, Qt, pyqtSlot
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
-                                 QFormLayout, QGroupBox, QHBoxLayout, QLabel,
-                                 QLineEdit, QPushButton, QSizePolicy, qApp)
+                             QFormLayout, QGroupBox, QHBoxLayout, QLabel,
+                             QLineEdit, QSizePolicy, qApp)
 
 
 class Settings(QDialog):
-    def __init__(self, parent, settings: QSettings, f=Qt.Tool | Qt.WindowStaysOnTopHint):
+    def __init__(self, parent, settings: QSettings, f=Qt.Window | Qt.WindowStaysOnTopHint):
         super(QDialog, self).__init__(parent, f)
         self.parent = parent
         self.settings = settings
@@ -102,7 +102,7 @@ class Settings(QDialog):
         self.dlmanagersettingsGroup = QGroupBox()
         self.dlmanagersettingsGroup.setLayout(self.dlmanagersettings_formLayout)
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, Qt.Horizontal, self)
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
         button_box.accepted.connect(self.save_settings)
         button_box.rejected.connect(self.close)
 

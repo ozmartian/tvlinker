@@ -1,6 +1,5 @@
 * {
     font-family: 'Open Sans';
-    font-size: 10pt;
 }
 
 QHeaderView::section, QTableCornerButton::section {
@@ -24,7 +23,7 @@ QTableView {
     margin-bottom: 0;
     background: #FFF url(:assets/images/watermark.png) no-repeat center center;
     background-attachment: fixed;
-    alternate-background-color: rgba(106, 69, 114, 0.15);
+    alternate-background-color: rgba(233, 222, 235, 0.3);
 }
 
 QTableView::item:selected {

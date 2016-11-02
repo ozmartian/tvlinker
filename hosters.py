@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtCore import QSize, QUrl, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QDesktopServices, QHideEvent, QIcon, QPixmap, QShowEvent
+from PyQt5.QtCore import QUrl, Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon, QPixmap
 from PyQt5.QtWidgets import (QBoxLayout, QButtonGroup, QDialog, QFrame, QHBoxLayout, QLabel, QProgressBar,
-                             QPushButton, QSizePolicy, QVBoxLayout, qApp)
+                             QPushButton, QSizePolicy, QStyleFactory, QVBoxLayout, qApp)
 
 
 class HosterLinks(QDialog):
@@ -12,10 +12,11 @@ class HosterLinks(QDialog):
     downloadLink = pyqtSignal(str)
     copyLink = pyqtSignal(str)
 
-    def __init__(self, parent, f=Qt.Tool):
+    def __init__(self, parent, f=Qt.Window | Qt.WindowStaysOnTopHint):
         super(QDialog, self).__init__(parent, f)
         self.parent = parent
-        self.setWindowModality(Qt.ApplicationModal)
+        self.setWindowModality(Qt.ApplicationModal | Qt.WindowModal)
+        self.setStyle(QStyleFactory.create('Fusion'))
         self.hosters = []
         self.setContentsMargins(20, 20, 20, 20)
         self.layout = QVBoxLayout(spacing=25)
@@ -31,6 +32,13 @@ class HosterLinks(QDialog):
         self.download_group = QButtonGroup(exclusive=False)
         self.download_group.buttonClicked[int].connect(self.download_link)
         self.setWindowTitle('Hoster Links')
+        busy_label = QLabel('Retrieving hoster links...', alignment=Qt.AlignCenter)
+        busy_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        busy_indicator = QProgressBar(parent=self, minimum=0, maximum=0)
+        self.layout.setSpacing(10)
+        self.layout.addWidget(busy_label)
+        self.layout.addWidget(busy_indicator)
+        self.setMinimumWidth(485)
 
     def clear_layout(self, layout: QBoxLayout = None) -> None:
         if layout is None:
@@ -55,20 +63,21 @@ class HosterLinks(QDialog):
         self.clear_layout()
         index = 0
         for hoster in hosters:
-            hoster_logo = QLabel(pixmap=QPixmap(self.parent.get_path('images/hoster_%s' % QUrl(hoster[0]).fileName())), toolTip=hoster[1])
-            hoster_logo.setMinimumWidth(160)
+            hoster_logo = QLabel(pixmap=QPixmap(self.parent.get_path('images/hoster_%s' % QUrl(hoster[0]).fileName())),
+                                 toolTip=hoster[1])
+            hoster_logo.setMinimumWidth(185)
             hoster_logo.setAlignment(Qt.AlignCenter)
-            copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard', flat=False,
-                                   cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
+            copy_btn = QPushButton(self, icon=self.copy_icon, text='COPY', toolTip='Copy to clipboard', flat=False,
+                                   cursor=Qt.PointingHandCursor)
             copy_btn.setFixedSize(90, 30)
             self.copy_group.addButton(copy_btn, index)
-            open_btn = QPushButton(self, icon=self.open_icon, text=' OPEN', toolTip='Open in browser', flat=False,
-                                   cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
+            open_btn = QPushButton(self, icon=self.open_icon, text='OPEN', toolTip='Open in browser', flat=False,
+                                   cursor=Qt.PointingHandCursor)
             open_btn.setFixedSize(90, 30)
             self.open_group.addButton(open_btn, index)
-            download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download link',
-                                            flat=False, cursor=Qt.PointingHandCursor, iconSize=QSize(16, 16))
-            download_btn.setFixedSize(110, 30)
+            download_btn = QPushButton(self, icon=self.download_icon, text='DOWNLOAD', toolTip='Download link',
+                                       flat=False, cursor=Qt.PointingHandCursor)
+            download_btn.setFixedSize(120, 30)
             self.download_group.addButton(download_btn, index)
             layout = QHBoxLayout(spacing=10)
             layout.addWidget(hoster_logo)
@@ -76,12 +85,12 @@ class HosterLinks(QDialog):
             layout.addWidget(open_btn, Qt.AlignRight)
             layout.addWidget(download_btn, Qt.AlignRight)
             self.layout.addLayout(layout)
-            if self.layout.count() <= len(hosters):
+            if index < len(hosters)-1:
                 self.layout.addWidget(self.get_separator())
             index += 1
-        qApp.restoreOverrideCursor()
         qApp.processEvents()
         self.adjustSize()
+        qApp.restoreOverrideCursor()
 
     @pyqtSlot(int)
     def copy_link(self, button_id: int) -> None:
@@ -90,27 +99,12 @@ class HosterLinks(QDialog):
     @pyqtSlot(int)
     def open_link(self, button_id: int) -> None:
         QDesktopServices.openUrl(QUrl(self.hosters[button_id][1]))
-        self.hide()
 
     @pyqtSlot(int)
     def download_link(self, button_id: int) -> None:
+        qApp.setOverrideCursor(Qt.BusyCursor)
         self.downloadLink.emit(self.hosters[button_id][1])
 
-    def hideEvent(self, event: QHideEvent) -> None:
-        self.clear_layout()
-        super(QDialog, self).hideEvent(event)
-
-    def showEvent(self, event: QShowEvent) -> None:
-        busy_label = QLabel('Retrieving hoster links...', alignment=Qt.AlignCenter)
-        busy_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        busy_indicator = QProgressBar(parent=self, minimum=0, maximum=0)
-        self.layout.setSpacing(10)
-        self.layout.addWidget(busy_label)
-        self.layout.addWidget(busy_indicator)
-        self.adjustSize()
-        self.setMinimumWidth(485)
-        super(HosterLinks, self).showEvent(event)
-
     def closeEvent(self, event: QCloseEvent) -> None:
-        self.hide()
-        event.accept()
+        self.deleteLater()
+        super(QDialog, self).closeEvent(event)

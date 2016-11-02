@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
 from codecs import open
 from os import path
 from re import match
@@ -31,27 +30,17 @@ setup(
     author_email='pete@ozmartians.com',
     description='''tv-release.net link scraper integrated with real-debrid to unrestrict links + supporting
                    Aria2 RPC Daemon (windows/linux), pyLoad (windows/linux), Internet Download Manager (windows only).
-                   A built-in download accelerator is also available by default.''',
+                   A built-in downloader is the default setting.''',
     long_description=get_description(),
     url='https://github.com/ozmartian/tvlinker',
     license='GPLv3+',
-
     packages=['tvlinker'],
-
     package_dir={'tvlinker': '.'},
-
     setup_requires=['setuptools >= 28.1.0'],
-
-    install_requires=['PyQt5 >= 5.7', 'beautifulsoup4 >= 4.5.1'],
-
-    package_data={ 'tvlinker': ['tvlinker.ini'] },
-
-    entry_points={
-        'gui_scripts': [
-            'tvlinker = tvlinker.tvlinker:main'
-        ]
-    },
-
+    install_requires=['PyQt5 >= 5.7', 'beautifulsoup4 >= 4.5.1', 'lxml >= 3.6.4'],
+    package_data={'tvlinker': ['tvlinker.ini']},
+    entry_points={'gui_scripts': ['tvlinker = tvlinker.tvlinker:main']},
+    keywords='tvlinker scraping tv-release filesharing',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: X11 Applications :: Qt',
@@ -61,14 +50,9 @@ setup(
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
         'Topic :: Communications :: File Sharing',
-
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5'
-    ],
-    keywords='tvlinker scraping tv-release filesharing'
+    ]
 )
-
-if sys.platform != 'win32':
-    setup.install_requires.append('lxml >= 3.6.4')
