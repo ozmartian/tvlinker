@@ -3,7 +3,7 @@
 
 import sys
 
-from PyQt5.QtCore import QSettings, Qt, pyqtSlot
+from PyQt5.QtCore import QSettings, Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QCloseEvent, QIcon, QPixmap
 from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
                              QFormLayout, QGroupBox, QHBoxLayout, QLabel,
@@ -17,6 +17,7 @@ class Settings(QDialog):
         self.settings = settings
         self.setWindowModality(Qt.ApplicationModal | Qt.WindowModal)
         self.tab_general = GeneralTab(self.settings)
+        self.tab_general.dlmanagerChanged.connect(self.adjust_size)
         self.tab_favorites = FavoritesTab(self.settings)
         tabs = QTabWidget()
         tabs.addTab(self.tab_general, 'General')
@@ -30,6 +31,13 @@ class Settings(QDialog):
         self.setLayout(layout)
         self.setWindowTitle('%s Settings' % qApp.applicationName())
         self.setWindowIcon(QIcon(self.parent.get_path('images/settings.png')))
+
+    @pyqtSlot()
+    def adjust_size(self) -> None:
+        qApp.processEvents()
+        self.tab_general.adjustSize()
+        qApp.processEvents()
+        self.adjustSize()
 
     def save_settings(self) -> None:
         self.tab_general.save()
@@ -45,6 +53,9 @@ class Settings(QDialog):
 
 
 class GeneralTab(QWidget):
+
+    dlmanagerChanged = pyqtSignal()
+
     def __init__(self, settings: QSettings, parent=None):
         super(GeneralTab, self).__init__(parent)
         self.settings = settings
@@ -195,10 +206,11 @@ class GeneralTab(QWidget):
             directdl_label.setStyleSheet('font-weight:300; text-align:center;')
             directdl_label.setAlignment(Qt.AlignCenter)
             self.dlmanagersettings_formLayout.addWidget(directdl_label)
-        qApp.processEvents()
+        # qApp.processEvents()
         self.update_dlmanager_logo()
-        self.adjustSize()
-        self.raise_()
+        self.dlmanagerChanged.emit()
+        # self.adjustSize()
+        # self.raise_()
 
     def clear_layout(self, layout: QFormLayout = None) -> None:
         if layout is None:
