@@ -4,10 +4,10 @@
 import sys
 
 from PyQt5.QtCore import QSettings, Qt, pyqtSlot
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QCloseEvent, QIcon, QPixmap
 from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
                              QFormLayout, QGroupBox, QHBoxLayout, QLabel,
-                             QLineEdit, QSizePolicy, qApp)
+                             QLineEdit, QSizePolicy, QTabWidget, QVBoxLayout, QWidget, qApp)
 
 
 class Settings(QDialog):
@@ -16,12 +16,38 @@ class Settings(QDialog):
         self.parent = parent
         self.settings = settings
         self.setWindowModality(Qt.ApplicationModal | Qt.WindowModal)
-        self.setLayout(self.init_form())
-        self.update_dlmanager_form(self.dlmanager_comboBox.currentIndex())
+        self.tab_general = GeneralTab(self.settings)
+        self.tab_favorites = FavoritesTab(self.settings)
+        tabs = QTabWidget()
+        tabs.addTab(self.tab_general, 'General')
+        tabs.addTab(self.tab_favorites, 'Favorites')
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close, Qt.Horizontal, self)
+        button_box.accepted.connect(self.save_settings)
+        button_box.rejected.connect(self.close)
+        layout = QVBoxLayout()
+        layout.addWidget(tabs)
+        layout.addWidget(button_box)
+        self.setLayout(layout)
         self.setWindowTitle('%s Settings' % qApp.applicationName())
         self.setWindowIcon(QIcon(self.parent.get_path('images/settings.png')))
 
-    def init_form(self) -> QFormLayout:
+    def save_settings(self) -> None:
+        self.tab_general.save()
+        self.tab_favorites.save()
+        self.parent.init_settings()
+        self.close()
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self.tab_general.deleteLater()
+        self.tab_favorites.deleteLater()
+        self.deleteLater()
+        super(QDialog, self).closeEvent(event)
+
+
+class GeneralTab(QWidget):
+    def __init__(self, settings: QSettings, parent=None):
+        super(GeneralTab, self).__init__(parent)
+        self.settings = settings
         generalGroup = QGroupBox()
         general_formLayout = QFormLayout()
         self.sourceUrl_lineEdit = QLineEdit(self, text=self.settings.value('source_url'))
@@ -62,14 +88,14 @@ class Settings(QDialog):
                                        <table border="0" cellspacing="0" cellpadding="2">
                                            <tr valign="middle" align="left">
                                               <td>
-                                                  <img src="%s" style="width:128px; height:26px;" />
+                                                  <img src=":assets/images/realdebrid.png" style="width:128px; height:26px;" />
                                                </td>
                                                <td>
                                                    API Token:
                                                </td>
                                            </tr>
                                            %s
-                                       </table>''' % (self.parent.get_path('images/realdebrid.png'), realdebrid_apitoken_link))
+                                       </table>''' % realdebrid_apitoken_link)
         self.realdebridtoken_lineEdit = QLineEdit(self, text=self.settings.value('realdebrid_apitoken'), alignment=Qt.AlignVCenter)
         self.realdebridtoken_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         realdebrid_formLayout.addRow(realdebrid_label, self.realdebridtoken_lineEdit)
@@ -102,21 +128,18 @@ class Settings(QDialog):
         self.dlmanagersettingsGroup = QGroupBox()
         self.dlmanagersettingsGroup.setLayout(self.dlmanagersettings_formLayout)
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close, Qt.Horizontal, self)
-        button_box.accepted.connect(self.save_settings)
-        button_box.rejected.connect(self.close)
-
         formLayout = QFormLayout()
         formLayout.addWidget(generalGroup)
         formLayout.addWidget(debridGroup)
         formLayout.addRow(dlmanagerGroup)
         formLayout.addRow(self.dlmanagersettingsGroup)
-        formLayout.addRow(button_box)
-        return formLayout
+
+        self.update_dlmanager_form(self.dlmanager_comboBox.currentIndex())
+
+        self.setLayout(formLayout)
 
     def update_dlmanager_logo(self):
-        self.dlmanager_logo.setPixmap(QPixmap(self.parent.get_path('images/%s.png'
-                                                                   % self.dlmanager_comboBox.currentText().lower())))
+        self.dlmanager_logo.setPixmap(QPixmap(':assets/images/%s.png' % self.dlmanager_comboBox.currentText().lower()))
 
     @pyqtSlot(int)
     def update_dlmanager_form(self, index: int) -> None:
@@ -182,13 +205,11 @@ class Settings(QDialog):
             layout = self.dlmanagersettings_formLayout
         while layout.count():
             child = layout.takeAt(0)
-            if child.widget() is not None:
-                child.widget().deleteLater()
+            if child.widget() is not None:child.widget().deleteLater()
             elif child.layout() is not None:
                 self.clear_layout(child.layout())
 
-    @pyqtSlot()
-    def save_settings(self) -> None:
+    def save(self) -> None:
         self.settings.setValue('source_url', self.sourceUrl_lineEdit.text())
         self.settings.setValue('user_agent', self.useragent_lineEdit.text())
         self.settings.setValue('dl_pagecount', self.dlpagecount_comboBox.currentText())
@@ -206,5 +227,13 @@ class Settings(QDialog):
             self.settings.setValue('pyload_password', self.pyloadpass_lineEdit.text())
         elif self.dlmanager_comboBox.currentText() == 'IDM':
             self.settings.setValue('idm_exe_path', self.idmexepath_lineEdit.text())
-        self.parent.init_settings()
-        self.close()
+
+
+class FavoritesTab(QWidget):
+    def __init__(self, settings: QSettings, parent=None):
+        super(FavoritesTab, self).__init__(parent)
+        self.settings = settings
+        pass
+
+    def save(self) -> None:
+        pass

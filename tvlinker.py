@@ -9,8 +9,8 @@ import re
 import sys
 from urllib.parse import quote_plus
 
-from PyQt5.QtCore import (QDir, QFile, QFileInfo, QJsonDocument, QModelIndex,
-                          QSettings, QSize, QStandardPaths, Qt, QTextStream, QUrl, pyqtSlot)
+from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex, QSettings,
+                          QSize, QStandardPaths, Qt, QTextStream, QUrl, pyqtSlot)
 from PyQt5.QtGui import (QCloseEvent, QColor, QDesktopServices,
                          QFont, QFontDatabase, QIcon, QPalette, QPixmap)
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
@@ -19,11 +19,11 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, qApp)
-from tvlinker.hosters import HosterLinks
-from tvlinker.pyload import PyloadConnection, PyloadConfig
-from tvlinker.settings import Settings
-from tvlinker.threads import (HostersThread, ScrapeThread, Aria2Thread, DownloadThread)
-import tvlinker.assets
+from hosters import HosterLinks
+from pyload import PyloadConnection, PyloadConfig
+from settings import Settings
+from threads import (HostersThread, ScrapeThread, Aria2Thread, DownloadThread)
+import assets
 
 
 def get_version(filename='__init__.py'):
