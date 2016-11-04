@@ -126,13 +126,11 @@ class GeneralTab(QWidget):
         self.dlmanager_comboBox.currentIndexChanged.connect(self.update_dlmanager_form)
         dlmanager_formLayout.addRow('Download Manager:', self.dlmanager_comboBox)
         dlmanager_layout = QHBoxLayout()
-        dlmanager_layout.addStretch(1)
         dlmanager_layout.addLayout(dlmanager_formLayout)
         self.dlmanager_logo = QLabel()
         self.dlmanager_logo.setAlignment(Qt.AlignLeft)
         self.dlmanager_logo.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         dlmanager_layout.addWidget(self.dlmanager_logo)
-        dlmanager_layout.addStretch(1)
         dlmanagerGroup.setLayout(dlmanager_layout)
 
         self.update_dlmanager_logo()

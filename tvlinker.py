@@ -146,6 +146,7 @@ class TVLinker(QDialog):
                                           clicked=self.refresh_links)
         self.settings_button = QPushButton(parent=self, flat=True, icon=QIcon(self.get_path('images/menu.png')),
                                            toolTip='Menu', cursor=Qt.PointingHandCursor)
+        self.settings_button.setIconSize(QSize(26, 22))
         self.settings_button.setMenu(self.settings_menu())
         layout = QHBoxLayout()
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
