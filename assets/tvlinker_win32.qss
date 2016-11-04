@@ -1,5 +1,6 @@
 * {
     font-family: 'Open Sans';
+    font-size: 10pt;
 }
 
 QHeaderView::section, QTableCornerButton::section {
@@ -34,6 +35,6 @@ QTableView::item:selected {
 QLabel#totals {
     margin-top: 6px;
     color: #65426D;
-    /* font-size: 11pt; */
+    /* font-size: 10pt; */
     border: none;
 }

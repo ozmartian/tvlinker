@@ -6,7 +6,7 @@ import sys
 from PyQt5.QtCore import QSettings, Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QCloseEvent, QIcon, QPixmap
 from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
-                             QFormLayout, QGroupBox, QHBoxLayout, QLabel,
+                             QFormLayout, QFrame, QGroupBox, QHBoxLayout, QLabel,
                              QLineEdit, QSizePolicy, QTabWidget, QVBoxLayout, QWidget, qApp)
 
 
@@ -60,7 +60,7 @@ class GeneralTab(QWidget):
         super(GeneralTab, self).__init__(parent)
         self.settings = settings
         generalGroup = QGroupBox()
-        general_formLayout = QFormLayout()
+        general_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
         self.sourceUrl_lineEdit = QLineEdit(self, text=self.settings.value('source_url'))
         self.sourceUrl_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.sourceUrl_lineEdit.setMinimumWidth(500)
@@ -126,11 +126,13 @@ class GeneralTab(QWidget):
         self.dlmanager_comboBox.currentIndexChanged.connect(self.update_dlmanager_form)
         dlmanager_formLayout.addRow('Download Manager:', self.dlmanager_comboBox)
         dlmanager_layout = QHBoxLayout()
+        dlmanager_layout.addStretch(1)
         dlmanager_layout.addLayout(dlmanager_formLayout)
         self.dlmanager_logo = QLabel()
         self.dlmanager_logo.setAlignment(Qt.AlignLeft)
         self.dlmanager_logo.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         dlmanager_layout.addWidget(self.dlmanager_logo)
+        dlmanager_layout.addStretch(1)
         dlmanagerGroup.setLayout(dlmanager_layout)
 
         self.update_dlmanager_logo()
@@ -206,11 +208,8 @@ class GeneralTab(QWidget):
             directdl_label.setStyleSheet('font-weight:300; text-align:center;')
             directdl_label.setAlignment(Qt.AlignCenter)
             self.dlmanagersettings_formLayout.addWidget(directdl_label)
-        # qApp.processEvents()
         self.update_dlmanager_logo()
         self.dlmanagerChanged.emit()
-        # self.adjustSize()
-        # self.raise_()
 
     def clear_layout(self, layout: QFormLayout = None) -> None:
         if layout is None:
@@ -245,6 +244,11 @@ class FavoritesTab(QWidget):
     def __init__(self, settings: QSettings, parent=None):
         super(FavoritesTab, self).__init__(parent)
         self.settings = settings
+        faves_content = QLabel(pixmap=QPixmap(':assets/images/comingsoon.png'), alignment=Qt.AlignCenter)
+        faves_content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        faves_layout = QVBoxLayout()
+        faves_layout.addWidget(faves_content)
+        self.setLayout(faves_layout)
         pass
 
     def save(self) -> None:

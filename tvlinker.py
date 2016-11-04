@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -97,10 +98,12 @@ class TVLinker(QDialog):
         self.start_scraping()
 
     def init_stylesheet(self) -> None:
+        qss_stylesheet = '%s.qss' % qApp.applicationName().lower()
         if sys.platform == 'win32':
             qApp.setStyle(FixedSettings.applicationStyle)
+            qss_stylesheet = '%s_win32.qss' % qApp.applicationName().lower()
         QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
-        qss = QFile(self.get_path('%s.qss' % qApp.applicationName().lower()))
+        qss = QFile(':assets/%s' % qss_stylesheet)
         qss.open(QFile.ReadOnly | QFile.Text)
         stream = QTextStream(qss)
         qApp.setStyleSheet(stream.readAll())
@@ -186,7 +189,7 @@ class TVLinker(QDialog):
         return self.table
 
     def init_metabar(self) -> QHBoxLayout:
-        self.meta_template = '<div>Total number of links retrieved: <b>%s</b></div>'
+        self.meta_template = 'Total number of links retrieved: <b>%s</b>'
         self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks),
                                      visible=False)
         palette = self.progress.palette()

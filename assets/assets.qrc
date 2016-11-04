@@ -2,6 +2,7 @@
   <qresource>
     <file>assets/fonts/OpenSans.ttf</file>
     <file>assets/images/aria2.png</file>
+    <file>assets/images/comingsoon.png</file>
     <file>assets/images/copy_icon.png</file>
     <file>assets/images/direct.png</file>
     <file>assets/images/down_arrow.png</file>
@@ -24,5 +25,6 @@
     <file>assets/images/up_arrow.png</file>
     <file>assets/images/watermark.png</file>
     <file>assets/tvlinker.qss</file>
+    <file>assets/tvlinker_win32.qss</file>
   </qresource>
 </RCC>
