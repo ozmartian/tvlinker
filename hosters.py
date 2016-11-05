@@ -12,10 +12,10 @@ class HosterLinks(QDialog):
     downloadLink = pyqtSignal(str)
     copyLink = pyqtSignal(str)
 
-    def __init__(self, parent, f=Qt.Window | Qt.WindowStaysOnTopHint):
+    def __init__(self, parent, f=Qt.Dialog):
         super(QDialog, self).__init__(parent, f)
         self.parent = parent
-        self.setWindowModality(Qt.ApplicationModal | Qt.WindowModal)
+        self.setWindowModality(Qt.ApplicationModal)
         self.setStyle(QStyleFactory.create('Fusion'))
         self.hosters = []
         self.setContentsMargins(20, 20, 20, 20)

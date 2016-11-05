@@ -47,10 +47,10 @@ class FixedSettings:
 
 
 class DirectDownload(QDialog):
-    def __init__(self, parent, f=Qt.Window | Qt.WindowStaysOnTopHint):
+    def __init__(self, parent, f=Qt.Dialog):
         super(QDialog, self).__init__(parent, f)
         self.parent = parent
-        self.setWindowModality(Qt.ApplicationModal | Qt.WindowModal)
+        self.setWindowModality(Qt.ApplicationModal)
         self.setMinimumWidth(485)
         self.setContentsMargins(20, 20, 20, 20)
         layout = QVBoxLayout()

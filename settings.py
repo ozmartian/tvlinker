@@ -11,11 +11,11 @@ from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
 
 
 class Settings(QDialog):
-    def __init__(self, parent, settings: QSettings, f=Qt.Window | Qt.WindowStaysOnTopHint):
+    def __init__(self, parent, settings: QSettings, f=Qt.Dialog):
         super(QDialog, self).__init__(parent, f)
         self.parent = parent
         self.settings = settings
-        self.setWindowModality(Qt.ApplicationModal | Qt.WindowModal)
+        self.setWindowModality(Qt.ApplicationModal)
         self.tab_general = GeneralTab(self.settings)
         self.tab_general.dlmanagerChanged.connect(self.adjust_size)
         self.tab_favorites = FavoritesTab(self.settings)
