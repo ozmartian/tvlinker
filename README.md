@@ -1,7 +1,9 @@
 ![TVLinker](https://raw.githubusercontent.com/ozmartian/tvlinker/master/assets/images/tvlinker.png)
 <h2>TVLinker</h2>
 
-Qt5 based desktop widget for scraping and organising links from various download feeds/sites. 
+[![Build Status](https://travis-ci.org/ozmartian/tvlinker.svg?branch=master)](https://travis-ci.org/ozmartian/tvlinker)
+
+PyQt5 based desktop widget for scraping and organising links from various download feeds/sites. 
 
 Currently supporting tv-release.net link scraping together with integration with real-debrid link unrestrictor
 service via their API (NOTE: a valid real-debrid account and api_token is necessary for this to work).
