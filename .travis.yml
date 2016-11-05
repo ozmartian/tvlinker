@@ -1,31 +1,19 @@
 sudo: required
 os: linux
 language: python
-
 python:
-  - 3.5
-
+- 3.5
 notifications:
   email: false
-
 install:
-  - python3 setup.py bdist_wheel
-
+- python3 setup.py bdist_wheel
 script: echo "Less is more.."
-
-# deploy:
-#   provider: releases
-#   api_key: "GITHUB OAUTH TOKEN"
-#   file: "FILE TO UPLOAD"
-#   skip_cleanup: true
-#   on:
-#     tags: true
-
-# deploy:
-#   provider: pypi
-#   user: ozmartian
-#   password:
-#     secure: my_secure_password
-#   on:
-#     tags: true
-#     branch: master
+deploy:
+  provider: pypi
+  user: ozmartian
+  password:
+    secure: JkN0BAAiLAGJewde9xW3eqjctSeOf4rqz7UxJKAfRVeE//QH3UEpQBDBXjQ0U63uIvLf+gjnhwfSv2gdQ7hBBI8QJFp3tAtTnDalZnziJzjL5sdFJypoWGFlDGGgXUvdE1J+GRzEd7nWZf3+g5wfNLkYlSLMmoMsGkGXlvepUxAnEFgocfZDexWBTO5jcgyUt3AiEMA+zpWluT2BHs5yqny7sAGVoJU99FdcTa2eonRU+0o2dDsiY5sRX8eLz9ioWxky+2mFC1uSDNpHEFLuftZPx8pE5XBW5LPZjloLLDtq31IEYcPY3y+GbfZ9ZiP0Dkr13/fVk7bPWglsivhvQRdoKp+PmfBUOQ8ocWUCJcCJpNQ3QJSgI9z/bSD0q5BI7Vbi97R/TlgXit1eGYGUDkKvB4hs+RFR+dvxDgvc/kNz8zCo/8Ptq1GK6PLzRGu+qpHJUBHRf3bCOP4orOGnJ8/im+st+mCzGSaKRHSFajTbRyAvZZljXaH9a/WXhDUOo0eyFlFKpf7lgEgsbTd/glEre4hrpRNtZgVbNRjm3feCXnJJ1NxTe9qc488Ul7EX3Z/Vd5Q0W43d/uUl3AcWeC72KAzztXBAmezZYKAPFSZcWTsK+I9i01m8Xuh5e9Qt8ERZfhT1TabWNcsEXHs0M1lEnNdxzPzaeV1op0IYNok=
+  on:
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: ozmartian/tvlinker
