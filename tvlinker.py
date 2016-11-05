@@ -100,7 +100,6 @@ class TVLinker(QDialog):
     def init_stylesheet(self) -> None:
         qss_stylesheet = '%s.qss' % qApp.applicationName().lower()
         if sys.platform == 'win32':
-            qApp.setStyle(FixedSettings.applicationStyle)
             qss_stylesheet = '%s_win32.qss' % qApp.applicationName().lower()
         QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
         qss = QFile(':assets/%s' % qss_stylesheet)
@@ -144,10 +143,11 @@ class TVLinker(QDialog):
         self.refresh_button = QPushButton(parent=self, flat=False, text='Refresh', cursor=Qt.PointingHandCursor,
                                           toolTip='Refresh', icon=QIcon(self.get_path('images/refresh.png')),
                                           clicked=self.refresh_links)
-        self.settings_button = QPushButton(parent=self, flat=True, icon=QIcon(self.get_path('images/menu.png')),
-                                           toolTip='Menu', cursor=Qt.PointingHandCursor)
-        self.settings_button.setIconSize(QSize(26, 22))
+        menu_icon = QPixmap(self.get_path('images/menu.png'))
+        self.settings_button = QPushButton(parent=self, flat=True, toolTip='Menu', cursor=Qt.PointingHandCursor,
+                                            icon=QIcon(menu_icon.scaledToHeight(18, Qt.SmoothTransformation)))
         self.settings_button.setMenu(self.settings_menu())
+        self.settings_button.setIconSize(QSize(21, 18))
         layout = QHBoxLayout()
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
         layout.addWidget(self.search_field)
@@ -283,7 +283,7 @@ class TVLinker(QDialog):
             if self.cols == 2:
                 table_item.setFont(QFont('Open Sans', weight=QFont.DemiBold))
                 table_item.setText('  ' + table_item.text())
-            elif self.cols == 3:
+            elif self.cols in (0, 3):
                 table_item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(self.rows, self.cols, table_item)
             self.update_metabar()
@@ -297,7 +297,7 @@ class TVLinker(QDialog):
     @pyqtSlot(QModelIndex)
     def show_hosters(self, index: QModelIndex) -> bool:
         qApp.setOverrideCursor(Qt.BusyCursor)
-        self.hosters_win = HosterLinks(parent=self)
+        self.hosters_win = HosterLinks(parent=self, title=self.table.item(self.table.currentRow(), 2).text())
         self.hosters_win.downloadLink.connect(self.download_link)
         self.hosters_win.copyLink.connect(self.copy_download_link)
         self.hosters_win.show()
@@ -411,6 +411,8 @@ class TVLinker(QDialog):
 
 
 def main():
+    if sys.platform == 'win32':
+        qApp.setStyle(FixedSettings.applicationStyle)
     app = QApplication(sys.argv)
     app.setApplicationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)

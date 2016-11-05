@@ -12,14 +12,15 @@ class HosterLinks(QDialog):
     downloadLink = pyqtSignal(str)
     copyLink = pyqtSignal(str)
 
-    def __init__(self, parent, f=Qt.Dialog):
+    def __init__(self, parent, title=None, f=Qt.Dialog):
         super(QDialog, self).__init__(parent, f)
         self.parent = parent
+        self.title = title
         self.setWindowModality(Qt.ApplicationModal)
         self.setStyle(QStyleFactory.create('Fusion'))
         self.hosters = []
-        self.setContentsMargins(20, 20, 20, 20)
-        self.layout = QVBoxLayout(spacing=25)
+        self.setContentsMargins(20, 10, 20, 20)
+        self.layout = QVBoxLayout(spacing=10)
         self.setLayout(self.layout)
         self.copy_icon = QIcon(self.parent.get_path('images/copy_icon.png'))
         self.open_icon = QIcon(self.parent.get_path('images/open_icon.png'))
@@ -35,7 +36,9 @@ class HosterLinks(QDialog):
         busy_label = QLabel('Retrieving hoster links...', alignment=Qt.AlignCenter)
         busy_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         busy_indicator = QProgressBar(parent=self, minimum=0, maximum=0)
-        self.layout.setSpacing(10)
+        if self.title is not None:
+            self.layout.addWidget(QLabel('<div align="center"><h3>%s</h3></div>' % self.title))
+            self.layout.addSpacing(10)
         self.layout.addWidget(busy_label)
         self.layout.addWidget(busy_indicator)
         self.setMinimumWidth(485)
@@ -61,6 +64,9 @@ class HosterLinks(QDialog):
     def show_hosters(self, hosters: list) -> None:
         self.hosters = hosters
         self.clear_layout()
+        if self.title is not None:
+            self.layout.addWidget(QLabel('<div align="center"><h3>%s</h3></div>' % self.title))
+            self.layout.addSpacing(10)
         index = 0
         for hoster in hosters:
             hoster_logo = QLabel(pixmap=QPixmap(self.parent.get_path('images/hoster_%s' % QUrl(hoster[0]).fileName())),
