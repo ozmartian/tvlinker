@@ -1,8 +1,8 @@
 #!/usr/bin/env xdg-open
 [Desktop Entry]
-Categories=Qt;KDE;Network;
-Comment=Link scraper and searcher for tv-release.net on your desktop
-Exec=python3 /home/ozmartian/Projects/tvlinker/tvlinker.py
+Categories=Qt;KDE;AudioVideo;
+Comment=tv-release.net link scraper, real-debrid
+Exec=/usr/bin/tvlinker
 GenericName=TVLinker
 Icon=tvlinker
 Keywords=scraper;tv;tvrelease;downloads;beautifulsoup;qt;python;pyqt;

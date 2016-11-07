@@ -19,11 +19,11 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, qApp)
-from hosters import HosterLinks
-from pyload import PyloadConnection, PyloadConfig
-from settings import Settings
-from threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
-import assets
+from tvlinker.hosters import HosterLinks
+from tvlinker.pyload import PyloadConnection, PyloadConfig
+from tvlinker.settings import Settings
+from tvlinker.threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
+import tvlinker.assets
 
 
 def get_version(filename='__init__.py'):
@@ -68,7 +68,7 @@ class DirectDownload(QDialog):
     def update_progress_label(self, progress_txt: str) -> None:
         self.progress_label.setText(progress_txt)
         qApp.processEvents()
-        self.ensurePolished()
+        self.adjustSize()
 
     @pyqtSlot()
     def download_complete(self) -> None:
@@ -101,7 +101,7 @@ class TVLinker(QDialog):
         if sys.platform == 'win32':
             qss_stylesheet = '%s_win32.qss' % qApp.applicationName().lower()
         QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
-        qss = QFile('assets/%s' % qss_stylesheet)
+        qss = QFile(':assets/%s' % qss_stylesheet)
         qss.open(QFile.ReadOnly | QFile.Text)
         stream = QTextStream(qss)
         qApp.setStyleSheet(stream.readAll())
@@ -359,13 +359,14 @@ class TVLinker(QDialog):
                                     'The download link has been queued in IDM.', QMessageBox.Ok)
         else:
             dlpath, _ = QFileDialog.getSaveFileName(self, 'Save File', link.split('/')[-1])
-            self.directdl_win = DirectDownload(self)
-            self.directdl = DownloadThread(link_url=link, dl_path=dlpath)
-            self.directdl.dlComplete.connect(self.directdl_win.download_complete)
-            self.directdl.dlProgress.connect(self.directdl_win.update_progress)
-            self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
-            self.directdl.start()
-            self.directdl_win.show()
+            if os.path.exists(dlpath):
+                self.directdl_win = DirectDownload(self)
+                self.directdl = DownloadThread(link_url=link, dl_path=dlpath)
+                self.directdl.dlComplete.connect(self.directdl_win.download_complete)
+                self.directdl.dlProgress.connect(self.directdl_win.update_progress)
+                self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
+                self.directdl.start()
+                self.directdl_win.show()
 
     def open_pyload(self):
         QDesktopServices.openUrl(QUrl(self.pyload_config.host))
