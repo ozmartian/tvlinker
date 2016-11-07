@@ -79,7 +79,7 @@ class GeneralTab(QWidget):
         generalGroup.setLayout(general_formLayout)
 
         debridGroup = QGroupBox()
-        realdebrid_formLayout = QFormLayout()
+        realdebrid_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
         realdebrid_apitoken_link = '''<tr>
                                         <td colspan="2" align="right">
                                             <a href="https://real-debrid.com/apitoken" title="https://real-debrid.com/apitoken" target="_blank">
@@ -113,7 +113,7 @@ class GeneralTab(QWidget):
         debridGroup.setLayout(realdebrid_formLayout)
 
         dlmanagerGroup = QGroupBox()
-        dlmanager_formLayout = QFormLayout()
+        dlmanager_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
         dlmanager_formLayout.setAlignment(Qt.AlignVCenter)
         self.dlmanager_comboBox = QComboBox(self, editable=False, cursor=Qt.PointingHandCursor)
         self.dlmanager_comboBox.setAutoFillBackground(True)
@@ -135,7 +135,7 @@ class GeneralTab(QWidget):
 
         self.update_dlmanager_logo()
 
-        self.dlmanagersettings_formLayout = QFormLayout()
+        self.dlmanagersettings_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
         self.dlmanagersettingsGroup = QGroupBox()
         self.dlmanagersettingsGroup.setLayout(self.dlmanagersettings_formLayout)
 
