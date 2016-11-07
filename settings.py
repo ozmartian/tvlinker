@@ -11,8 +11,8 @@ from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
 
 
 class Settings(QDialog):
-    def __init__(self, parent, settings: QSettings, f=Qt.Dialog):
-        super(QDialog, self).__init__(parent, f)
+    def __init__(self, parent, settings: QSettings, f=Qt.WindowCloseButtonHint):
+        super(Settings, self).__init__(parent, f)
         self.parent = parent
         self.settings = settings
         self.setWindowModality(Qt.ApplicationModal)

@@ -12,7 +12,7 @@ class HosterLinks(QDialog):
     downloadLink = pyqtSignal(str)
     copyLink = pyqtSignal(str)
 
-    def __init__(self, parent, title=None, f=Qt.Dialog):
+    def __init__(self, parent, title=None, f=Qt.Dialog | Qt.WindowCloseButtonHint):
         super(QDialog, self).__init__(parent, f)
         self.parent = parent
         self.title = title

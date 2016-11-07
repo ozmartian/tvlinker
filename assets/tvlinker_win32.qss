@@ -4,9 +4,9 @@
 }
 
 QHeaderView::section, QTableCornerButton::section {
-    background-color: #65426D;
+    background-color: #6a687d;
     color: #FFF;
-    font-weight: bold;
+    font-weight: 800;
     font-size: -1;
     padding: 4px;
 }
@@ -24,7 +24,7 @@ QTableView {
     margin-bottom: 0;
     background: #FFF url(:assets/images/watermark.png) no-repeat center center;
     background-attachment: fixed;
-    alternate-background-color: rgba(233, 222, 235, 0.3);
+    alternate-background-color: rgba(106, 104, 125, 0.1);
 }
 
 QTableView::item:selected {

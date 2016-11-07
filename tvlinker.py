@@ -1,5 +1,4 @@
-
-#!/usr/bin/env python3
+#!/usr/bin/env pyton3
 # -*- coding: utf-8 -*-
 
 import codecs
@@ -20,17 +19,17 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, qApp)
-from tvlinker.hosters import HosterLinks
-from tvlinker.pyload import PyloadConnection, PyloadConfig
-from tvlinker.settings import Settings
-from tvlinker.threads import (HostersThread, ScrapeThread, Aria2Thread, DownloadThread)
-import tvlinker.assets
+from hosters import HosterLinks
+from pyload import PyloadConnection, PyloadConfig
+from settings import Settings
+from threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
+import assets
 
 
 def get_version(filename='__init__.py'):
     here = os.path.abspath(os.path.dirname(__file__))
     with codecs.open(os.path.join(here, filename), encoding='utf-8') as initfile:
-        for line in initfile.readlines():
+        for line in initfile.readlines():   
             m = re.match('__version__ *= *[\'](.*)[\']', line)
             if m:
                 return m.group(1)
@@ -74,14 +73,14 @@ class DirectDownload(QDialog):
     @pyqtSlot()
     def download_complete(self) -> None:
         qApp.restoreOverrideCursor()
-        QMessageBox.information(self.parent, 'Download complete...', QMessageBox.Ok)
+        QMessageBox.information(self.parent, 'Confirmation', 'The download is complete...', buttons=QMessageBox.Ok)
         self.close()
         self.deleteLater()
 
 
 class TVLinker(QDialog):
-    def __init__(self, parent=None, f=Qt.Window):
-        super(TVLinker, self).__init__(parent, f)
+    def __init__(self, parent=None):
+        super(TVLinker, self).__init__(parent)
         self.rows, self.cols = 0, 0
         self.init_stylesheet()
         layout = QVBoxLayout()
@@ -102,7 +101,7 @@ class TVLinker(QDialog):
         if sys.platform == 'win32':
             qss_stylesheet = '%s_win32.qss' % qApp.applicationName().lower()
         QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
-        qss = QFile(':assets/%s' % qss_stylesheet)
+        qss = QFile('assets/%s' % qss_stylesheet)
         qss.open(QFile.ReadOnly | QFile.Text)
         stream = QTextStream(qss)
         qApp.setStyleSheet(stream.readAll())
@@ -145,9 +144,8 @@ class TVLinker(QDialog):
                                           clicked=self.refresh_links)
         menu_icon = QPixmap(self.get_path('images/menu.png'))
         self.settings_button = QPushButton(parent=self, flat=True, toolTip='Menu', cursor=Qt.PointingHandCursor,
-                                            icon=QIcon(menu_icon.scaledToHeight(18, Qt.SmoothTransformation)))
+                                            icon=QIcon(menu_icon))
         self.settings_button.setMenu(self.settings_menu())
-        self.settings_button.setIconSize(QSize(21, 18))
         layout = QHBoxLayout()
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
         layout.addWidget(self.search_field)

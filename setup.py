@@ -40,7 +40,7 @@ setup(
     setup_requires=['setuptools >= 28.1.0'],
     install_requires=['PyQt5 >= 5.7', 'beautifulsoup4 >= 4.5.1'],
     extras_require={':sys_platform!="win32"': ['lxml >= 3.6.4']},
-    package_data={'tvlinker': ['tvlinker.ini']},
+    package_data={'tvlinker': ['tvlinker.ini', 'assets/images/tvlinker.ico', 'assets/images/tvlinker.png']},
     entry_points={'gui_scripts': ['tvlinker = tvlinker.tvlinker:main']},
     keywords='tvlinker scraping tv-release filesharing',
     classifiers=[
@@ -49,12 +49,8 @@ setup(
         'Intended Audience :: End Users/Desktop',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Natural Language :: English',
-        'Operating System :: Microsoft :: Windows',
-        'Operating System :: POSIX :: Linux',
+        'Operating System :: OS Independent',
         'Topic :: Communications :: File Sharing',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5'
     ]
 )
