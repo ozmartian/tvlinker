@@ -3,11 +3,11 @@
 
 import sys
 
-from PyQt5.QtCore import QSettings, Qt, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import QSettings, Qt, pyqtSlot
 from PyQt5.QtGui import QCloseEvent, QIcon, QPixmap
 from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
-                             QFormLayout, QFrame, QGroupBox, QHBoxLayout, QLabel,
-                             QLineEdit, QSizePolicy, QTabWidget, QVBoxLayout, QWidget, qApp)
+                             QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLayout,
+                             QLineEdit, QSizePolicy, QStackedLayout, QTabWidget, QVBoxLayout, QWidget, qApp)
 
 
 class Settings(QDialog):
@@ -17,7 +17,7 @@ class Settings(QDialog):
         self.settings = settings
         self.setWindowModality(Qt.ApplicationModal)
         self.tab_general = GeneralTab(self.settings)
-        self.tab_general.dlmanagerChanged.connect(self.adjust_size)
+        self.tab_general.dlmanagersettings_layout.currentChanged.connect(self.adjust_size)
         self.tab_favorites = FavoritesTab(self.settings)
         tabs = QTabWidget()
         tabs.addTab(self.tab_general, 'General')
@@ -26,9 +26,12 @@ class Settings(QDialog):
         button_box.accepted.connect(self.save_settings)
         button_box.rejected.connect(self.close)
         layout = QVBoxLayout()
+        layout.setSizeConstraint(QLayout.SetFixedSize)
         layout.addWidget(tabs)
         layout.addWidget(button_box)
+        
         self.setLayout(layout)
+
         self.setWindowTitle('%s Settings' % qApp.applicationName())
         self.setWindowIcon(QIcon(self.parent.get_path('images/settings.png')))
 
@@ -36,7 +39,6 @@ class Settings(QDialog):
     def adjust_size(self) -> None:
         qApp.processEvents()
         self.tab_general.adjustSize()
-        qApp.processEvents()
         self.adjustSize()
 
     def save_settings(self) -> None:
@@ -53,11 +55,8 @@ class Settings(QDialog):
 
 
 class GeneralTab(QWidget):
-
-    dlmanagerChanged = pyqtSignal()
-
-    def __init__(self, settings: QSettings, parent=None):
-        super(GeneralTab, self).__init__(parent)
+    def __init__(self, settings: QSettings):
+        super(GeneralTab, self).__init__()
         self.settings = settings
         generalGroup = QGroupBox()
         general_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
@@ -123,100 +122,89 @@ class GeneralTab(QWidget):
             self.dlmanager_comboBox.addItem('IDM')
         self.dlmanager_comboBox.setCurrentIndex(self.dlmanager_comboBox.findText(
             str(self.settings.value('download_manager')), Qt.MatchFixedString))
-        self.dlmanager_comboBox.currentIndexChanged.connect(self.update_dlmanager_form)
         dlmanager_formLayout.addRow('Download Manager:', self.dlmanager_comboBox)
         dlmanager_layout = QHBoxLayout()
         dlmanager_layout.addLayout(dlmanager_formLayout)
-        self.dlmanager_logo = QLabel()
-        self.dlmanager_logo.setAlignment(Qt.AlignLeft)
-        self.dlmanager_logo.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        dlmanager_layout.addWidget(self.dlmanager_logo)
         dlmanagerGroup.setLayout(dlmanager_layout)
 
-        self.update_dlmanager_logo()
+        directdl_label = QLabel('No settings available for built-in downloader')
+        directdl_label.setStyleSheet('font-weight:300; text-align:center;')
+        directdl_label.setAlignment(Qt.AlignCenter)
 
-        self.dlmanagersettings_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
-        self.dlmanagersettingsGroup = QGroupBox()
-        self.dlmanagersettingsGroup.setLayout(self.dlmanagersettings_formLayout)
+        self.aria2rpchost_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_host'))
+        self.aria2rpchost_lineEdit.setFixedWidth(350)
+        self.aria2rpcport_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_port'))
+        self.aria2rpcport_lineEdit.setFixedWidth(100)
+        self.aria2rpcsecret_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_secret'))
+        self.aria2rpcsecret_lineEdit.setFixedWidth(100)
+        self.aria2rpcuser_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_username'))
+        self.aria2rpcuser_lineEdit.setFixedWidth(150)
+        self.aria2rpcpass_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_password'))
+        self.aria2rpcpass_lineEdit.setFixedWidth(150)
+        aria2rpchost_infotext = QLabel('default: http://localhost')
+        aria2rpchost_infotext.setStyleSheet('font-weight:300;')
+        aria2rpchost_layout = QHBoxLayout()
+        aria2rpchost_layout.addWidget(self.aria2rpchost_lineEdit)
+        aria2rpchost_layout.addWidget(aria2rpchost_infotext)
+        aria2rpcport_infotext = QLabel('default: 6800')
+        aria2rpcport_infotext.setStyleSheet('font-weight:300;')
+        aria2rpcport_layout = QHBoxLayout()
+        aria2rpcport_layout.addWidget(self.aria2rpcport_lineEdit)
+        aria2rpcport_layout.addWidget(aria2rpcport_infotext)
+        aria2_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
+        aria2_formLayout.addRow('RPC Daemon Host:', aria2rpchost_layout)
+        aria2_formLayout.addRow('RPC Daemon Port:', aria2rpcport_layout)
+        aria2_formLayout.addRow('RPC Daemon Secret:', self.aria2rpcsecret_lineEdit)
+        aria2_formLayout.addRow('RPC Daemon Username:', self.aria2rpcuser_lineEdit)
+        aria2_formLayout.addRow('RPC Daemon Password:', self.aria2rpcpass_lineEdit)
+        aria2_settings = QWidget()
+        aria2_settings.setLayout(aria2_formLayout)
 
-        formLayout = QFormLayout()
-        formLayout.addWidget(generalGroup)
-        formLayout.addWidget(debridGroup)
-        formLayout.addRow(dlmanagerGroup)
-        formLayout.addRow(self.dlmanagersettingsGroup)
+        self.pyloadhost_lineEdit = QLineEdit(self, text=self.settings.value('pyload_host'))
+        self.pyloadhost_lineEdit.setFixedWidth(350)
+        self.pyloaduser_lineEdit = QLineEdit(self, text=self.settings.value('pyload_username'))
+        self.pyloaduser_lineEdit.setFixedWidth(150)
+        self.pyloadpass_lineEdit = QLineEdit(self, text=self.settings.value('pyload_password'))
+        self.pyloadpass_lineEdit.setFixedWidth(150)
+        pyloadhost_infotext = QLabel('default: http://localhost:8000')
+        pyloadhost_infotext.setStyleSheet('font-weight:300;')
+        pyloadhost_layout = QHBoxLayout()
+        pyloadhost_layout.addWidget(self.pyloadhost_lineEdit)
+        pyloadhost_layout.addWidget(pyloadhost_infotext)
+        pyload_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
+        pyload_formLayout.addRow('pyLoad Host:', pyloadhost_layout)
+        pyload_formLayout.addRow('pyLoad Username:', self.pyloaduser_lineEdit)
+        pyload_formLayout.addRow('pyLoad Password:', self.pyloadpass_lineEdit)
+        pyload_settings = QWidget()
+        pyload_settings.setLayout(pyload_formLayout)
 
-        self.update_dlmanager_form(self.dlmanager_comboBox.currentIndex())
+        self.idmexepath_lineEdit = QLineEdit(self, text=self.settings.value('idm_exe_path'))
+        self.idmexepath_lineEdit.setFixedWidth(500)
+        idm_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
+        idm_formLayout.addRow('IDM Executable (EXE) Path:', self.idmexepath_lineEdit)
+        idm_settings = QWidget()
+        idm_settings.setLayout(idm_formLayout)
 
-        self.setLayout(formLayout)
+        self.dlmanagersettings_layout = QStackedLayout()
+        self.dlmanagersettings_layout.setSizeConstraint(QLayout.SetFixedSize)
+        self.dlmanagersettings_layout.addWidget(directdl_label)
+        self.dlmanagersettings_layout.addWidget(aria2_settings)
+        self.dlmanagersettings_layout.addWidget(pyload_settings)
+        self.dlmanagersettings_layout.addWidget(idm_settings)
+        self.dlmanagersettings_layout.setCurrentIndex(self.dlmanager_comboBox.currentIndex())
 
-    def update_dlmanager_logo(self):
-        self.dlmanager_logo.setPixmap(QPixmap(':assets/images/%s.png' % self.dlmanager_comboBox.currentText().lower()))
+        self.dlmanager_comboBox.currentIndexChanged.connect(self.dlmanagersettings_layout.setCurrentIndex)
 
-    @pyqtSlot(int)
-    def update_dlmanager_form(self, index: int) -> None:
-        dlmanager = self.dlmanager_comboBox.itemText(index)
-        self.clear_layout()
-        if dlmanager == 'aria2':
-            self.aria2rpchost_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_host'))
-            self.aria2rpchost_lineEdit.setFixedWidth(350)
-            self.aria2rpcport_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_port'))
-            self.aria2rpcport_lineEdit.setFixedWidth(100)
-            self.aria2rpcsecret_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_secret'))
-            self.aria2rpcsecret_lineEdit.setFixedWidth(100)
-            self.aria2rpcuser_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_username'))
-            self.aria2rpcuser_lineEdit.setFixedWidth(150)
-            self.aria2rpcpass_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_password'))
-            self.aria2rpcpass_lineEdit.setFixedWidth(150)
-            aria2rpchost_infotext = QLabel('default: http://localhost')
-            aria2rpchost_infotext.setStyleSheet('font-weight:300;')
-            aria2rpchost_layout = QHBoxLayout()
-            aria2rpchost_layout.addWidget(self.aria2rpchost_lineEdit)
-            aria2rpchost_layout.addWidget(aria2rpchost_infotext)
-            aria2rpcport_infotext = QLabel('default: 6800')
-            aria2rpcport_infotext.setStyleSheet('font-weight:300;')
-            aria2rpcport_layout = QHBoxLayout()
-            aria2rpcport_layout.addWidget(self.aria2rpcport_lineEdit)
-            aria2rpcport_layout.addWidget(aria2rpcport_infotext)
-            self.dlmanagersettings_formLayout.addRow('RPC Daemon Host:', aria2rpchost_layout)
-            self.dlmanagersettings_formLayout.addRow('RPC Daemon Port:', aria2rpcport_layout)
-            self.dlmanagersettings_formLayout.addRow('RPC Daemon Secret:', self.aria2rpcsecret_lineEdit)
-            self.dlmanagersettings_formLayout.addRow('RPC Daemon Username:', self.aria2rpcuser_lineEdit)
-            self.dlmanagersettings_formLayout.addRow('RPC Daemon Password:', self.aria2rpcpass_lineEdit)
-        elif dlmanager == 'pyLoad':
-            self.pyloadhost_lineEdit = QLineEdit(self, text=self.settings.value('pyload_host'))
-            self.pyloadhost_lineEdit.setFixedWidth(350)
-            self.pyloaduser_lineEdit = QLineEdit(self, text=self.settings.value('pyload_username'))
-            self.pyloaduser_lineEdit.setFixedWidth(150)
-            self.pyloadpass_lineEdit = QLineEdit(self, text=self.settings.value('pyload_password'))
-            self.pyloadpass_lineEdit.setFixedWidth(150)
-            pyloadhost_infotext = QLabel('default: http://localhost:8000')
-            pyloadhost_infotext.setStyleSheet('font-weight:300;')
-            pyloadhost_layout = QHBoxLayout()
-            pyloadhost_layout.addWidget(self.pyloadhost_lineEdit)
-            pyloadhost_layout.addWidget(pyloadhost_infotext)
-            self.dlmanagersettings_formLayout.addRow('pyLoad Host:', pyloadhost_layout)
-            self.dlmanagersettings_formLayout.addRow('pyLoad Username:', self.pyloaduser_lineEdit)
-            self.dlmanagersettings_formLayout.addRow('pyLoad Password:', self.pyloadpass_lineEdit)
-        elif dlmanager == 'IDM':
-            self.idmexepath_lineEdit = QLineEdit(self, text=self.settings.value('idm_exe_path'))
-            self.idmexepath_lineEdit.setFixedWidth(500)
-            self.dlmanagersettings_formLayout.addRow('IDM Executable (EXE) Path:', self.idmexepath_lineEdit)
-        elif dlmanager == 'built-in':
-            directdl_label = QLabel('No settings available for built-in downloader')
-            directdl_label.setStyleSheet('font-weight:300; text-align:center;')
-            directdl_label.setAlignment(Qt.AlignCenter)
-            self.dlmanagersettings_formLayout.addWidget(directdl_label)
-        self.update_dlmanager_logo()
-        self.dlmanagerChanged.emit()
+        dlmanagersettingsGroup = QGroupBox()
+        dlmanagersettingsGroup.setLayout(self.dlmanagersettings_layout)
 
-    def clear_layout(self, layout: QFormLayout = None) -> None:
-        if layout is None:
-            layout = self.dlmanagersettings_formLayout
-        while layout.count():
-            child = layout.takeAt(0)
-            if child.widget() is not None:child.widget().deleteLater()
-            elif child.layout() is not None:
-                self.clear_layout(child.layout())
+        tab_layout = QVBoxLayout()
+        tab_layout.addWidget(generalGroup)
+        tab_layout.addWidget(debridGroup)
+        tab_layout.addWidget(dlmanagerGroup)
+        tab_layout.addWidget(dlmanagersettingsGroup)
+
+        self.setLayout(tab_layout)
 
     def save(self) -> None:
         self.settings.setValue('source_url', self.sourceUrl_lineEdit.text())
@@ -239,8 +227,8 @@ class GeneralTab(QWidget):
 
 
 class FavoritesTab(QWidget):
-    def __init__(self, settings: QSettings, parent=None):
-        super(FavoritesTab, self).__init__(parent)
+    def __init__(self, settings: QSettings):
+        super(FavoritesTab, self).__init__()
         self.settings = settings
         faves_content = QLabel(pixmap=QPixmap(':assets/images/comingsoon.png'), alignment=Qt.AlignCenter)
         faves_content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)

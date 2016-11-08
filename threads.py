@@ -6,6 +6,7 @@ import os
 import sys
 from urllib.request import Request, urlopen
 
+import requests
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from bs4 import BeautifulSoup, FeatureNotFound
 
@@ -136,27 +137,28 @@ class DownloadThread(QThread):
         QThread.__init__(self)
         self.download_link = link_url
         self.download_path = dl_path
+        self.cancel_download = False
 
     def __del__(self) -> None:
         self.wait()
 
     def download_file(self) -> None:
-        conn = urlopen(self.download_link)
-        fileSize = int(conn.info()['Content-Length'])
-        fileName = os.path.basename(self.download_path)
+        req = requests.get(self.download_link, stream=True)
+        filesize = int(req.headers['Content-Length'])
+        filename = os.path.basename(self.download_path)
         downloadedChunk = 0
-        blockSize = 2048
-        with open(self.download_path, 'wb') as sura:
-            while True:
-                chunk = conn.read(blockSize)
-                if not chunk:
+        blockSize = 1024
+        with open(self.download_path, 'wb') as f:
+            for chunk in req.iter_content(chunk_size=blockSize):
+                if self.cancel_download or not chunk:
+                    req.close()
                     break
+                f.write(chunk)
                 downloadedChunk += len(chunk)
-                sura.write(chunk)
-                progress = float(downloadedChunk) / fileSize
+                progress = float(downloadedChunk) / filesize
                 self.dlProgress.emit(progress * 100)
-                progressTxt = '<b>Downloading {0}</b>:<br/>{1} [{2:.2%}] <b>of</b> {3} <b>bytes</b>.'\
-                    . format(fileName, downloadedChunk, progress, fileSize)
+                progressTxt = '<b>Downloading {0}</b>:<br/>{1} <b>of</b> {3} <b>bytes</b> [{2:.2%}]'\
+                    . format(filename, downloadedChunk, progress, filesize)
                 self.dlProgressTxt.emit(progressTxt)
         self.dlComplete.emit()
 

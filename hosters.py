@@ -3,8 +3,8 @@
 
 from PyQt5.QtCore import QUrl, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon, QPixmap
-from PyQt5.QtWidgets import (QBoxLayout, QButtonGroup, QDialog, QFrame, QHBoxLayout, QLabel, QProgressBar,
-                             QPushButton, QSizePolicy, QStyleFactory, QVBoxLayout, qApp)
+from PyQt5.QtWidgets import (QBoxLayout, QButtonGroup, QDialog, QFrame, QHBoxLayout, QLabel, QLayout,
+                             QProgressBar, QPushButton, QSizePolicy, QStyleFactory, QVBoxLayout, qApp)
 
 
 class HosterLinks(QDialog):
@@ -13,7 +13,7 @@ class HosterLinks(QDialog):
     copyLink = pyqtSignal(str)
 
     def __init__(self, parent, title=None, f=Qt.Dialog | Qt.WindowCloseButtonHint):
-        super(QDialog, self).__init__(parent, f)
+        super(HosterLinks, self).__init__(parent, f)
         self.parent = parent
         self.title = title
         self.setWindowModality(Qt.ApplicationModal)
@@ -21,6 +21,7 @@ class HosterLinks(QDialog):
         self.hosters = []
         self.setContentsMargins(20, 10, 20, 20)
         self.layout = QVBoxLayout(spacing=10)
+        self.layout.setSizeConstraint(QLayout.SetFixedSize)
         self.setLayout(self.layout)
         self.copy_icon = QIcon(self.parent.get_path('images/copy_icon.png'))
         self.open_icon = QIcon(self.parent.get_path('images/open_icon.png'))
@@ -94,8 +95,6 @@ class HosterLinks(QDialog):
             if index < len(hosters)-1:
                 self.layout.addWidget(self.get_separator())
             index += 1
-        qApp.processEvents()
-        self.adjustSize()
         qApp.restoreOverrideCursor()
 
     @pyqtSlot(int)

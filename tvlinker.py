@@ -10,20 +10,20 @@ import sys
 from urllib.parse import quote_plus
 
 from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex, QSettings,
-                          QSize, QStandardPaths, Qt, QTextStream, QUrl, pyqtSlot)
+                          QSize, QStandardPaths, Qt, QTextStream, QUrl, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import (QCloseEvent, QColor, QDesktopServices,
                          QFont, QFontDatabase, QIcon, QPalette, QPixmap)
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QComboBox, QDialog, QFileDialog, QHBoxLayout,
-                             QHeaderView, QLabel, QLineEdit, QMenu,
+                             QHeaderView, QLabel, QLayout, QLineEdit, QMenu,
                              QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
-                             QVBoxLayout, qApp)
-from tvlinker.hosters import HosterLinks
-from tvlinker.pyload import PyloadConnection, PyloadConfig
-from tvlinker.settings import Settings
-from tvlinker.threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
-import tvlinker.assets
+                             QVBoxLayout, QWidget, qApp)
+from hosters import HosterLinks
+from pyload import PyloadConnection, PyloadConfig
+from settings import Settings
+from threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
+import assets
 
 
 def get_version(filename='__init__.py'):
@@ -46,13 +46,17 @@ class FixedSettings:
 
 
 class DirectDownload(QDialog):
-    def __init__(self, parent, f=Qt.Dialog):
-        super(QDialog, self).__init__(parent, f)
+
+    cancelDownload = pyqtSignal()
+
+    def __init__(self, parent, f=Qt.WindowCloseButtonHint):
+        super(DirectDownload, self).__init__(parent, f)
         self.parent = parent
         self.setWindowModality(Qt.ApplicationModal)
         self.setMinimumWidth(485)
         self.setContentsMargins(20, 20, 20, 20)
         layout = QVBoxLayout()
+        layout.setSizeConstraint(QLayout.SetFixedSize)
         self.progress_label = QLabel(alignment=Qt.AlignCenter)
         self.progress = QProgressBar(self.parent, minimum=0, maximum=100)
         layout.addWidget(self.progress_label)
@@ -60,27 +64,32 @@ class DirectDownload(QDialog):
         self.setLayout(layout)
         self.setWindowTitle('Download Progress')
 
+    def closeEvent(self, event: QCloseEvent) -> None:
+        qApp.restoreOverrideCursor()
+        self.cancelDownload.emit()
+        super(DirectDownload, self).closeEvent(event)
+
     @pyqtSlot(int)
     def update_progress(self, progress: int) -> None:
         self.progress.setValue(progress)
 
     @pyqtSlot(str)
     def update_progress_label(self, progress_txt: str) -> None:
+        if self.isHidden():
+            self.show()
         self.progress_label.setText(progress_txt)
-        qApp.processEvents()
-        self.adjustSize()
 
     @pyqtSlot()
     def download_complete(self) -> None:
         qApp.restoreOverrideCursor()
-        QMessageBox.information(self.parent, 'Confirmation', 'The download is complete...', buttons=QMessageBox.Ok)
+        QMessageBox.information(self.parent, 'Confirmation', 'The download is complete...                    ',
+                                buttons=QMessageBox.Ok)
         self.close()
-        self.deleteLater()
 
 
-class TVLinker(QDialog):
-    def __init__(self, parent=None):
-        super(TVLinker, self).__init__(parent)
+class TVLinker(QWidget):
+    def __init__(self):
+        super(TVLinker, self).__init__()
         self.rows, self.cols = 0, 0
         self.init_stylesheet()
         layout = QVBoxLayout()
@@ -207,7 +216,7 @@ class TVLinker(QDialog):
     @pyqtSlot()
     def show_settings(self) -> None:
         settings_win = Settings(self, self.settings)
-        settings_win.show()
+        settings_win.exec_()
 
     def update_metabar(self) -> bool:
         rowcount = self.table.rowCount()
@@ -345,9 +354,7 @@ class TVLinker(QDialog):
             open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
             open_pyload.clicked.connect(self.open_pyload)
         elif self.download_manager == 'IDM':
-            import os
-            import shlex
-            import subprocess
+            import shlex, subprocess
             si = subprocess.STARTUPINFO()
             si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
@@ -359,14 +366,21 @@ class TVLinker(QDialog):
                                     'The download link has been queued in IDM.', QMessageBox.Ok)
         else:
             dlpath, _ = QFileDialog.getSaveFileName(self, 'Save File', link.split('/')[-1])
-            if os.path.exists(dlpath):
-                self.directdl_win = DirectDownload(self)
-                self.directdl = DownloadThread(link_url=link, dl_path=dlpath)
-                self.directdl.dlComplete.connect(self.directdl_win.download_complete)
-                self.directdl.dlProgress.connect(self.directdl_win.update_progress)
-                self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
-                self.directdl.start()
-                self.directdl_win.show()
+            if dlpath == '':
+                return
+            self.directdl_win = DirectDownload(parent=self)
+            self.directdl = DownloadThread(link_url=link, dl_path=dlpath)
+            self.directdl.dlComplete.connect(self.directdl_win.download_complete)
+            self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
+            self.directdl.dlProgress.connect(self.directdl_win.update_progress)
+            self.directdl_win.cancelDownload.connect(self.cancel_download)
+            self.directdl.start()
+
+    @pyqtSlot()
+    def cancel_download(self) -> None:
+        self.directdl.cancel_download = True
+        self.directdl.terminate()
+        self.directdl.deleteLater()
 
     def open_pyload(self):
         QDesktopServices.openUrl(QUrl(self.pyload_config.host))
