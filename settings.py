@@ -71,7 +71,7 @@ class GeneralTab(QWidget):
                                          cursor=Qt.PointingHandCursor)
         self.dlpagecount_comboBox.setAutoFillBackground(True)
         self.dlpagecount_comboBox.setFixedWidth(50)
-        self.dlpagecount_comboBox.addItems(('10', '20', '30', '40'))
+        self.dlpagecount_comboBox.addItems(('10', '20', '30', '40', '50'))
         self.dlpagecount_comboBox.setCurrentIndex(self.dlpagecount_comboBox.findText(
             str(self.settings.value('dl_pagecount')), Qt.MatchFixedString))
         general_formLayout.addRow('Default Page Count:', self.dlpagecount_comboBox)
