@@ -19,11 +19,11 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QWidget, qApp)
-from hosters import HosterLinks
-from pyload import PyloadConnection, PyloadConfig
-from settings import Settings
-from threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
-import assets
+from tvlinker.hosters import HosterLinks
+from tvlinker.pyload import PyloadConnection, PyloadConfig
+from tvlinker.settings import Settings
+from tvlinker.threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
+import tvlinker.assets
 
 
 def get_version(filename='__init__.py'):
