@@ -19,30 +19,11 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QWidget, qApp)
-from tvlinker.hosters import HosterLinks
-from tvlinker.pyload import PyloadConnection, PyloadConfig
-from tvlinker.settings import Settings
-from tvlinker.threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
-import tvlinker.assets
-
-
-def get_version(filename='__init__.py'):
-    here = os.path.abspath(os.path.dirname(__file__))
-    with codecs.open(os.path.join(here, filename), encoding='utf-8') as initfile:
-        for line in initfile.readlines():   
-            m = re.match('__version__ *= *[\'](.*)[\']', line)
-            if m:
-                return m.group(1)
-
-
-class FixedSettings:
-    applicationName = 'TVLinker'
-    applicationVersion = get_version()
-    applicationStyle = 'Fusion'
-    organizationDomain = 'http://tvlinker.ozmartians.com'
-    windowSize = QSize(1000, 750)
-    linksPerPage = 30
-    realdebrid_api_url = 'api.real-debrid.com'
+from hosters import HosterLinks
+from pyload import PyloadConnection, PyloadConfig
+from settings import Settings
+from threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
+import assets
 
 
 class DirectDownload(QDialog):
@@ -411,6 +392,11 @@ class TVLinker(QWidget):
                 dl_link = api_result['download'].toString()
                 return dl_link
 
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self.table.deleteLater()
+        self.deleteLater()
+        qApp.quit()
+
     @staticmethod
     def get_path(path: str = None, override: bool = False) -> str:
         if override:
@@ -419,10 +405,23 @@ class TVLinker(QWidget):
             return os.path.join(QFileInfo(__file__).absolutePath(), path)
         return ':assets/%s' % path
 
-    def closeEvent(self, event: QCloseEvent) -> None:
-        self.table.deleteLater()
-        self.deleteLater()
-        qApp.quit()
+    @staticmethod
+    def get_version(filename: str = '__init__.py') -> str:
+        with codecs.open(TVLinker.get_path(filename, override=True), encoding='utf-8') as initfile:
+            for line in initfile.readlines():   
+                m = re.match('__version__ *= *[\'](.*)[\']', line)
+                if m:
+                    return m.group(1)
+
+
+class FixedSettings:
+    applicationName = 'TVLinker'
+    applicationVersion = TVLinker.get_version()
+    applicationStyle = 'Fusion'
+    organizationDomain = 'http://tvlinker.ozmartians.com'
+    windowSize = QSize(1000, 750)
+    linksPerPage = 30
+    realdebrid_api_url = 'api.real-debrid.com'
 
 
 def main():

@@ -10,7 +10,10 @@ a = Analysis(['..\\tvlinker.py'],
                  '..'
              ], 
              binaries=[],
-             datas=[('..\\tvlinker.ini', '.')],
+             datas=[
+                 ('..\\tvlinker.ini', '.'),
+                 ('..\\__init__.py', '.')
+             ],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
