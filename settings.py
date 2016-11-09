@@ -22,7 +22,7 @@ class Settings(QDialog):
         tabs = QTabWidget()
         tabs.addTab(self.tab_general, 'General')
         tabs.addTab(self.tab_favorites, 'Favorites')
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close, Qt.Horizontal, self)
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
         button_box.accepted.connect(self.save_settings)
         button_box.rejected.connect(self.close)
         layout = QVBoxLayout()
@@ -60,12 +60,14 @@ class GeneralTab(QWidget):
         self.settings = settings
         generalGroup = QGroupBox()
         general_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
-        self.sourceUrl_lineEdit = QLineEdit(self, text=self.settings.value('source_url'))
+        self.sourceUrl_lineEdit = QLineEdit(self, text=self.settings.value('source_url'), readOnly=True)
         self.sourceUrl_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.sourceUrl_lineEdit.setMinimumWidth(500)
+        self.sourceUrl_lineEdit.setStyleSheet('background-color:#EAEAEA')
         general_formLayout.addRow('Source URL:', self.sourceUrl_lineEdit)
-        self.useragent_lineEdit = QLineEdit(self, text=self.settings.value('user_agent'))
+        self.useragent_lineEdit = QLineEdit(self, text=self.settings.value('user_agent'), readOnly=True)
         self.useragent_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.useragent_lineEdit.setStyleSheet('background-color:#EAEAEA')
         general_formLayout.addRow('User Agent:', self.useragent_lineEdit)
         self.dlpagecount_comboBox = QComboBox(self, toolTip='Default Page Count', editable=False,
                                          cursor=Qt.PointingHandCursor)
@@ -77,10 +79,8 @@ class GeneralTab(QWidget):
         general_formLayout.addRow('Default Page Count:', self.dlpagecount_comboBox)
         generalGroup.setLayout(general_formLayout)
 
-        debridGroup = QGroupBox()
-        realdebrid_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
         realdebrid_apitoken_link = '''<tr>
-                                        <td colspan="2" align="right">
+                                        <td align="right">
                                             <a href="https://real-debrid.com/apitoken" title="https://real-debrid.com/apitoken" target="_blank">
                                                 access your API token settings
                                             </a>
@@ -95,21 +95,23 @@ class GeneralTab(QWidget):
                                                color: #481953;
                                            }
                                        </style>
-                                       <table border="0" cellspacing="0" cellpadding="2">
+                                       <table border="0" cellspacing="0" cellpadding="3">
                                            <tr valign="middle" align="left">
                                               <td>
                                                   <img src=":assets/images/realdebrid.png" style="width:128px; height:26px;" />
-                                               </td>
-                                               <td>
-                                                   API Token:
                                                </td>
                                            </tr>
                                            %s
                                        </table>''' % realdebrid_apitoken_link)
         self.realdebridtoken_lineEdit = QLineEdit(self, text=self.settings.value('realdebrid_apitoken'), alignment=Qt.AlignVCenter)
         self.realdebridtoken_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        realdebrid_formLayout.addRow(realdebrid_label, self.realdebridtoken_lineEdit)
-        debridGroup.setLayout(realdebrid_formLayout)
+        realdebrid_formLayout = QFormLayout(labelAlignment=Qt.AlignRight, formAlignment=Qt.AlignVCenter)
+        realdebrid_formLayout.addRow('API Token:', self.realdebridtoken_lineEdit)
+        realdebrid_logoLayout = QHBoxLayout()
+        realdebrid_logoLayout.addWidget(realdebrid_label)
+        realdebrid_logoLayout.addLayout(realdebrid_formLayout)
+        debridGroup = QGroupBox()
+        debridGroup.setLayout(realdebrid_logoLayout)
 
         dlmanagerGroup = QGroupBox()
         dlmanager_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
@@ -137,7 +139,7 @@ class GeneralTab(QWidget):
         self.aria2rpcport_lineEdit.setFixedWidth(100)
         self.aria2rpcsecret_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_secret'))
         self.aria2rpcsecret_lineEdit.setFixedWidth(100)
-        self.aria2rpcuser_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_username'))
+        self.aria2rpcuser_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_username'))    
         self.aria2rpcuser_lineEdit.setFixedWidth(150)
         self.aria2rpcpass_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_password'))
         self.aria2rpcpass_lineEdit.setFixedWidth(150)
