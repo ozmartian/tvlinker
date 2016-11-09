@@ -453,10 +453,10 @@ header, h2 {
 }
 
 header {
-  background: #2e7bcf url(../images/header-bg.jpg) 0 0 repeat-x;
+  background: rgba(58, 54, 97, 0.65) 0 0 repeat-x;
   padding-top: 40px;
   padding-bottom: 40px;
-  border-bottom: solid 1px #275da1;
+  border-bottom: solid 1px #523e62;
 }
 
 header h1 {
