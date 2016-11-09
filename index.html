@@ -1,65 +1,119 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-    <link href="https://fonts.googleapis.com/css?family=Architects+Daughter" rel="stylesheet" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
 
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+<head>
+	<meta charset="utf-8" />
+	<meta content="chrome=1" http-equiv="X-UA-Compatible" />
+	<meta content="width=device-width, initial-scale=1, maximum-scale=1" name="viewport" />
+	<title>TVLinker by ozmartian</title>
+	<script src="ism/js/ism-2.2.min.js"></script>
+	<link href="https://fonts.googleapis.com/css?family=Architects+Daughter" rel="stylesheet" />
+	<link href="stylesheets/stylesheet.css" media="screen" rel="stylesheet" />
+	<link href="stylesheets/github-light.css" media="screen" rel="stylesheet" />
+	<link href="stylesheets/print.css" media="print" rel="stylesheet" />
+	<link href="ism/css/my-slider.css" rel="stylesheet" />
+	<style>
+		.ism-slider {
+			margin: 25px auto;
+			border: 1px solid #666;
+			box-shadow: 1px 5px 10px #444;
+			text-align: center;
+			width: 700px;
+		}
+	</style>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+</head>
 
-    <title>TVLinker by ozmartian</title>
-  </head>
+<body>
+	<header>
+		<div class="inner">
+			 <img align="left" alt="TVLinker" src="https://raw.githubusercontent.com/ozmartian/tvlinker/master/assets/images/tvlinker.png" style="width:135px; float:left; position:relative; top:-25px; margin-right:15px;"/>
+				<h1 style="display:inline; position:relative; top:20px; left:20px;">
+					TVLinker
+				</h1>
+			<a class="button" href="https://github.com/ozmartian/tvlinker">
+				<small>
+						Open sourced at
+					</small> GitHub
+			</a>
+			<p align="right">
+				<img src="https://travis-ci.org/ozmartian/tvlinker.svg?branch=master" style="padding:10px;width:110px;position:relative;float:right;bottom200px;" />
+			</p>
+		</div>
+	</header>
+	<div id="content-wrapper">
+		<div class="inner clearfix">
+			<section id="main-content">
+				<h2>
+					tv-release.net link scraper integrated with real-debrid to unrestrict links plus integration with download managers aria2, pyLoad and IDM (Internet Download Manager)
+					or use the default built-in download accelerator to save direct to your desktop instead...
+				</h2>
+				<div class="ism-slider" data-image_fx="zoomrotate" id="my-slider">
+				  <ol>
+				    <li>
+				      <img src="ism/image/slides/_u/1478707813303_19543.png">
+				      <div class="ism-caption ism-caption-0">Link Scraping</div>
+				    </li>
+				    <li>
+				      <img src="ism/image/slides/_u/1478707812883_257005.png">
+				      <div class="ism-caption ism-caption-0">File Hosters</div>
+				    </li>
+				    <li>
+				      <img src="ism/image/slides/_u/1478707813320_204404.png">
+				      <div class="ism-caption ism-caption-0">Download Managers</div>
+				    </li>
+				    <li>
+				      <img src="ism/image/slides/_u/1478707813890_158068.png">
+				      <div class="ism-caption ism-caption-0">Direct Downloads</div>
+				    </li>
+				  </ol>
+				</div>
+				<p>
+					Qt5 based desktop widget for scraping and organising links from various download feeds/sites.
+				</p>
+				<p>
+					Currently supporting tv-release.net link scraping together with integrating with real-debrid to unrestrict links (a valid real-debrid account and api_token is necessary).
+				</p>
+				<p>
+					Finally, integration with Aria2 RPC Daemon (windows/linux), pyLoad (linux), IDM (Internet Download Manager; windows only) or built-in direct download to your desktop is all included and easy to configure from the GUI.
+				</p>
+			</section>
+			<aside id="sidebar">
+				<a class="button" href="https://github.com/ozmartian/tvlinker/zipball/master">
+					<small>
+							Download
+						</small> .zip file
+				</a>
+				<a class="button" href="https://github.com/ozmartian/tvlinker/tarball/master">
+					<small>
+							Download
+						</small> .tar.gz file
+				</a>
+				<p class="repo-owner" align="center">
+					Copyright &copy; <script>document.write(new Date().getFullYear());</script>
+					<br/>
+					<a href="https://github.com/ozmartian">Pete Alexandrou</a>
+				</p>
+				<br/>
+				<p style="height:110px; margin:10px 25px;">
+					<a href="http://python.org" target="_blank" title="python powered"><img src="images/python.png" align="left" /></a>
+					<a href="http://qt.io" target="_blank" title="built using Qt"><img src="images/qt.png" align="right" /></a>
+				</p>
+				<br/>
+				<p>
+					This page was generated by
+					<a href="https://pages.github.com">
+							GitHub Pages
+						</a> using the Architect theme by
+					<a href="https://twitter.com/jasonlong">
+							Jason Long
+						</a>.
+				</p>
+			</aside>
+		</div>
+	</div>
+</body>
 
-  <body>
-    <header>
-      <div class="inner">
-        <h1>
-          <img src="https://raw.githubusercontent.com/ozmartian/tvlinker/master/assets/images/tvlinker.png" alt="TVLinker" align="left" style="width:170px; margin:25px 25px 7px 30px;" />
-          TVLinker
-        </h1>
-        <h2 align="right">tv-release.net link scraper integrated with real-debrid to unrestrict links and aria2, pyLoad or direct download manager options</h2>
-        <a href="https://github.com/ozmartian/tvlinker" class="button"><small>Open sourced at</small> GitHub</a>
-        <p align="right"><img src="https://travis-ci.org/ozmartian/tvlinker.svg?branch=master" style="padding:10px;width:110px;position:relative;float:right;bottom200px;" /></p>
-      </div>
-    </header>
-
-    <div id="content-wrapper">
-      <div class="inner clearfix">
-        <section id="main-content">
-          <div style="display:block;">
-            <div style="float:left; padding-right:15px;clear:right"></div>
-          </div>
-
-  <p>Qt5 based desktop widget for scraping and organising links from various download feeds/sites. </p>
-
-  <p>Currently supporting tv-release.net link scraping together with integrating with real-debrid to
-  unrestrict links (a valid real-debrid account and api_token is necessary).</p>
-<p>Finally, integration with Aria2 RPC Daemon (windows/linux), pyLoad (linux), IDM (Internet Download Manager; windows only) or built-in direct download to your desktop is all included and easy to configure from the GUI.</p>
-        </section>
-
-        <aside id="sidebar">
-          <a href="https://github.com/ozmartian/tvlinker/zipball/master" class="button">
-            <small>Download</small>
-            .zip file
-          </a>
-          <a href="https://github.com/ozmartian/tvlinker/tarball/master" class="button">
-            <small>Download</small>
-            .tar.gz file
-          </a>
-
-          <p class="repo-owner"><a href="https://github.com/ozmartian/tvlinker"></a> is maintained by <a href="https://github.com/ozmartian">ozmartian</a>.</p>
-
-          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
-        </aside>
-      </div>
-    </div>
-
-  
-  </body>
 </html>

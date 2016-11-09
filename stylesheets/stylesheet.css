@@ -447,11 +447,14 @@ a:hover {
   color: #2268b2;
 }
 
+header, h2 {
+  font-family: 'Architects Daughter', 'Helvetica Neue', Helvetica, Arial, serif;
+}
+
 header {
+  background: #2e7bcf url(../images/header-bg.jpg) 0 0 repeat-x;
   padding-top: 40px;
   padding-bottom: 40px;
-  font-family: 'Architects Daughter', 'Helvetica Neue', Helvetica, Arial, serif;
-  background: #2e7bcf url(../images/header-bg.jpg) 0 0 repeat-x;
   border-bottom: solid 1px #275da1;
 }
 
@@ -459,27 +462,27 @@ header h1 {
   width: 540px;
   margin-top: 0;
   margin-bottom: 0.2em;
-  font-size: 72px;
+  font-size: 84px;
   font-weight: normal;
   line-height: 1;
   color: #fff;
   letter-spacing: -1px;
 }
 
-header h2 {
-  width: 540px;
+h2 {
+  width: 100%;
   margin-top: 0;
-  margin-bottom: 0;
+  margin-bottom: 10px;
   font-size: 26px;
   font-weight: normal;
   line-height: 1.3;
-  color: #9ddcff;
+  color: #2e7bcf;
   letter-spacing: 0;
 }
 
 .inner {
   position: relative;
-  width: 940px;
+  width: 955px;
   margin: 0 auto;
 }
 
@@ -627,21 +630,6 @@ form {
   margin-left: -0.9em;
   color: #9ddcff;
   content: "/";
-}
-
-#main-content h2 {
-  margin-bottom: 8px;
-  font-family: 'Architects Daughter', 'Helvetica Neue', Helvetica, Arial, serif;
-  font-size: 22px;
-  font-weight: bold;
-  color: #474747;
-  text-indent: 4px;
-}
-#main-content h2:before {
-  padding-right: 0.3em;
-  margin-left: -1.5em;
-  content: "//";
-  color: #9ddcff;
 }
 
 #main-content h3 {
@@ -816,7 +804,7 @@ footer a:hover {
   header .inner {
     position: relative;
   }
-  header h1, header h2 {
+  header h1 {
     width: 100%;
   }
   header h1 {
