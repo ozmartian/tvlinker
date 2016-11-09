@@ -414,6 +414,8 @@ class TVLinker(QWidget):
     @staticmethod
     def get_path(path: str = None, override: bool = False) -> str:
         if override:
+            if getattr(sys, 'frozen', False):
+                return os.path.join(sys._MEIPASS, path)
             return os.path.join(QFileInfo(__file__).absolutePath(), path)
         return ':assets/%s' % path
 
