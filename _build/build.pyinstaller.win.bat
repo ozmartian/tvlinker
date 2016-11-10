@@ -2,4 +2,4 @@
 
 rd /s /q build
 rd /s /q dist
-pyinstaller --clean tvlinker.%1.spec
+pyinstaller --clean tvlinker.%1e.spec

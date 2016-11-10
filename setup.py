@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from codecs import open
 from os import path
 from re import match
 
@@ -11,7 +10,7 @@ here = path.abspath(path.dirname(__file__))
 
 
 def get_version(filename='__init__.py'):
-    with open(path.join(here, filename), encoding='utf-8') as initfile:
+    with open(path.join(here, filename), 'r') as initfile:
         for line in initfile.readlines():
             m = match('__version__ *= *[\'](.*)[\']', line)
             if m:
@@ -19,7 +18,7 @@ def get_version(filename='__init__.py'):
 
 
 def get_description(filename='README.md'):
-    with open(path.join(here, filename), encoding='utf-8') as f:
+    with open(path.join(here, filename), 'r') as f:
         return f.read()
 
 

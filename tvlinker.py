@@ -1,7 +1,6 @@
 #!/usr/bin/env pyton3
 # -*- coding: utf-8 -*-
 
-import codecs
 import http.client
 import os
 import platform
@@ -19,11 +18,11 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QWidget, qApp)
-from hosters import HosterLinks
-from pyload import PyloadConnection, PyloadConfig
-from settings import Settings
-from threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
-import assets
+from tvlinker.hosters import HosterLinks
+from tvlinker.pyload import PyloadConnection, PyloadConfig
+from tvlinker.settings import Settings
+from tvlinker.threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
+import tvlinker.assets
 
 
 class DirectDownload(QDialog):
@@ -407,7 +406,7 @@ class TVLinker(QWidget):
 
     @staticmethod
     def get_version(filename: str = '__init__.py') -> str:
-        with codecs.open(TVLinker.get_path(filename, override=True), encoding='utf-8') as initfile:
+        with open(TVLinker.get_path(filename, override=True), 'r') as initfile:
             for line in initfile.readlines():   
                 m = re.match('__version__ *= *[\'](.*)[\']', line)
                 if m:
