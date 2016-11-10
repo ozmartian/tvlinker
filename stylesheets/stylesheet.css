@@ -493,7 +493,7 @@ h2 {
 #main-content {
   float: left;
   width: 690px;
-  z-index: 1;
+  /*z-index: 1;*/
 }
 
 aside#sidebar {

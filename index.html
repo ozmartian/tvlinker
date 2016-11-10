@@ -9,13 +9,12 @@
     <title>
         TVLinker :: the little link scraper who could...
     </title>
-    <script src="ism/js/ism-2.2.min.js">
-    </script>
+    <script src="ism/js/ism-2.2.min.js"></script>
+    <link href="ism/css/my-slider.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css?family=Architects+Daughter" rel="stylesheet" />
     <link href="stylesheets/stylesheet.css" media="screen" rel="stylesheet" />
     <link href="stylesheets/github-light.css" media="screen" rel="stylesheet" />
     <link href="stylesheets/print.css" media="print" rel="stylesheet" />
-    <link href="ism/css/my-slider.css" rel="stylesheet" />
     <style>
     ul.dlfiles li {
         font-size: 10pt;
@@ -43,8 +42,14 @@
     header .logo {
         position: fixed;
         top: 8px;
-        z-index: 999;
         margin-left: -40px;
+        z-index: 100;
+        overflow: visible;
+    }
+
+    header .logo img {
+        z-index: 110;
+        overflow: visible;
     }
     
     header h1 {
@@ -67,7 +72,7 @@
         box-shadow: 1px 5px 10px #444;
         text-align: center;
         max-width: 700px;
-        z-index: -1;
+        z-index: 2;
     }
     
     a:hover {
