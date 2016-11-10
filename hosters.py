@@ -96,6 +96,7 @@ class HosterLinks(QDialog):
                 self.layout.addWidget(self.get_separator())
             index += 1
         qApp.restoreOverrideCursor()
+        self.move(self.x(), self.y()-100)
 
     @pyqtSlot(int)
     def copy_link(self, button_id: int) -> None:
