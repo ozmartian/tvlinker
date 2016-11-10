@@ -17,9 +17,27 @@
     <link href="stylesheets/print.css" media="print" rel="stylesheet" />
     <link href="ism/css/my-slider.css" rel="stylesheet" />
     <style>
+    ul.dlfiles li {
+        font-size: 10pt;
+        list-style-type: none;
+        text-align: right;
+        margin-right: 10px;
+        margin-bottom:20px;
+    }
+
+    ul.dlfiles li a {
+        font-size:11pt;
+        font-weight: bold;
+        text-decoration: none;
+    }
+
+    ul.dlfiles li a:hover {
+        text-decoration: underline;
+    }
+
     #content-wrapper {
         position: relative;
-        top: 135px;
+        top: 145px;
     }
     
     header .logo {
@@ -49,6 +67,7 @@
         box-shadow: 1px 5px 10px #444;
         text-align: center;
         max-width: 700px;
+        z-index: -1;
     }
     
     a:hover {
@@ -90,6 +109,16 @@
     a.repo small {
       display: block;
       margin-left:-15px;
+    }
+
+    span.code {
+        color: #888;
+        font-family: monospace;
+    }
+
+    h4 {
+        text-align: right;
+        margin-top: 35px;
     }
     </style>    
     <!--[if lt IE 9]>
@@ -162,6 +191,45 @@
                     Finally, integration with Aria2 RPC Daemon (windows/linux), pyLoad (linux), IDM (Internet Download Manager; windows only) or built-in direct download to your desktop is all included and easy to configure from the GUI.
                 </p>
             </section>
+            <h4>Windows</h4>
+            <ul class="dlfiles">
+                <li>
+                    <a href="builds/win/tvlinker_2.8.8_win64.zip" title="click to download" target="_blank">tvlinker_2.8.8_win64.zip</a>
+                    <br/>
+                    18.1 MB - v2.8.8 - 64bit release
+                </li>
+                <li>
+                    <a href="builds/win/tvlinker_2.8.8_win32.zip" title="click to download" target="_blank">tvlinker_2.8.8_win32.zip</a>
+                    <br/>
+                    17.2 MB - v2.8.8 - 32bit release
+                </li>
+            </ul>
+            <h4>Linux / Mac</h4>
+            <div align="right" style="font-size:10pt; width:100%;">
+            <p>
+             Install via <a href="https//pypi.python.org">Python Package Index</a> (PyPi)
+             <br/>
+             with <b>pip</b> (recommended)
+             <br/>
+             or <b>easy_install</b>
+             <br/>
+             </p>
+            <b>PyPi Package Page:</b>
+            <a href="https://pypi.python.org/pypi/tvlinker" target="_blank">tvlinker</a>
+            <br/><br/>
+            <b>$</b> <span class="code">sudo pip install tvlinker</span>
+            </div>
+            <br/><br/>
+            <div align="right">
+                <a href="http://python.org" target="_blank" title="python powered">
+                    <img src="images/python.png" />
+                </a>
+                &nbsp;&nbsp;&nbsp;&nbsp;    
+                <a href="http://qt.io" target="_blank" title="built using Qt">
+                    <img src="images/qt.png" />
+                </a>
+            </div>
+            <br/>
             <h4>
                     Source Code
                 </h4>
@@ -176,14 +244,6 @@
                             Download
                         </small> .tar.gz file
                 </a>
-                <p style="height:75px; margin:30px 35px 10px;">
-                    <a href="http://python.org" target="_blank" title="python powered">
-                        <img align="left" src="images/python.png" />
-                    </a>
-                    <a href="http://qt.io" target="_blank" title="built using Qt">
-                        <img align="right" src="images/qt.png" style="padding-top:5px;" />
-                    </a>
-                </p>
                 <p align="center" class="repo-owner" style="margin-top:25px; text-align: right; padding-right:10px;">
                     <span style="font-weight:normal;">written and maintained by</span>
                     <br/>

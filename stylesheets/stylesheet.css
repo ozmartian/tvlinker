@@ -499,7 +499,6 @@ h2 {
 aside#sidebar {
   float: right;
   width: 200px;
-  min-height: 504px;
   padding-left: 20px;
   font-size: 12px;
   line-height: 1.3;
