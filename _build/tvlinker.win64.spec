@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 # -*- mode: python -*-
 
+import os, sys
+import PyQt5
+
+
 block_cipher = None
 
 a = Analysis(['..\\tvlinker.py'],
              pathex=[
-                 'C:\\Python35\\lib\\site-packages\\PyQt5\\Qt\\bin',
+                 os.path.join(sys.modules['PyQt5'].__path__[0], 'Qt', 'bin'),
                  'C:\\Program Files (x86)\\Windows Kits\\10\Redist\\ucrt\\DLLs\\x64',
                  '..'
              ], 
