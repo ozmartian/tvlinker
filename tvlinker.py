@@ -145,12 +145,11 @@ class TVLinker(QWidget):
         return layout
 
     def settings_menu(self) -> QMenu:
-        settings_action = QAction(parent=self, iconText='Configure %s...' % qApp.applicationName(),
-                                  icon=QIcon(self.get_path('images/settings.png')), triggered=self.show_settings)
-        aboutQt_action = QAction(parent=self, icon=QIcon(self.get_path('images/qt.png')),
-                                 iconText='About Qt', triggered=qApp.aboutQt)
-        about_action = QAction(parent=self, iconText='About %s' % qApp.applicationName(),
-                               icon=QIcon(self.get_path('images/tvlinker.png')), triggered=self.about_app)
+        settings_action = QAction(QIcon(self.get_path('images/settings.png')), 'Configure %s...' % qApp.applicationName(),
+                                  self, triggered=self.show_settings)
+        aboutQt_action = QAction(QIcon(self.get_path('images/qt.png')), 'About Qt', self, triggered=qApp.aboutQt)
+        about_action = QAction(QIcon(self.get_path('images/tvlinker.png')), 'About %s' % qApp.applicationName(),
+                                  self, triggered=self.about_app)
         menu = QMenu()
         menu.addAction(settings_action)
         menu.addSeparator()
