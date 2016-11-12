@@ -17,7 +17,6 @@ class Settings(QDialog):
         self.settings = settings
         self.setWindowModality(Qt.ApplicationModal)
         self.tab_general = GeneralTab(self.settings)
-        self.tab_general.dlmanagersettings_layout.currentChanged.connect(self.adjust_size)
         self.tab_favorites = FavoritesTab(self.settings)
         tabs = QTabWidget()
         tabs.addTab(self.tab_general, 'General')
@@ -34,12 +33,6 @@ class Settings(QDialog):
 
         self.setWindowTitle('%s Settings' % qApp.applicationName())
         self.setWindowIcon(QIcon(self.parent.get_path('images/settings.png')))
-
-    @pyqtSlot()
-    def adjust_size(self) -> None:
-        qApp.processEvents()
-        self.tab_general.adjustSize()
-        self.adjustSize()
 
     def save_settings(self) -> None:
         self.tab_general.save()
