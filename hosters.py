@@ -12,7 +12,7 @@ class HosterLinks(QDialog):
     downloadLink = pyqtSignal(str)
     copyLink = pyqtSignal(str)
 
-    def __init__(self, parent, title=None, f=Qt.Dialog | Qt.WindowCloseButtonHint):
+    def __init__(self, parent, title=None, f=Qt.WindowCloseButtonHint):
         super(HosterLinks, self).__init__(parent, f)
         self.parent = parent
         self.title = title
@@ -113,4 +113,5 @@ class HosterLinks(QDialog):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.deleteLater()
+        qApp.restoreOverrideCursor()
         super(QDialog, self).closeEvent(event)

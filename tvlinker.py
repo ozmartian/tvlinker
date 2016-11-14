@@ -1,12 +1,12 @@
 #!/usr/bin/env pyton3
 # -*- coding: utf-8 -*-
 
-import http.client
+import inspect
 import os
 import platform
 import re
+import signal
 import sys
-from urllib.parse import quote_plus
 
 from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex, QSettings,
                           QSize, QStandardPaths, Qt, QTextStream, QUrl, pyqtSignal, pyqtSlot)
@@ -18,11 +18,15 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QWidget, qApp)
-from tvlinker.hosters import HosterLinks
-from tvlinker.pyload import PyloadConnection, PyloadConfig
-from tvlinker.settings import Settings
-from tvlinker.threads import HostersThread, ScrapeThread, Aria2Thread, DownloadThread
-import tvlinker.assets
+from hosters import HosterLinks
+from pyload import PyloadConnection, PyloadConfig
+from settings import Settings
+from threads import (HostersThread, ScrapeThread, RealDebridThread,
+                    Aria2Thread, DownloadThread)
+import assets
+
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
 
 class DirectDownload(QDialog):
@@ -316,44 +320,48 @@ class TVLinker(QWidget):
 
     @pyqtSlot(str)
     def download_link(self, link: str) -> None:
-        qApp.setOverrideCursor(Qt.BusyCursor)
-        if len(self.realdebrid_api_token) > 0:
+        if len(self.realdebrid_api_token) > 0 and 'real-debrid.com' not in link:
+            qApp.setOverrideCursor(Qt.BusyCursor)
             link = self.unrestrict_link(link)
-        self.hosters_win.close()
-        if self.download_manager == 'aria2':
-            self.aria2 = Aria2Thread(settings=self.settings, link_url=link)
-            self.aria2.aria2Confirmation.connect(self.aria2_confirmation)
-            self.aria2.start()
-        elif self.download_manager == 'pyLoad':
-            self.pyload_conn = PyloadConnection(config=self.pyload_config)
-            pid = self.pyload_conn.addPackage(name='TVLinker', links=[link])
-            qApp.restoreOverrideCursor()
-            msgbox = QMessageBox.information(self, 'pyLoad Download Manager',
-                                             'Download link has been successfully queued in pyLoad.', QMessageBox.Ok)
-            open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
-            open_pyload.clicked.connect(self.open_pyload)
-        elif self.download_manager == 'IDM':
-            import shlex, subprocess
-            si = subprocess.STARTUPINFO()
-            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
-            proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                    stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
-            proc.wait()
-            qApp.restoreOverrideCursor()
-            QMessageBox.information(self, 'Internet Download Manager',
-                                    'The download link has been queued in IDM.', QMessageBox.Ok)
         else:
-            dlpath, _ = QFileDialog.getSaveFileName(self, 'Save File', link.split('/')[-1])
-            if dlpath == '':
-                return
-            self.directdl_win = DirectDownload(parent=self)
-            self.directdl = DownloadThread(link_url=link, dl_path=dlpath)
-            self.directdl.dlComplete.connect(self.directdl_win.download_complete)
-            self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
-            self.directdl.dlProgress.connect(self.directdl_win.update_progress)
-            self.directdl_win.cancelDownload.connect(self.cancel_download)
-            self.directdl.start()
+            if self.download_manager == 'aria2':
+                self.aria2 = Aria2Thread(settings=self.settings, link_url=link)
+                self.aria2.aria2Confirmation.connect(self.aria2_confirmation)
+                self.aria2.start()
+                self.hosters_win.close()
+            elif self.download_manager == 'pyLoad':
+                self.pyload_conn = PyloadConnection(config=self.pyload_config)
+                pid = self.pyload_conn.addPackage(name='TVLinker', links=[link])
+                qApp.restoreOverrideCursor()
+                self.hosters_win.close()
+                msgbox = QMessageBox.information(self, 'pyLoad Download Manager',
+                                                 'Download link has been successfully queued in pyLoad.', QMessageBox.Ok)
+                open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
+                open_pyload.clicked.connect(self.open_pyload)
+            elif self.download_manager == 'IDM':
+                import shlex, subprocess
+                si = subprocess.STARTUPINFO()
+                si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
+                proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                        stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
+                proc.wait()
+                qApp.restoreOverrideCursor()
+                self.hosters_win.close()
+                QMessageBox.information(self, 'Internet Download Manager',
+                                        'Your link has been queued in IDM.', QMessageBox.Ok)
+            else:
+                dlpath, _ = QFileDialog.getSaveFileName(self, 'Save File', link.split('/')[-1])
+                if dlpath == '':
+                    return
+                self.directdl_win = DirectDownload(parent=self)
+                self.directdl = DownloadThread(link_url=link, dl_path=dlpath)
+                self.directdl.dlComplete.connect(self.directdl_win.download_complete)
+                self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
+                self.directdl.dlProgress.connect(self.directdl_win.update_progress)
+                self.directdl_win.cancelDownload.connect(self.cancel_download)
+                self.directdl.start()
+                self.hosters_win.close()
 
     @pyqtSlot()
     def cancel_download(self) -> None:
@@ -366,29 +374,20 @@ class TVLinker(QWidget):
 
     @pyqtSlot(str)
     def copy_download_link(self, link: str) -> None:
-        if len(self.realdebrid_api_token) > 0:
+        if len(self.realdebrid_api_token) > 0 and 'real-debrid.com' not in link:
+            qApp.setOverrideCursor(Qt.BusyCursor)
             link = self.unrestrict_link(link)
-        clip = qApp.clipboard()
-        clip.setText(link)
-        self.hosters_win.close()
+        else:
+            clip = qApp.clipboard()
+            clip.setText(link)
+            self.hosters_win.close()
+            qApp.restoreOverrideCursor()
 
-    def unrestrict_link(self, link: str) -> str:
-        conn = http.client.HTTPSConnection(FixedSettings.realdebrid_api_url)
-        payload = 'link=%s' % quote_plus(link)
-        headers = {
-            'Authorization': 'Bearer %s' % self.realdebrid_api_token,
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Cache-Control': 'no-cache'
-        }
-        conn.request('POST', '/rest/1.0/unrestrict/link', payload, headers)
-        res = conn.getresponse()
-        data = res.read()
-        jsondoc = QJsonDocument.fromJson(data)
-        if jsondoc.isObject():
-            api_result = jsondoc.object()
-            if 'download' in api_result.keys():
-                dl_link = api_result['download'].toString()
-                return dl_link
+    def unrestrict_link(self, link: str) -> None:
+        caller = inspect.stack()[1].function
+        self.realdebrid = RealDebridThread(settings=self.settings, api_url=FixedSettings.realdebrid_api_url, link_url=link)
+        self.realdebrid.unrestrictedLink.connect(getattr(self, caller))
+        self.realdebrid.start()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.table.deleteLater()
@@ -419,7 +418,7 @@ class FixedSettings:
     organizationDomain = 'http://tvlinker.ozmartians.com'
     windowSize = QSize(1000, 750)
     linksPerPage = 30
-    realdebrid_api_url = 'api.real-debrid.com'
+    realdebrid_api_url = 'https://api.real-debrid.com/rest/1.0'
 
 
 def main():

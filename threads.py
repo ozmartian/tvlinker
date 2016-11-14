@@ -4,15 +4,16 @@
 import json
 import os
 import sys
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import requests
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from bs4 import BeautifulSoup, FeatureNotFound
+from var_dump import var_dump
 
 
 class ScrapeThread(QThread):
-
     addRow = pyqtSignal(list)
 
     def __init__(self, settings: QSettings, maxpages: int = 10):
@@ -54,7 +55,6 @@ class ScrapeThread(QThread):
 
 
 class HostersThread(QThread):
-    
     setHosters = pyqtSignal(list)
     
     def __init__(self, settings: QSettings, link_url: str):
@@ -85,8 +85,36 @@ class HostersThread(QThread):
         self.get_hoster_links()
 
 
-class Aria2Thread(QThread):
+class RealDebridThread(QThread):
+    unrestrictedLink = pyqtSignal(str)
 
+    def __init__(self, settings: QSettings, api_url: str, link_url: str):
+        QThread.__init__(self)
+        self.api_url = api_url
+        self.api_token = settings.value('realdebrid_apitoken')
+        self.link_url = link_url
+
+    def __del__(self):
+        self.wait()
+
+    def unrestrict_link(self):
+        headers = {
+            'Authorization': 'Bearer %s' % self.api_token,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cache-Control': 'no-cache'
+        }
+        payload = urlencode({'link': self.link_url}).encode('utf-8')
+        req = Request('%s/unrestrict/link' % self.api_url, headers=headers, data=payload)
+        res = urlopen(req).read().decode('utf-8')
+        jsonres = json.loads(res)
+        if 'download' in jsonres.keys():
+            self.unrestrictedLink.emit(jsonres['download'])
+
+    def run(self) -> None:
+        self.unrestrict_link()
+
+
+class Aria2Thread(QThread):
     aria2Confirmation = pyqtSignal(bool)
 
     def __init__(self, settings: QSettings, link_url: str):
@@ -102,25 +130,24 @@ class Aria2Thread(QThread):
         self.wait()
 
     def add_uri(self) -> None:
-        try:
-            user, passwd = '', ''
-            if len(self.rpc_username) > 0 and len(self.rpc_password) > 0:
-                user = self.rpc_username
-                passwd = self.rpc_password
-            elif len(self.rpc_secret) > 0:
-                user = 'token'
-                passwd = self.rpc_secret
-            jsonreq = json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'aria2.addUri',
-                                  'params': ['%s:%s' % (user, passwd), [self.link_url]]})
-            conn = urlopen('%s:%s/jsonrpc' % (self.rpc_host, self.rpc_port), jsonreq.encode('utf-8'))
-            jsonres = json.loads(conn.read().decode('utf-8'))
-            if 'result' in jsonres.keys():
-                if len(jsonres['result']) > 0:
-                    self.aria2Confirmation.emit(True)
-                    return
-            self.aria2Confirmation.emit(False)
-        except:
-            print(sys.exc_info()[0])
+        user, passwd = '', ''
+        if len(self.rpc_username) > 0 and len(self.rpc_password) > 0:
+            user = self.rpc_username
+            passwd = self.rpc_password
+        elif len(self.rpc_secret) > 0:
+            user = 'token'  
+            passwd = self.rpc_secret
+        aria2_endpoint = '%s:%s/jsonrpc' % (self.rpc_host, self.rpc_port)
+        headers = { 'Content-Type': 'application/json' }
+        payload = json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'aria2.addUri',
+                             'params': ['%s:%s' % (user, passwd), [self.link_url]]}, sort_keys=False).encode('utf-8')
+        req = Request(aria2_endpoint, headers=headers, data=payload)
+        res = urlopen(req).read().decode('utf-8')
+        jsonres = json.loads(res)
+        if 'result' in jsonres.keys():
+            self.aria2Confirmation.emit(True)
+        else:
+            var_dump(req)
             self.aria2Confirmation.emit(False)
 
     def run(self) -> None:
@@ -128,7 +155,6 @@ class Aria2Thread(QThread):
 
 
 class DownloadThread(QThread):
-
     dlComplete = pyqtSignal()
     dlProgress = pyqtSignal(int)
     dlProgressTxt = pyqtSignal(str)
