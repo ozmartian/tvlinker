@@ -10,7 +10,6 @@ from urllib.request import Request, urlopen
 import requests
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from bs4 import BeautifulSoup, FeatureNotFound
-from var_dump import var_dump
 
 
 class ScrapeThread(QThread):
@@ -147,7 +146,6 @@ class Aria2Thread(QThread):
         if 'result' in jsonres.keys():
             self.aria2Confirmation.emit(True)
         else:
-            var_dump(req)
             self.aria2Confirmation.emit(False)
 
     def run(self) -> None:
