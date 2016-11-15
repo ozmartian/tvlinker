@@ -7,22 +7,25 @@ import platform
 import re
 import signal
 import sys
+from enum import Enum
 
-from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex, QSettings,
-                          QSize, QStandardPaths, Qt, QTextStream, QUrl, pyqtSignal, pyqtSlot)
-from PyQt5.QtGui import (QCloseEvent, QColor, QDesktopServices,
-                         QFont, QFontDatabase, QIcon, QPalette, QPixmap)
+from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex,
+                          QProcess, QSettings, QSize, QStandardPaths, Qt,
+                          QTextStream, QUrl, pyqtSignal, pyqtSlot)
+from PyQt5.QtGui import (QCloseEvent, QColor, QDesktopServices, QFont,
+                         QFontDatabase, QIcon, QPalette, QPixmap)
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QComboBox, QDialog, QFileDialog, QHBoxLayout,
                              QHeaderView, QLabel, QLayout, QLineEdit, QMenu,
                              QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QWidget, qApp)
+
 from tvlinker.hosters import HosterLinks
-from tvlinker.pyload import PyloadConnection, PyloadConfig
+from tvlinker.pyload import PyloadConfig, PyloadConnection
 from tvlinker.settings import Settings
-from tvlinker.threads import (HostersThread, ScrapeThread, RealDebridThread,
-                    Aria2Thread, DownloadThread)
+from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread,
+                              RealDebridThread, ScrapeThread)
 import tvlinker.assets
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -30,7 +33,6 @@ signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
 
 class DirectDownload(QDialog):
-
     cancelDownload = pyqtSignal()
 
     def __init__(self, parent, f=Qt.WindowCloseButtonHint):
@@ -339,17 +341,34 @@ class TVLinker(QWidget):
                 open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
                 open_pyload.clicked.connect(self.open_pyload)
             elif self.download_manager == 'IDM':
-                import shlex, subprocess
-                si = subprocess.STARTUPINFO()
-                si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
-                proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                        stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
-                proc.wait()
-                qApp.restoreOverrideCursor()
-                self.hosters_win.close()
-                QMessageBox.information(self, 'Internet Download Manager',
-                                        'Your link has been queued in IDM.', QMessageBox.Ok)
+                # import shlex, subprocess
+                # si = subprocess.STARTUPINFO()
+                # si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                # cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
+                # proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                #                         stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
+                # proc.wait()
+                self.idm = QProcess()
+                self.idm.setProcessChannelMode(QProcess.MergedChannels)
+                if hasattr(self.idm, 'errorOccurred'):
+                    self.idm.errorOccurred.connect(lambda: print('IDM QProcess error = %s' % ProcError(error).name))
+                if self.idm.state() == QProcess.NotRunning:
+                    cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
+                    self.idm.start(cmd)
+                    self.idm.waitForFinished(-1)
+                    if self.idm.exitStatus() == QProcess.NormalExit and self.idm.exitCode() == 0:
+                        qApp.restoreOverrideCursor()
+                        self.hosters_win.close()
+                        QMessageBox.information(self, 'Internet Download Manager',
+                                                'Your link has been queued in IDM.', QMessageBox.Ok)       
+                    else:
+                        print('IDM QProcess error = %s' % ProcError(self.idm.error()).name)
+                        qApp.restoreOverrideCursor()
+                        self.hosters_win.close()
+                        QMessageBox.critical(self, 'Internet Download Manager',
+                                                '<p>Could not connect to your local IDM application instance. Please check your ' +
+                                                'settings and ensure the IDM executable path is correct according to your ' +
+                                                'installation.</p><p>Error Code: %s</p>' % ProcError(self.idm.error()).name, QMessageBox.Ok)
             else:
                 dlpath, _ = QFileDialog.getSaveFileName(self, 'Save File', link.split('/')[-1])
                 if dlpath == '':
@@ -409,6 +428,15 @@ class TVLinker(QWidget):
                 m = re.match('__version__ *= *[\'](.*)[\']', line)
                 if m:
                     return m.group(1)
+
+
+class ProcError(Enum):
+    FAILED_TO_START = 0
+    CRASHED = 1
+    TIMED_OUT = 2
+    READ_ERROR = 3
+    WRITE_ERROR = 4
+    UNKNOWN_ERROR = 5
 
 
 class FixedSettings:
