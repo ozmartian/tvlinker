@@ -22,12 +22,12 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
                              QToolButton, QVBoxLayout, QWidget, qApp)
 
-from hosters import HosterLinks
-from pyload import PyloadConfig, PyloadConnection
-from settings import Settings
-from threads import (Aria2Thread, DownloadThread, HostersThread,
+from tvlinker.hosters import HosterLinks
+from tvlinker.pyload import PyloadConfig, PyloadConnection
+from tvlinker.settings import Settings
+from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread,
                     RealDebridThread, ScrapeThread)
-import assets
+import tvlinker.assets
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 signal.signal(signal.SIGTERM, signal.SIG_DFL)
