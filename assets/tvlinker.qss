@@ -34,3 +34,7 @@ QTableView::item:selected {
 QLabel#totals {
     color: #65426D;
 }
+
+QToolButton:checked {
+    background-color: #6a687d;
+}

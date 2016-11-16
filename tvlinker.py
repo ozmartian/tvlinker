@@ -7,6 +7,7 @@ import platform
 import re
 import signal
 import sys
+from datetime import datetime
 from enum import Enum
 
 from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex,
@@ -19,13 +20,13 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QHeaderView, QLabel, QLayout, QLineEdit, QMenu,
                              QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
-                             QVBoxLayout, QWidget, qApp)
+                             QToolButton, QVBoxLayout, QWidget, qApp)
 
 from hosters import HosterLinks
 from pyload import PyloadConfig, PyloadConnection
 from settings import Settings
 from threads import (Aria2Thread, DownloadThread, HostersThread,
-                              RealDebridThread, ScrapeThread)
+                    RealDebridThread, ScrapeThread)
 import assets
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -61,16 +62,16 @@ class DirectDownload(QDialog):
 
     @pyqtSlot(str)
     def update_progress_label(self, progress_txt: str) -> None:
-        if self.isHidden():
+        if not self.isVisible():
             self.show()
         self.progress_label.setText(progress_txt)
 
     @pyqtSlot()
     def download_complete(self) -> None:
         qApp.restoreOverrideCursor()
+        self.close()
         QMessageBox.information(self.parent, 'Confirmation', 'The download is complete...                    ',
                                 buttons=QMessageBox.Ok)
-        self.close()
 
 
 class TVLinker(QWidget):
@@ -96,7 +97,7 @@ class TVLinker(QWidget):
         if sys.platform == 'win32':
             qss_stylesheet = '%s_win32.qss' % qApp.applicationName().lower()
         QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
-        qss = QFile(':assets/%s' % qss_stylesheet)
+        qss = QFile('assets/%s' % qss_stylesheet)
         qss.open(QFile.ReadOnly | QFile.Text)
         stream = QTextStream(qss)
         qApp.setStyleSheet(stream.readAll())
@@ -125,27 +126,31 @@ class TVLinker(QWidget):
             self.idm_exe_path = self.settings.value('idm_exe_path')
 
     def init_form(self) -> QHBoxLayout:
-        logo = QPixmap(self.get_path('images/tvrelease.png'))
         self.search_field = QLineEdit(self, clearButtonEnabled=True, placeholderText='Enter search criteria')
         self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.search_field.setFocus()
         self.search_field.textChanged.connect(self.filter_table)
-                self.favorites_button = QPushButton(parent=self, flat=True, toolTip='Favorites', cursor=Qt.PointingHandCursor,
-                                            icon=QIcon(self.get_path('images/favorites.png')))
+        self.favorites_button = QToolButton(parent=self, toolTip='Favorites', cursor=Qt.PointingHandCursor,
+                                              icon=QIcon(self.get_path('images/favorites.png')), checkable=True)
+        self.favorites_button.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        self.favorites_button.setIconSize(QSize(18, 18))
+        self.favorites_button.toggled.connect(self.filter_faves)
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
         self.dlpages_field.addItems(('10', '20', '30', '40', '50'))
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
         self.dlpages_field.currentIndexChanged.connect(self.update_pagecount)
-        self.refresh_button = QPushButton(parent=self, flat=False, text='Refresh', cursor=Qt.PointingHandCursor,
+        self.refresh_button = QPushButton(parent=self, flat=False, text=' Refresh', cursor=Qt.PointingHandCursor,
                                           toolTip='Refresh', icon=QIcon(self.get_path('images/refresh.png')),
                                           clicked=self.refresh_links)
-        menu_icon = QPixmap(self.get_path('images/menu.png'))
         self.settings_button = QPushButton(parent=self, flat=True, toolTip='Menu', cursor=Qt.PointingHandCursor,
-                                            icon=QIcon(menu_icon))
+                                            icon=QIcon(self.get_path('images/menu.png')))
         self.settings_button.setMenu(self.settings_menu())
+        self.settings_button.setIconSize(QSize(26, 18))
         layout = QHBoxLayout()
+        logo = QPixmap(self.get_path('images/tvrelease.png'))
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
         layout.addWidget(self.search_field)
+        layout.addWidget(self.favorites_button)
         layout.addWidget(QLabel('Pages:'))
         layout.addWidget(self.dlpages_field)
         layout.addWidget(self.refresh_button)
@@ -156,7 +161,7 @@ class TVLinker(QWidget):
         settings_action = QAction(QIcon(self.get_path('images/settings.png')), 'Configure %s...' % qApp.applicationName(),
                                   self, triggered=self.show_settings)
         aboutQt_action = QAction(QIcon(self.get_path('images/qt.png')), 'About Qt', self, triggered=qApp.aboutQt)
-        about_action = QAction(QIcon(self.get_path('images/tvlinker.png')), 'About %s' % qApp.applicationName(),
+        about_action = QAction(QIcon(self.get_path('images/about.png')), 'About %s' % qApp.applicationName(),
                                   self, triggered=self.about_app)
         menu = QMenu()
         menu.addAction(settings_action)
@@ -237,7 +242,7 @@ class TVLinker(QWidget):
         <span style="font-size:10pt;position:relative;left:5px;">( %s )</span>
     </p>
     <p style="font-size:13px;">
-        Copyright &copy; 2016 <a href="mailto:pete@ozmartians.com">Pete Alexandrou</a>
+        Copyright &copy; %s <a href="mailto:pete@ozmartians.com">Pete Alexandrou</a>
         <br/>
         Web: <a href="%s">%s</a>
     </p>
@@ -247,8 +252,16 @@ class TVLinker(QWidget):
         as published by the Free Software Foundation; either version 2
         of the License, or (at your option) any later version.
     </p>''' % (qApp.applicationName(), qApp.applicationVersion(), platform.architecture()[0],
-               qApp.organizationDomain(), qApp.organizationDomain())
+                datetime.now().year, qApp.organizationDomain(), qApp.organizationDomain())
         QMessageBox.about(self, 'About %s' % qApp.applicationName(), about_html)
+
+    @pyqtSlot(bool)
+    def filter_faves(self, checked: bool) -> None:
+        if checked:
+            self.favorites_button.setIcon(QIcon(self.get_path('images/favorites_on.png')))
+        else:
+            self.favorites_button.setIcon(QIcon(self.get_path('images/favorites.png')))
+        pass
 
     @pyqtSlot(bool)
     def refresh_links(self) -> None:
@@ -343,13 +356,6 @@ class TVLinker(QWidget):
                 open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
                 open_pyload.clicked.connect(self.open_pyload)
             elif self.download_manager == 'IDM':
-                # import shlex, subprocess
-                # si = subprocess.STARTUPINFO()
-                # si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                # cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
-                # proc = subprocess.Popen(args=shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                #                         stdin=subprocess.PIPE, startupinfo=si, env=os.environ, shell=False)
-                # proc.wait()
                 self.idm = QProcess()
                 self.idm.setProcessChannelMode(QProcess.MergedChannels)
                 if hasattr(self.idm, 'errorOccurred'):
@@ -371,18 +377,18 @@ class TVLinker(QWidget):
                                                 '<p>Could not connect to your local IDM application instance. Please check your ' +
                                                 'settings and ensure the IDM executable path is correct according to your ' +
                                                 'installation.</p><p>Error Code: %s</p>' % ProcError(self.idm.error()).name, QMessageBox.Ok)
+                    self.idm.deleteLater()
             else:
                 dlpath, _ = QFileDialog.getSaveFileName(self, 'Save File', link.split('/')[-1])
-                if dlpath == '':
-                    return
-                self.directdl_win = DirectDownload(parent=self)
-                self.directdl = DownloadThread(link_url=link, dl_path=dlpath)
-                self.directdl.dlComplete.connect(self.directdl_win.download_complete)
-                self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
-                self.directdl.dlProgress.connect(self.directdl_win.update_progress)
-                self.directdl_win.cancelDownload.connect(self.cancel_download)
-                self.directdl.start()
-                self.hosters_win.close()
+                if dlpath != '':
+                    self.directdl_win = DirectDownload(parent=self)
+                    self.directdl = DownloadThread(link_url=link, dl_path=dlpath)
+                    self.directdl.dlComplete.connect(self.directdl_win.download_complete)
+                    self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
+                    self.directdl.dlProgress.connect(self.directdl_win.update_progress)
+                    self.directdl_win.cancelDownload.connect(self.cancel_download)
+                    self.directdl.start()
+                    self.hosters_win.close()
 
     @pyqtSlot()
     def cancel_download(self) -> None:
