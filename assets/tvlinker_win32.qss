@@ -28,13 +28,10 @@ QTableView {
 }
 
 QTableView::item:selected {
-    background-color: #898989;
+    background-color: #BABABA;
     color: #FFF;
 }
 
 QLabel#totals {
-    margin-top: 6px;
     color: #65426D;
-    /* font-size: 10pt; */
-    border: none;
 }

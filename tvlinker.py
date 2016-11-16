@@ -21,12 +21,12 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QWidget, qApp)
 
-from tvlinker.hosters import HosterLinks
-from tvlinker.pyload import PyloadConfig, PyloadConnection
-from tvlinker.settings import Settings
-from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread,
+from hosters import HosterLinks
+from pyload import PyloadConfig, PyloadConnection
+from settings import Settings
+from threads import (Aria2Thread, DownloadThread, HostersThread,
                               RealDebridThread, ScrapeThread)
-import tvlinker.assets
+import assets
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 signal.signal(signal.SIGTERM, signal.SIG_DFL)
@@ -130,6 +130,8 @@ class TVLinker(QWidget):
         self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.search_field.setFocus()
         self.search_field.textChanged.connect(self.filter_table)
+                self.favorites_button = QPushButton(parent=self, flat=True, toolTip='Favorites', cursor=Qt.PointingHandCursor,
+                                            icon=QIcon(self.get_path('images/favorites.png')))
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
         self.dlpages_field.addItems(('10', '20', '30', '40', '50'))
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
