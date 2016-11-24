@@ -1,40 +1,56 @@
-* {
-    font-family: 'Open Sans';
-}
-
 QHeaderView::section, QTableCornerButton::section {
-    background-color: #6a687d;
+    background-color: #6A687D;
     color: #FFF;
     font-weight: 800;
-    font-size: -1;
+    font-size: 9pt;
     padding: 4px;
+    margin-top: 0;
 }
 
 QHeaderView::down-arrow {
-    image: url(:assets/images/down_arrow.png)
+    image: url(:assets/images/down_arrow.png);
 }
 
 QHeaderView::up-arrow {
-    image: url(:assets/images/up_arrow.png)
+    image: url(:assets/images/up_arrow.png);
 }
 
 QTableView {
-    margin-top: 8px;
+    border-top: none;
+    margin-top: 0;
     margin-bottom: 0;
     background: #FFF url(:assets/images/watermark.png) no-repeat center center;
     background-attachment: fixed;
-    alternate-background-color: rgba(106, 104, 125, 0.1);
+    alternate-background-color: rgba(0, 0, 0, 0.05);
 }
 
 QTableView::item:selected {
-    background-color: #898989;
+    background-color: #898989;  
     color: #FFF;
 }
 
-QLabel#totals {
-    color: #65426D;
+QGroupBox {
+    background-color: rgba(0, 0, 0, 0.05);
+    border: 1px inset #BABABA;
+    margin: 0;
+    padding: 6px;
 }
 
-QToolButton:checked {
-    background-color: #6a687d;
+QLineInput, QPushButton {
+    padding: 5px;
+}
+
+QLabel#heading {
+    color: #555;
+    font-size: 12pt;
+    font-weight: 500;
+    text-align: center;
+    padding: 15px 10px;
+    border: 1px groove #BABABA;
+    background-color: #FAFAFA;
+    margin-bottom: 15px;
+}
+
+QLabel#totals {
+    color: #6A687D;
 }

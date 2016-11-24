@@ -7,8 +7,7 @@ import sys
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-import requests
-from PyQt5.QtCore import QSettings, QThread, pyqtSignal
+from qtpy.QtCore import QSettings, QThread, Signal as pyqtSignal
 from bs4 import BeautifulSoup, FeatureNotFound
 
 
@@ -167,23 +166,24 @@ class DownloadThread(QThread):
         self.wait()
 
     def download_file(self) -> None:
-        req = requests.get(self.download_link, stream=True)
-        filesize = int(req.headers['Content-Length'])
+        res = urlopen(self.download_link)
+        filesize = int(res.info()['Content-Length'])
         filename = os.path.basename(self.download_path)
-        downloadedChunk = 0
-        blockSize = 1024
+        downloaded_chunk = 0
+        blocksize = 1024
         with open(self.download_path, 'wb') as f:
-            for chunk in req.iter_content(chunk_size=blockSize):
-                if self.cancel_download or not chunk:
-                    req.close()
-                    break
+            while True:
+                chunk = res.read(blocksize)
+                if not chunk or self.cancel_download:
+                    self.exit()
+                    break;
+                downloaded_chunk += len(chunk)
                 f.write(chunk)
-                downloadedChunk += len(chunk)
-                progress = float(downloadedChunk) / filesize
+                progress = float(downloaded_chunk) / filesize
                 self.dlProgress.emit(progress * 100)
-                progressTxt = '<b>Downloading {0}</b>:<br/>{1} <b>of</b> {3} <b>bytes</b> [{2:.2%}]'\
-                    . format(filename, downloadedChunk, progress, filesize)
-                self.dlProgressTxt.emit(progressTxt)
+                progress_text = '<b>Downloading {0}</b>:<br/>{1} <b>of</b> {3} <b>bytes</b> [{2:.2%}]'\
+                                  . format(filename, downloaded_chunk, progress, filesize)
+                self.dlProgressTxt.emit(progress_text)
         self.dlComplete.emit()
 
     def run(self) -> None:

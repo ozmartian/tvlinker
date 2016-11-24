@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtCore import QUrl, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon, QPixmap
-from PyQt5.QtWidgets import (QBoxLayout, QButtonGroup, QDialog, QFrame, QHBoxLayout, QLabel, QLayout,
-                             QProgressBar, QPushButton, QSizePolicy, QStyleFactory, QVBoxLayout, qApp)
+import sys
+
+from qtpy.QtCore import QTimer, QUrl, Qt, Signal as pyqtSignal, Slot as pyqtSlot
+from qtpy.QtGui import QCloseEvent, QDesktopServices, QIcon, QPixmap
+from qtpy.QtWidgets import (QBoxLayout, QButtonGroup, QDialog, QFrame, QGroupBox, QHBoxLayout, QLabel, QLayout,
+                             QProgressBar, QPushButton, QSizePolicy, QSpacerItem, QStyleFactory, QVBoxLayout, qApp)
 
 
 class HosterLinks(QDialog):
-
     downloadLink = pyqtSignal(str)
     copyLink = pyqtSignal(str)
 
@@ -17,16 +18,13 @@ class HosterLinks(QDialog):
         self.parent = parent
         self.title = title
         self.setWindowModality(Qt.ApplicationModal)
-        self.setStyle(QStyleFactory.create('Fusion'))
         self.hosters = []
-        self.setContentsMargins(20, 10, 20, 20)
-        self.layout = QVBoxLayout(spacing=10)
-        self.layout.setSizeConstraint(QLayout.SetFixedSize)
+        self.layout = QVBoxLayout(spacing=0)
         self.setLayout(self.layout)
         self.copy_icon = QIcon(self.parent.get_path('images/copy_icon.png'))
         self.open_icon = QIcon(self.parent.get_path('images/open_icon.png'))
         self.download_icon = QIcon(self.parent.get_path('images/download_icon.png'))
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         self.copy_group = QButtonGroup(exclusive=False)
         self.copy_group.buttonClicked[int].connect(self.copy_link)
         self.open_group = QButtonGroup(exclusive=False)
@@ -37,10 +35,10 @@ class HosterLinks(QDialog):
         busy_label = QLabel('Retrieving hoster links...', alignment=Qt.AlignCenter)
         busy_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         busy_indicator = QProgressBar(parent=self, minimum=0, maximum=0)
-        if self.title is not None:
-            self.layout.addWidget(QLabel('<div align="center"><h3>%s</h3></div>' % self.title))
-            self.layout.addSpacing(10)
+        if sys.platform.startswith('linux'):
+            busy_indicator.setStyle(QStyleFactory.create('Fusion'))
         self.layout.addWidget(busy_label)
+        self.layout.addSpacerItem(QSpacerItem(1, 10))
         self.layout.addWidget(busy_indicator)
         self.setMinimumWidth(485)
 
@@ -53,21 +51,16 @@ class HosterLinks(QDialog):
                 child.widget().deleteLater()
             elif child.layout() is not None:
                 self.clear_layout(child.layout())
-        self.layout.setSpacing(25)
-
-    @staticmethod
-    def get_separator() -> QFrame:
-        line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
-        return line
 
     def show_hosters(self, hosters: list) -> None:
         self.hosters = hosters
+        self.hide()
         self.clear_layout()
+        self.setMinimumWidth(650)
         if self.title is not None:
-            self.layout.addWidget(QLabel('<div align="center"><h3>%s</h3></div>' % self.title))
-            self.layout.addSpacing(10)
+            title_label = QLabel(self.title, alignment=Qt.AlignCenter, objectName='heading')
+            title_label.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+            self.layout.addWidget(title_label)
         index = 0
         for hoster in hosters:
             hoster_logo = QLabel(pixmap=QPixmap(self.parent.get_path('images/hoster_%s' % QUrl(hoster[0]).fileName())),
@@ -91,12 +84,13 @@ class HosterLinks(QDialog):
             layout.addWidget(copy_btn, Qt.AlignRight)
             layout.addWidget(open_btn, Qt.AlignRight)
             layout.addWidget(download_btn, Qt.AlignRight)
-            self.layout.addLayout(layout)
-            if index < len(hosters)-1:
-                self.layout.addWidget(self.get_separator())
+            groupbox = QGroupBox(self)
+            groupbox.setLayout(layout)
+            self.layout.addWidget(groupbox)
             index += 1
         qApp.restoreOverrideCursor()
-        self.move(self.x(), self.y()-100)
+        QTimer.singleShot(800, self.updateGeometry)
+        self.show()
 
     @pyqtSlot(int)
     def copy_link(self, button_id: int) -> None:

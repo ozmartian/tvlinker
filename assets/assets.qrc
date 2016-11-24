@@ -1,30 +1,22 @@
 <RCC>
   <qresource>
     <file>assets/fonts/OpenSans.ttf</file>
-    <file>assets/images/about.png</file>
     <file>assets/images/comingsoon.png</file>
     <file>assets/images/copy_icon.png</file>
     <file>assets/images/direct.png</file>
     <file>assets/images/down_arrow.png</file>
     <file>assets/images/download_icon.png</file>
-    <file>assets/images/favorites.png</file>
-    <file>assets/images/favorites_on.png</file>
     <file>assets/images/hoster_filefactory.png</file>
     <file>assets/images/hoster_rapidgator.png</file>
     <file>assets/images/hoster_uploaded.png</file>
     <file>assets/images/hoster_uploadingsite.png</file>
-    <file>assets/images/menu.png</file>
     <file>assets/images/open_icon.png</file>
-    <file>assets/images/qt.png</file>
     <file>assets/images/realdebrid.png</file>
-    <file>assets/images/refresh.png</file>
-    <file>assets/images/settings.png</file>
     <file>assets/images/tvlinker.ico</file>
     <file>assets/images/tvlinker.png</file>
     <file>assets/images/tvrelease.png</file>
     <file>assets/images/up_arrow.png</file>
     <file>assets/images/watermark.png</file>
     <file>assets/tvlinker.qss</file>
-    <file>assets/tvlinker_win32.qss</file>
   </qresource>
 </RCC>

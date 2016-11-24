@@ -3,11 +3,11 @@
 
 import sys
 
-from PyQt5.QtCore import QSettings, Qt, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QIcon, QPixmap
-from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
+from qtpy.QtCore import QSettings, Qt, Slot as pyqtSlot
+from qtpy.QtGui import QCloseEvent, QIcon, QPixmap
+from qtpy.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
                              QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLayout,
-                             QLineEdit, QSizePolicy, QStackedLayout, QTabWidget, QVBoxLayout, QWidget, qApp)
+                             QLineEdit, QSizePolicy, QStackedLayout, QStyleFactory, QTabWidget, QVBoxLayout, QWidget, qApp)
 
 
 class Settings(QDialog):
@@ -32,7 +32,7 @@ class Settings(QDialog):
         self.setLayout(layout)
 
         self.setWindowTitle('%s Settings' % qApp.applicationName())
-        self.setWindowIcon(QIcon(self.parent.get_path('images/settings.png')))
+        self.setWindowIcon(self.parent.icon_settings)
 
     def save_settings(self) -> None:
         self.tab_general.save()
@@ -55,21 +55,30 @@ class GeneralTab(QWidget):
         general_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
         self.sourceUrl_lineEdit = QLineEdit(self, text=self.settings.value('source_url'), readOnly=True)
         self.sourceUrl_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.sourceUrl_lineEdit.setMinimumWidth(500)
+        # self.sourceUrl_lineEdit.setMinimumWidth(500)
         self.sourceUrl_lineEdit.setStyleSheet('background-color:#EAEAEA')
         general_formLayout.addRow('Source URL:', self.sourceUrl_lineEdit)
         self.useragent_lineEdit = QLineEdit(self, text=self.settings.value('user_agent'), readOnly=True)
         self.useragent_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.useragent_lineEdit.setStyleSheet('background-color:#EAEAEA')
         general_formLayout.addRow('User Agent:', self.useragent_lineEdit)
-        self.dlpagecount_comboBox = QComboBox(self, toolTip='Default Page Count', editable=False,
-                                         cursor=Qt.PointingHandCursor)
-        self.dlpagecount_comboBox.setAutoFillBackground(True)
+        self.dlpagecount_comboBox = QComboBox(self, toolTip='Default Page Count', editable=False, cursor=Qt.PointingHandCursor)
+        self.dlpagecount_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.dlpagecount_comboBox.setFixedWidth(50)
         self.dlpagecount_comboBox.addItems(('10', '20', '30', '40', '50'))
         self.dlpagecount_comboBox.setCurrentIndex(self.dlpagecount_comboBox.findText(
             str(self.settings.value('dl_pagecount')), Qt.MatchFixedString))
         general_formLayout.addRow('Default Page Count:', self.dlpagecount_comboBox)
+        self.uistyle_comboBox = QComboBox(self, toolTip='UI Style', editable=False, cursor=Qt.PointingHandCursor)
+        self.uistyle_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.uistyle_comboBox.addItems(QStyleFactory.keys())
+        self.uistyle_comboBox.setCurrentIndex(self.uistyle_comboBox.findText(str(self.settings.value('ui_style')), Qt.MatchFixedString))
+        uistyle_infotext = QLabel('* requires restart')
+        uistyle_infotext.setStyleSheet('font-weight:300;')
+        uistyle_layout = QHBoxLayout()
+        uistyle_layout.addWidget(self.uistyle_comboBox)
+        uistyle_layout.addWidget(uistyle_infotext)
+        general_formLayout.addRow('UI Style', uistyle_layout)
         generalGroup.setLayout(general_formLayout)
 
         realdebrid_apitoken_link = '''<tr>
@@ -115,11 +124,15 @@ class GeneralTab(QWidget):
         self.dlmanager_comboBox.addItems(('built-in', 'aria2', 'pyLoad'))
         if sys.platform == 'win32':
             self.dlmanager_comboBox.addItem('IDM')
+        if sys.platform.startswith('linux'):
+            self.dlmanager_comboBox.addItem('kget')
         self.dlmanager_comboBox.setCurrentIndex(self.dlmanager_comboBox.findText(
             str(self.settings.value('download_manager')), Qt.MatchFixedString))
         dlmanager_formLayout.addRow('Download Manager:', self.dlmanager_comboBox)
         dlmanager_layout = QHBoxLayout()
+        dlmanager_layout.addStretch(1)
         dlmanager_layout.addLayout(dlmanager_formLayout)
+        dlmanager_layout.addStretch(1)
         dlmanagerGroup.setLayout(dlmanager_layout)
 
         directdl_label = QLabel('No settings available for built-in downloader')
@@ -205,6 +218,7 @@ class GeneralTab(QWidget):
         self.settings.setValue('source_url', self.sourceUrl_lineEdit.text())
         self.settings.setValue('user_agent', self.useragent_lineEdit.text())
         self.settings.setValue('dl_pagecount', self.dlpagecount_comboBox.currentText())
+        self.settings.setValue('ui_style', self.uistyle_comboBox.currentText())
         self.settings.setValue('realdebrid_apitoken', self.realdebridtoken_lineEdit.text())
         self.settings.setValue('download_manager', self.dlmanager_comboBox.currentText())
         if self.dlmanager_comboBox.currentText() == 'aria2':

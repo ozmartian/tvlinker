@@ -1,36 +1,40 @@
-#!/usr/bin/env pyton3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import inspect
 import os
 import platform
+import qtawesome as qta
 import re
 import signal
 import sys
+import warnings
 from datetime import datetime
-from enum import Enum
 
-from PyQt5.QtCore import (QFile, QFileInfo, QJsonDocument, QModelIndex,
+from qtpy.QtCore import (QFile, QFileInfo, QModelIndex,
                           QProcess, QSettings, QSize, QStandardPaths, Qt,
-                          QTextStream, QUrl, pyqtSignal, pyqtSlot)
-from PyQt5.QtGui import (QCloseEvent, QColor, QDesktopServices, QFont,
+                          QTemporaryDir, QTextStream, QUrl, Signal as pyqtSignal,
+                          Slot as pyqtSlot)
+from qtpy.QtGui import (QCloseEvent, QColor, QDesktopServices, QFont,
                          QFontDatabase, QIcon, QPalette, QPixmap)
-from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
-                             QComboBox, QDialog, QFileDialog, QHBoxLayout,
+from qtpy.QtWidgets import (QAbstractItemView, QAction, QApplication,
+                             QComboBox, QDialog, QFileDialog, QGroupBox, QHBoxLayout,
                              QHeaderView, QLabel, QLayout, QLineEdit, QMenu,
                              QMessageBox, QProgressBar, QPushButton,
-                             QSizePolicy, QTableWidget, QTableWidgetItem,
+                             QSizePolicy, QStyleFactory, QTableWidget, QTableWidgetItem,
                              QToolButton, QVBoxLayout, QWidget, qApp)
 
-from tvlinker.hosters import HosterLinks
-from tvlinker.pyload import PyloadConfig, PyloadConnection
-from tvlinker.settings import Settings
-from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread,
+from hosters import HosterLinks
+from pyload import PyloadConfig, PyloadConnection
+from settings import Settings
+from threads import (Aria2Thread, DownloadThread, HostersThread,
                     RealDebridThread, ScrapeThread)
-import tvlinker.assets
+import assets
+
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 signal.signal(signal.SIGTERM, signal.SIG_DFL)
+warnings.filterwarnings('ignore')
 
 
 class DirectDownload(QDialog):
@@ -69,38 +73,50 @@ class DirectDownload(QDialog):
     @pyqtSlot()
     def download_complete(self) -> None:
         qApp.restoreOverrideCursor()
-        self.close()
         QMessageBox.information(self.parent, 'Confirmation', 'The download is complete...                    ',
                                 buttons=QMessageBox.Ok)
+        self.close()
 
 
 class TVLinker(QWidget):
-    def __init__(self):
-        super(TVLinker, self).__init__()
+    def __init__(self, parent=None):
+        super(TVLinker, self).__init__(parent)
         self.rows, self.cols = 0, 0
         self.init_stylesheet()
-        layout = QVBoxLayout()
-        layout.setContentsMargins(10, 10, 10, 5)
+        self.init_icons()
         self.init_settings()
-        layout.addLayout(self.init_form())
+        layout = QVBoxLayout(spacing=0)
+        layout.setContentsMargins(10, 10, 10, 0)
+        form_groupbox = QGroupBox(self)
+        form_groupbox.setLayout(self.init_form())
+        form_groupbox.setStyle(QStyleFactory.create('Fusion'))
+        layout.addWidget(form_groupbox)
         layout.addWidget(self.init_table())
         layout.addLayout(self.init_metabar())
         self.setLayout(layout)
         self.setWindowTitle(qApp.applicationName())
-        self.setWindowIcon(QIcon(self.get_path('images/tvlinker.png')))
+        self.setWindowIcon(self.icon_app)
         self.resize(FixedSettings.windowSize)
         self.show()
         self.start_scraping()
 
     def init_stylesheet(self) -> None:
         qss_stylesheet = '%s.qss' % qApp.applicationName().lower()
-        if sys.platform == 'win32':
-            qss_stylesheet = '%s_win32.qss' % qApp.applicationName().lower()
-        QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
-        qss = QFile('assets/%s' % qss_stylesheet)
+        QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans-Bold.ttf'))
+        QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans-Regular.ttf'))
+        QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans-Semibold.ttf'))
+        qApp.setFont(QFont('Open Sans', 10))
+        qss = QFile(self.get_path(qss_stylesheet))
         qss.open(QFile.ReadOnly | QFile.Text)
-        stream = QTextStream(qss)
-        qApp.setStyleSheet(stream.readAll())
+        qApp.setStyleSheet(QTextStream(qss).readAll())
+
+    def init_icons(self) -> None:
+        self.icon_app = QIcon(self.get_path('images/%s.png' % qApp.applicationName().lower()))
+        self.icon_faves_off = qta.icon('fa.star', color='#555555')
+        self.icon_faves_on = qta.icon('fa.star', color='#FFFFFF')             
+        self.icon_refresh = qta.icon('fa.refresh', color='#555555')  
+        self.icon_menu = qta.icon('fa.navicon', scale_factor=1.5, color='#555555')
+        self.icon_settings = qta.icon('ei.cog', color='#555555')
 
     def init_settings(self) -> None:
         self.config_path = QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation)
@@ -114,6 +130,7 @@ class TVLinker(QWidget):
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
+        self.ui_style = self.settings.value('ui_style')
         self.dl_pagelinks = FixedSettings.linksPerPage
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
         self.download_manager = self.settings.value('download_manager')
@@ -130,39 +147,38 @@ class TVLinker(QWidget):
         self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.search_field.setFocus()
         self.search_field.textChanged.connect(self.filter_table)
-        self.favorites_button = QToolButton(parent=self, toolTip='Favorites', cursor=Qt.PointingHandCursor,
-                                              icon=QIcon(self.get_path('images/favorites.png')), checkable=True)
-        self.favorites_button.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        self.search_field.setStyleSheet('background-color:#FFF; color:#000;')
+        self.favorites_button = QPushButton(parent=self, flat=False, cursor=Qt.PointingHandCursor,
+                                              toolTip='Filter Favorites', icon=self.icon_faves_off,
+                                              checkable=True, toggled=self.filter_faves)
         self.favorites_button.setIconSize(QSize(18, 18))
-        self.favorites_button.toggled.connect(self.filter_faves)
+        self.refresh_button = QPushButton(parent=self, flat=False, cursor=Qt.PointingHandCursor,
+                                          toolTip='Refresh', icon=self.icon_refresh, clicked=self.refresh_links)
+        self.refresh_button.setIconSize(QSize(18, 18))
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
         self.dlpages_field.addItems(('10', '20', '30', '40', '50'))
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
         self.dlpages_field.currentIndexChanged.connect(self.update_pagecount)
-        self.refresh_button = QPushButton(parent=self, flat=False, text=' Refresh', cursor=Qt.PointingHandCursor,
-                                          toolTip='Refresh', icon=QIcon(self.get_path('images/refresh.png')),
-                                          clicked=self.refresh_links)
+        self.dlpages_field.setFixedHeight(24)
         self.settings_button = QPushButton(parent=self, flat=True, toolTip='Menu', cursor=Qt.PointingHandCursor,
-                                            icon=QIcon(self.get_path('images/menu.png')))
+                                            icon=self.icon_menu)
         self.settings_button.setMenu(self.settings_menu())
-        self.settings_button.setIconSize(QSize(26, 18))
+        self.settings_button.setFixedHeight(24)
         layout = QHBoxLayout()
         logo = QPixmap(self.get_path('images/tvrelease.png'))
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
         layout.addWidget(self.search_field)
         layout.addWidget(self.favorites_button)
+        layout.addWidget(self.refresh_button)
         layout.addWidget(QLabel('Pages:'))
         layout.addWidget(self.dlpages_field)
-        layout.addWidget(self.refresh_button)
         layout.addWidget(self.settings_button)
         return layout
 
     def settings_menu(self) -> QMenu:
-        settings_action = QAction(QIcon(self.get_path('images/settings.png')), 'Configure %s...' % qApp.applicationName(),
-                                  self, triggered=self.show_settings)
-        aboutQt_action = QAction(QIcon(self.get_path('images/qt.png')), 'About Qt', self, triggered=qApp.aboutQt)
-        about_action = QAction(QIcon(self.get_path('images/about.png')), 'About %s' % qApp.applicationName(),
-                                  self, triggered=self.about_app)
+        settings_action = QAction(self.icon_settings, 'Settings', self, triggered=self.show_settings)
+        aboutQt_action = QAction('About Qt', self, triggered=qApp.aboutQt)
+        about_action = QAction('About %s' % qApp.applicationName(), self, triggered=self.about_app)
         menu = QMenu()
         menu.addAction(settings_action)
         menu.addSeparator()
@@ -189,18 +205,13 @@ class TVLinker(QWidget):
         return self.table
 
     def init_metabar(self) -> QHBoxLayout:
-        self.meta_template = 'Total number of links retrieved: <b>%s</b>'
+        self.meta_template = 'Total number of links retrieved: <b>%i</b>'
         self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks),
                                      visible=False)
-        palette = self.progress.palette()
-        palette.setColor(QPalette.Base, Qt.white)
-        palette.setColor(QPalette.Foreground, QColor(119, 89, 127))
-        self.progress.setPalette(palette)
         self.meta_label = QLabel(textFormat=Qt.RichText, alignment=Qt.AlignRight, objectName='totals')
-        self.meta_label.setFixedHeight(30)
-        self.meta_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.update_metabar()
         layout = QHBoxLayout()
+        layout.setContentsMargins(10, 5, 10, 10)
         layout.addWidget(self.progress, Qt.AlignLeft)
         layout.addWidget(self.meta_label, Qt.AlignRight)
         return layout
@@ -212,7 +223,7 @@ class TVLinker(QWidget):
 
     def update_metabar(self) -> bool:
         rowcount = self.table.rowCount()
-        self.meta_label.setText(self.meta_template.replace('%s', str(rowcount)))
+        self.meta_label.setText(self.meta_template % rowcount)
         self.progress.setValue(rowcount)
         return True
 
@@ -258,10 +269,11 @@ class TVLinker(QWidget):
     @pyqtSlot(bool)
     def filter_faves(self, checked: bool) -> None:
         if checked:
-            self.favorites_button.setIcon(QIcon(self.get_path('images/favorites_on.png')))
+            self.favorites_button.setIcon(self.icon_faves_on)
+            self.favorites_button.setStyleSheet('background-color:#6A687D;')
         else:
-            self.favorites_button.setIcon(QIcon(self.get_path('images/favorites.png')))
-        pass
+            self.favorites_button.setIcon(self.icon_faves_off)
+            self.favorites_button.setStyleSheet('')
 
     @pyqtSlot(bool)
     def refresh_links(self) -> None:
@@ -355,6 +367,12 @@ class TVLinker(QWidget):
                                                  'Download link has been successfully queued in pyLoad.', QMessageBox.Ok)
                 open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
                 open_pyload.clicked.connect(self.open_pyload)
+            elif self.download_manager == 'kget':
+                cmd = 'kget --hideMainWindow %s' % link
+                if self.cmdexec(cmd):
+                    qApp.restoreOverrideCursor()
+                    self.hosters_win.close()
+                    QMessageBox.information(self, 'kget', 'Your link has been queued in kget.', QMessageBox.Ok)   
             elif self.download_manager == 'IDM':
                 self.idm = QProcess()
                 self.idm.setProcessChannelMode(QProcess.MergedChannels)
@@ -367,8 +385,7 @@ class TVLinker(QWidget):
                     if self.idm.exitStatus() == QProcess.NormalExit and self.idm.exitCode() == 0:
                         qApp.restoreOverrideCursor()
                         self.hosters_win.close()
-                        QMessageBox.information(self, 'Internet Download Manager',
-                                                'Your link has been queued in IDM.', QMessageBox.Ok)       
+                        QMessageBox.information(self, 'Internet Download Manager', 'Your link has been queued in IDM.', QMessageBox.Ok)       
                     else:
                         print('IDM QProcess error = %s' % ProcError(self.idm.error()).name)
                         qApp.restoreOverrideCursor()
@@ -389,6 +406,17 @@ class TVLinker(QWidget):
                     self.directdl_win.cancelDownload.connect(self.cancel_download)
                     self.directdl.start()
                     self.hosters_win.close()
+
+    def cmdexec(self, cmd: str) -> bool:
+        self.proc = QProcess()
+        self.proc.setProcessChannelMode(QProcess.MergedChannels)
+        if hasattr(self.proc, 'errorOccurred'):
+            self.proc.errorOccurred.connect(lambda: print('Process error = %s' % ProcError(error).name))
+        if self.proc.state() == QProcess.NotRunning:
+            self.proc.start(cmd)
+            self.proc.waitForFinished(-1)
+            return self.proc.exitStatus() == QProcess.NormalExit and self.proc.exitCode() == 0
+        return False
 
     @pyqtSlot()
     def cancel_download(self) -> None:
@@ -438,7 +466,7 @@ class TVLinker(QWidget):
                     return m.group(1)
 
 
-class ProcError(Enum):
+class ProcError:
     FAILED_TO_START = 0
     CRASHED = 1
     TIMED_OUT = 2
@@ -452,20 +480,20 @@ class FixedSettings:
     applicationVersion = TVLinker.get_version()
     applicationStyle = 'Fusion'
     organizationDomain = 'http://tvlinker.ozmartians.com'
-    windowSize = QSize(1000, 750)
+    windowSize = QSize(1000, 785)
     linksPerPage = 30
     realdebrid_api_url = 'https://api.real-debrid.com/rest/1.0'
 
 
 def main():
-    if sys.platform == 'win32':
-        qApp.setStyle(FixedSettings.applicationStyle)
+    if not sys.platform.startswith('linux'):
+        qApp.setStyle(QStyleFactory.create(FixedSettings.applicationStyle))
     app = QApplication(sys.argv)
     app.setApplicationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)
     app.setQuitOnLastWindowClosed(True)
-    linker = TVLinker()
+    tvlinker = TVLinker()
     sys.exit(app.exec_())
 
 
