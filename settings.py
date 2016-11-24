@@ -21,7 +21,7 @@ class Settings(QDialog):
         tabs = QTabWidget()
         tabs.addTab(self.tab_general, 'General')
         tabs.addTab(self.tab_favorites, 'Favorites')
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
+        button_box = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, Qt.Horizontal, self)
         button_box.accepted.connect(self.save_settings)
         button_box.rejected.connect(self.close)
         layout = QVBoxLayout()
@@ -55,7 +55,6 @@ class GeneralTab(QWidget):
         general_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
         self.sourceUrl_lineEdit = QLineEdit(self, text=self.settings.value('source_url'), readOnly=True)
         self.sourceUrl_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        # self.sourceUrl_lineEdit.setMinimumWidth(500)
         self.sourceUrl_lineEdit.setStyleSheet('background-color:#EAEAEA')
         general_formLayout.addRow('Source URL:', self.sourceUrl_lineEdit)
         self.useragent_lineEdit = QLineEdit(self, text=self.settings.value('user_agent'), readOnly=True)
@@ -186,19 +185,31 @@ class GeneralTab(QWidget):
         pyload_settings = QWidget()
         pyload_settings.setLayout(pyload_formLayout)
 
-        self.idmexepath_lineEdit = QLineEdit(self, text=self.settings.value('idm_exe_path'))
-        self.idmexepath_lineEdit.setFixedWidth(500)
-        idm_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
-        idm_formLayout.addRow('IDM Executable (EXE) Path:', self.idmexepath_lineEdit)
-        idm_settings = QWidget()
-        idm_settings.setLayout(idm_formLayout)
+        if sys.platform == 'win32':
+            self.idmexepath_lineEdit = QLineEdit(self, text=self.settings.value('idm_exe_path'))
+            self.idmexepath_lineEdit.setFixedWidth(500)
+            idm_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
+            idm_formLayout.addRow('IDM Executable (EXE) Path:', self.idmexepath_lineEdit)
+            idm_settings = QWidget()
+            idm_settings.setLayout(idm_formLayout)
+
+        if sys.platform.startswith('linux'):
+            self.kgetpath_lineEdit = QLineEdit(self, text=self.settings.value('kget_path'))
+            self.kgetpath_lineEdit.setFixedWidth(500)
+            kget_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
+            kget_formLayout.addRow('kget Path:', self.kgetpath_lineEdit)
+            kget_settings = QWidget()
+            kget_settings.setLayout(kget_formLayout)
 
         self.dlmanagersettings_layout = QStackedLayout()
         self.dlmanagersettings_layout.setSizeConstraint(QLayout.SetFixedSize)
         self.dlmanagersettings_layout.addWidget(directdl_label)
         self.dlmanagersettings_layout.addWidget(aria2_settings)
         self.dlmanagersettings_layout.addWidget(pyload_settings)
-        self.dlmanagersettings_layout.addWidget(idm_settings)
+        if sys.platform == 'win32':
+            self.dlmanagersettings_layout.addWidget(idm_settings)
+        if sys.platform.startswith('linux'):
+            self.dlmanagersettings_layout.addWidget(kget_settings)
         self.dlmanagersettings_layout.setCurrentIndex(self.dlmanager_comboBox.currentIndex())
 
         self.dlmanager_comboBox.currentIndexChanged.connect(self.dlmanagersettings_layout.setCurrentIndex)
@@ -233,6 +244,8 @@ class GeneralTab(QWidget):
             self.settings.setValue('pyload_password', self.pyloadpass_lineEdit.text())
         elif self.dlmanager_comboBox.currentText() == 'IDM':
             self.settings.setValue('idm_exe_path', self.idmexepath_lineEdit.text())
+        elif self.dlmanager_comboBox.currentText() == 'kget':
+            self.settings.setValue('kget_path', self.kgetpath_lineEdit.text())
 
 
 class FavoritesTab(QWidget):
@@ -244,7 +257,6 @@ class FavoritesTab(QWidget):
         faves_layout = QVBoxLayout()
         faves_layout.addWidget(faves_content)
         self.setLayout(faves_layout)
-        pass
 
     def save(self) -> None:
         pass

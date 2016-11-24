@@ -24,12 +24,12 @@ from qtpy.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QSizePolicy, QStyleFactory, QTableWidget, QTableWidgetItem,
                              QToolButton, QVBoxLayout, QWidget, qApp)
 
-from hosters import HosterLinks
-from pyload import PyloadConfig, PyloadConnection
-from settings import Settings
-from threads import (Aria2Thread, DownloadThread, HostersThread,
+from tvlinker.hosters import HosterLinks
+from tvlinker.pyload import PyloadConfig, PyloadConnection
+from tvlinker.settings import Settings
+from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread,
                     RealDebridThread, ScrapeThread)
-import assets
+import tvlinker.assets
 
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -141,6 +141,8 @@ class TVLinker(QWidget):
             self.pyload_config.password = self.settings.value('pyload_password')
         elif self.download_manager == 'IDM':
             self.idm_exe_path = self.settings.value('idm_exe_path')
+        elif self.download_manager == 'kget':
+            self.kget_path = self.settings.value('kget_path')
 
     def init_form(self) -> QHBoxLayout:
         self.search_field = QLineEdit(self, clearButtonEnabled=True, placeholderText='Enter search criteria')
@@ -247,7 +249,7 @@ class TVLinker(QWidget):
         a { color:#441d4e; text-decoration:none; font-weight:bold; }
         a:hover { text-decoration:underline; }
     </style>
-    <p style="font-size:26pt; font-weight:bold;">%s</p>
+    <p style="font-size:24pt; font-weight:bold; color:#6A687D;">%s</p>
     <p>
         <span style="font-size:13pt;"><b>Version: %s</b></span>
         <span style="font-size:10pt;position:relative;left:5px;">( %s )</span>
@@ -368,7 +370,7 @@ class TVLinker(QWidget):
                 open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
                 open_pyload.clicked.connect(self.open_pyload)
             elif self.download_manager == 'kget':
-                cmd = 'kget --hideMainWindow %s' % link
+                cmd = '%s --hideMainWindow %s' % (self.kget_path, link)
                 if self.cmdexec(cmd):
                     qApp.restoreOverrideCursor()
                     self.hosters_win.close()
