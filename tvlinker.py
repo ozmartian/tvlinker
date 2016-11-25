@@ -24,19 +24,19 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QToolButton, QVBoxLayout, QWidget, qApp)
 
 try:
+    from tvlinker.hosters import HosterLinks
+    from tvlinker.pyload import PyloadConfig, PyloadConnection
+    from tvlinker.settings import Settingskcolor
+    from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread,
+                        RealDebridThread, ScrapeThread)
+    import tvlinker.assets
+except:
     from hosters import HosterLinks
     from pyload import PyloadConfig, PyloadConnection
     from settings import Settings
     from threads import (Aria2Thread, DownloadThread, HostersThread,
                         RealDebridThread, ScrapeThread)
     import assets
-except:
-    from tvlinker.hosters import HosterLinks
-    from tvlinker.pyload import PyloadConfig, PyloadConnection
-    from tvlinker.settings import Settings
-    from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread,
-                        RealDebridThread, ScrapeThread)
-    import tvlinker.assets
 
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -54,7 +54,6 @@ class DirectDownload(QDialog):
         self.setMinimumWidth(485)
         self.setContentsMargins(20, 20, 20, 20)
         layout = QVBoxLayout()
-        # layout.setSizeConstraint(QLayout.SetFixedSize)
         self.progress_label = QLabel(alignment=Qt.AlignCenter)
         self.progress = QProgressBar(self.parent, minimum=0, maximum=100)
         layout.addWidget(self.progress_label)
@@ -86,12 +85,13 @@ class DirectDownload(QDialog):
 
 
 class TVLinker(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, settings: QSettings, parent=None):
         super(TVLinker, self).__init__(parent)
         self.rows, self.cols = 0, 0
+        self.settings = settings
         self.init_styles()
-        self.init_icons()
         self.init_settings()
+        self.init_icons()
         layout = QVBoxLayout(spacing=0)
         layout.setContentsMargins(10, 10, 10, 0)
         form_groupbox = QGroupBox(self, objectName='mainForm')
@@ -123,18 +123,10 @@ class TVLinker(QDialog):
         self.icon_settings = qta.icon('ei.cog', color='#555')
 
     def init_settings(self) -> None:
-        self.config_path = QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation)
-        self.settings_ini = os.path.join(self.config_path, '%s.ini' % qApp.applicationName().lower())
-        if not os.path.exists(self.settings_ini):
-            os.makedirs(self.config_path, exist_ok=True)
-            QFile.copy(self.get_path(path='%s.ini' % qApp.applicationName().lower(), override=True), self.settings_ini)
-        self.settings_ini_secret = os.path.join(self.config_path, '%s.ini.secret' % qApp.applicationName().lower())
-        self.settings_path = self.settings_ini_secret if os.path.exists(self.settings_ini_secret) else self.settings_ini
-        self.settings = QSettings(self.settings_path, QSettings.IniFormat)
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
-        self.ui_style = self.settings.value('ui_style')
+        self.ui_style = self.settings.value('ui_style', FixedSettings.applicationStyle)
         self.dl_pagelinks = FixedSettings.linksPerPage
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
         self.download_manager = self.settings.value('download_manager')
@@ -482,16 +474,27 @@ class FixedSettings:
     linksPerPage = 30
     realdebrid_api_url = 'https://api.real-debrid.com/rest/1.0'
 
+    @staticmethod
+    def get_app_settings() -> QSettings:
+        config_path = QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation)
+        settings_ini = os.path.join(config_path, '%s.ini' % FixedSettings.applicationName.lower())
+        if not os.path.exists(settings_ini):
+            os.makedirs(config_path, exist_ok=True)
+            QFile.copy(TVLinker.get_path(path='%s.ini' % FixedSettings.applicationName.lower(), override=True), settings_ini)
+        settings_ini_secret = os.path.join(config_path, '%s.ini.secret' % FixedSettings.applicationName.lower())
+        settings_path = settings_ini_secret if os.path.exists(settings_ini_secret) else settings_ini
+        return QSettings(settings_path, QSettings.IniFormat)
+
 
 def main():
-    if not sys.platform.startswith('linux'):
-       qApp.setStyle(QStyleFactory.create(FixedSettings.applicationStyle))
     app = QApplication(sys.argv)
+    config = FixedSettings.get_app_settings()
+    qApp.setStyle(config.value('ui_style', FixedSettings.applicationStyle))
     app.setApplicationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)
     app.setQuitOnLastWindowClosed(True)
-    tvlinker = TVLinker()
+    tvlinker = TVLinker(config)
     sys.exit(app.exec_())
 
 

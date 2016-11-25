@@ -68,22 +68,22 @@ class HosterLinks(QDialog):
             hoster_logo.setAlignment(Qt.AlignCenter)
             copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard', flat=False,
                                    cursor=Qt.PointingHandCursor)
-            copy_btn.setFixedSize(90, 30)
+            # copy_btn.setFixedSize(90, 30)
             self.copy_group.addButton(copy_btn, index)
             open_btn = QPushButton(self, icon=self.open_icon, text=' OPEN', toolTip='Open in browser', flat=False,
                                    cursor=Qt.PointingHandCursor)
-            open_btn.setFixedSize(90, 30)
+            # open_btn.setFixedSize(90, 30)
             self.open_group.addButton(open_btn, index)
             download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download link',
                                        flat=False, cursor=Qt.PointingHandCursor)
-            download_btn.setFixedSize(120, 30)
+            # download_btn.setFixedSize(120, 30)
             self.download_group.addButton(download_btn, index)
             layout = QHBoxLayout(spacing=10)
             layout.addWidget(hoster_logo)
             layout.addWidget(copy_btn, Qt.AlignRight)
             layout.addWidget(open_btn, Qt.AlignRight)
             layout.addWidget(download_btn, Qt.AlignRight)
-            groupbox = QGroupBox(self)
+            groupbox = QGroupBox(self, objectName='hosters')
             groupbox.setLayout(layout)
             self.layout.addWidget(groupbox)
             index += 1

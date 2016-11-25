@@ -36,6 +36,10 @@ QGroupBox {
     padding: 6px;
 }
 
+QGroupBox#hosters {
+    background-color: #D9D9D9;
+}
+
 QLabel#heading {
     color: #444;
     font-size: 12pt;
