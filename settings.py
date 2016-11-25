@@ -3,9 +3,9 @@
 
 import sys
 
-from qtpy.QtCore import QSettings, Qt, Slot as pyqtSlot
-from qtpy.QtGui import QCloseEvent, QIcon, QPixmap
-from qtpy.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
+from PyQt5.QtCore import QSettings, Qt, pyqtSlot
+from PyQt5.QtGui import QCloseEvent, QIcon, QPixmap
+from PyQt5.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
                              QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLayout,
                              QLineEdit, QSizePolicy, QStackedLayout, QStyleFactory, QTabWidget, QVBoxLayout, QWidget, qApp)
 
@@ -25,7 +25,7 @@ class Settings(QDialog):
         button_box.accepted.connect(self.save_settings)
         button_box.rejected.connect(self.close)
         layout = QVBoxLayout()
-        layout.setSizeConstraint(QLayout.SetFixedSize)
+        # layout.setSizeConstraint(QLayout.SetFixedSize)
         layout.addWidget(tabs)
         layout.addWidget(button_box)
         
@@ -187,7 +187,7 @@ class GeneralTab(QWidget):
 
         if sys.platform == 'win32':
             self.idmexepath_lineEdit = QLineEdit(self, text=self.settings.value('idm_exe_path'))
-            self.idmexepath_lineEdit.setFixedWidth(500)
+            self.idmexepath_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             idm_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
             idm_formLayout.addRow('IDM Executable (EXE) Path:', self.idmexepath_lineEdit)
             idm_settings = QWidget()
@@ -195,14 +195,13 @@ class GeneralTab(QWidget):
 
         if sys.platform.startswith('linux'):
             self.kgetpath_lineEdit = QLineEdit(self, text=self.settings.value('kget_path'))
-            self.kgetpath_lineEdit.setFixedWidth(500)
+            self.kgetpath_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             kget_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
             kget_formLayout.addRow('kget Path:', self.kgetpath_lineEdit)
             kget_settings = QWidget()
             kget_settings.setLayout(kget_formLayout)
 
         self.dlmanagersettings_layout = QStackedLayout()
-        self.dlmanagersettings_layout.setSizeConstraint(QLayout.SetFixedSize)
         self.dlmanagersettings_layout.addWidget(directdl_label)
         self.dlmanagersettings_layout.addWidget(aria2_settings)
         self.dlmanagersettings_layout.addWidget(pyload_settings)
@@ -253,7 +252,7 @@ class FavoritesTab(QWidget):
         super(FavoritesTab, self).__init__()
         self.settings = settings
         faves_content = QLabel(pixmap=QPixmap(':assets/images/comingsoon.png'), alignment=Qt.AlignCenter)
-        faves_content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        faves_content.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Expanding)
         faves_layout = QVBoxLayout()
         faves_layout.addWidget(faves_content)
         self.setLayout(faves_layout)

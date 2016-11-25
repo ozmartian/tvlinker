@@ -36,7 +36,7 @@ setup(
     packages=['tvlinker'],
     package_dir={'tvlinker': '.'},
     setup_requires=['setuptools >= 28.1.0'],
-    install_requires=['PyQt5 >= 5.5', 'beautifulsoup4 >= 4.5.1', 'QtAwesome >= 0.3.3', 'QtPy >= 1.1.2'],
+    install_requires=['PyQt5 >= 5.5', 'beautifulsoup4 >= 4.5.1', 'QtAwesome >= 0.3.3'],
     extras_require={':sys_platform!="win32"': ['lxml >= 3.6.4']},
     package_data={'tvlinker': ['tvlinker.ini', 'assets/images/tvlinker.ico', 'assets/images/tvlinker.png']},
     entry_points={'gui_scripts': ['tvlinker = tvlinker.tvlinker:main']},

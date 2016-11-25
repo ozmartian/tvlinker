@@ -11,25 +11,32 @@ import sys
 import warnings
 from datetime import datetime
 
-from qtpy.QtCore import (QFile, QFileInfo, QModelIndex,
+from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex,
                           QProcess, QSettings, QSize, QStandardPaths, Qt,
-                          QTemporaryDir, QTextStream, QUrl, Signal as pyqtSignal,
-                          Slot as pyqtSlot)
-from qtpy.QtGui import (QCloseEvent, QColor, QDesktopServices, QFont,
+                          QTemporaryDir, QTextStream, QUrl, pyqtSignal, pyqtSlot)
+from PyQt5.QtGui import (QCloseEvent, QColor, QDesktopServices, QFont,
                          QFontDatabase, QIcon, QPalette, QPixmap)
-from qtpy.QtWidgets import (QAbstractItemView, QAction, QApplication,
+from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QComboBox, QDialog, QFileDialog, QGroupBox, QHBoxLayout,
                              QHeaderView, QLabel, QLayout, QLineEdit, QMenu,
                              QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QStyleFactory, QTableWidget, QTableWidgetItem,
                              QToolButton, QVBoxLayout, QWidget, qApp)
 
-from tvlinker.hosters import HosterLinks
-from tvlinker.pyload import PyloadConfig, PyloadConnection
-from tvlinker.settings import Settings
-from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread,
-                    RealDebridThread, ScrapeThread)
-import tvlinker.assets
+try:
+    from hosters import HosterLinks
+    from pyload import PyloadConfig, PyloadConnection
+    from settings import Settings
+    from threads import (Aria2Thread, DownloadThread, HostersThread,
+                        RealDebridThread, ScrapeThread)
+    import assets
+except:
+    from tvlinker.hosters import HosterLinks
+    from tvlinker.pyload import PyloadConfig, PyloadConnection
+    from tvlinker.settings import Settings
+    from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread,
+                        RealDebridThread, ScrapeThread)
+    import tvlinker.assets
 
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -47,7 +54,7 @@ class DirectDownload(QDialog):
         self.setMinimumWidth(485)
         self.setContentsMargins(20, 20, 20, 20)
         layout = QVBoxLayout()
-        layout.setSizeConstraint(QLayout.SetFixedSize)
+        # layout.setSizeConstraint(QLayout.SetFixedSize)
         self.progress_label = QLabel(alignment=Qt.AlignCenter)
         self.progress = QProgressBar(self.parent, minimum=0, maximum=100)
         layout.addWidget(self.progress_label)
@@ -78,18 +85,17 @@ class DirectDownload(QDialog):
         self.close()
 
 
-class TVLinker(QWidget):
+class TVLinker(QDialog):
     def __init__(self, parent=None):
         super(TVLinker, self).__init__(parent)
         self.rows, self.cols = 0, 0
-        self.init_stylesheet()
+        self.init_styles()
         self.init_icons()
         self.init_settings()
         layout = QVBoxLayout(spacing=0)
         layout.setContentsMargins(10, 10, 10, 0)
-        form_groupbox = QGroupBox(self)
+        form_groupbox = QGroupBox(self, objectName='mainForm')
         form_groupbox.setLayout(self.init_form())
-        form_groupbox.setStyle(QStyleFactory.create('Fusion'))
         layout.addWidget(form_groupbox)
         layout.addWidget(self.init_table())
         layout.addLayout(self.init_metabar())
@@ -100,23 +106,21 @@ class TVLinker(QWidget):
         self.show()
         self.start_scraping()
 
-    def init_stylesheet(self) -> None:
+    def init_styles(self) -> None:
         qss_stylesheet = '%s.qss' % qApp.applicationName().lower()
-        QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans-Bold.ttf'))
-        QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans-Regular.ttf'))
-        QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans-Semibold.ttf'))
-        qApp.setFont(QFont('Open Sans', 10))
         qss = QFile(self.get_path(qss_stylesheet))
         qss.open(QFile.ReadOnly | QFile.Text)
         qApp.setStyleSheet(QTextStream(qss).readAll())
+        QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
+        qApp.setFont(QFont('Open Sans', 10))
 
     def init_icons(self) -> None:
         self.icon_app = QIcon(self.get_path('images/%s.png' % qApp.applicationName().lower()))
-        self.icon_faves_off = qta.icon('fa.star', color='#555555')
-        self.icon_faves_on = qta.icon('fa.star', color='#FFFFFF')             
-        self.icon_refresh = qta.icon('fa.refresh', color='#555555')  
-        self.icon_menu = qta.icon('fa.navicon', scale_factor=1.5, color='#555555')
-        self.icon_settings = qta.icon('ei.cog', color='#555555')
+        self.icon_faves_off = qta.icon('ei.star', color='#555')
+        self.icon_faves_on = qta.icon('ei.star', color='#FFF')             
+        self.icon_refresh = qta.icon('ei.refresh', color='#555')  
+        self.icon_menu = qta.icon('fa.navicon', scale_factor=1.5, color='#555')
+        self.icon_settings = qta.icon('ei.cog', color='#555')
 
     def init_settings(self) -> None:
         self.config_path = QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation)
@@ -149,29 +153,30 @@ class TVLinker(QWidget):
         self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.search_field.setFocus()
         self.search_field.textChanged.connect(self.filter_table)
-        self.search_field.setStyleSheet('background-color:#FFF; color:#000;')
-        self.favorites_button = QPushButton(parent=self, flat=False, cursor=Qt.PointingHandCursor,
-                                              toolTip='Filter Favorites', icon=self.icon_faves_off,
+        self.favorites_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
+                                              toolTip='Favorites', icon=self.icon_faves_off,
                                               checkable=True, toggled=self.filter_faves)
-        self.favorites_button.setIconSize(QSize(18, 18))
-        self.refresh_button = QPushButton(parent=self, flat=False, cursor=Qt.PointingHandCursor,
+        self.favorites_button.setIconSize(QSize(22, 22))
+        self.refresh_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
                                           toolTip='Refresh', icon=self.icon_refresh, clicked=self.refresh_links)
-        self.refresh_button.setIconSize(QSize(18, 18))
+        self.refresh_button.setIconSize(QSize(22, 22))
+        toolbar_buttons = QHBoxLayout(spacing=0)
+        toolbar_buttons.setContentsMargins(0, 0, 0, 0)
+        toolbar_buttons.addWidget(self.favorites_button)
+        toolbar_buttons.addWidget(self.refresh_button)
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
         self.dlpages_field.addItems(('10', '20', '30', '40', '50'))
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
         self.dlpages_field.currentIndexChanged.connect(self.update_pagecount)
-        self.dlpages_field.setFixedHeight(24)
         self.settings_button = QPushButton(parent=self, flat=True, toolTip='Menu', cursor=Qt.PointingHandCursor,
                                             icon=self.icon_menu)
         self.settings_button.setMenu(self.settings_menu())
-        self.settings_button.setFixedHeight(24)
+        self.settings_button.setStyle(QStyleFactory.create(FixedSettings.applicationStyle))
         layout = QHBoxLayout()
         logo = QPixmap(self.get_path('images/tvrelease.png'))
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
         layout.addWidget(self.search_field)
-        layout.addWidget(self.favorites_button)
-        layout.addWidget(self.refresh_button)
+        layout.addLayout(toolbar_buttons)
         layout.addWidget(QLabel('Pages:'))
         layout.addWidget(self.dlpages_field)
         layout.addWidget(self.settings_button)
@@ -272,10 +277,8 @@ class TVLinker(QWidget):
     def filter_faves(self, checked: bool) -> None:
         if checked:
             self.favorites_button.setIcon(self.icon_faves_on)
-            self.favorites_button.setStyleSheet('background-color:#6A687D;')
         else:
             self.favorites_button.setIcon(self.icon_faves_off)
-            self.favorites_button.setStyleSheet('')
 
     @pyqtSlot(bool)
     def refresh_links(self) -> None:
@@ -376,27 +379,19 @@ class TVLinker(QWidget):
                     self.hosters_win.close()
                     QMessageBox.information(self, 'kget', 'Your link has been queued in kget.', QMessageBox.Ok)   
             elif self.download_manager == 'IDM':
-                self.idm = QProcess()
-                self.idm.setProcessChannelMode(QProcess.MergedChannels)
-                if hasattr(self.idm, 'errorOccurred'):
-                    self.idm.errorOccurred.connect(lambda: print('IDM QProcess error = %s' % ProcError(error).name))
-                if self.idm.state() == QProcess.NotRunning:
-                    cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
-                    self.idm.start(cmd)
-                    self.idm.waitForFinished(-1)
-                    if self.idm.exitStatus() == QProcess.NormalExit and self.idm.exitCode() == 0:
-                        qApp.restoreOverrideCursor()
-                        self.hosters_win.close()
-                        QMessageBox.information(self, 'Internet Download Manager', 'Your link has been queued in IDM.', QMessageBox.Ok)       
-                    else:
-                        print('IDM QProcess error = %s' % ProcError(self.idm.error()).name)
-                        qApp.restoreOverrideCursor()
-                        self.hosters_win.close()
-                        QMessageBox.critical(self, 'Internet Download Manager',
-                                                '<p>Could not connect to your local IDM application instance. Please check your ' +
-                                                'settings and ensure the IDM executable path is correct according to your ' +
-                                                'installation.</p><p>Error Code: %s</p>' % ProcError(self.idm.error()).name, QMessageBox.Ok)
-                    self.idm.deleteLater()
+                cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
+                if self.cmdexec(cmd):
+                    qApp.restoreOverrideCursor()
+                    self.hosters_win.close()
+                    QMessageBox.information(self, 'Internet Download Manager', 'Your link has been queued in IDM.', QMessageBox.Ok)       
+                else:
+                    print('IDM QProcess error = %s' % ProcError(self.idm.error()).name)
+                    qApp.restoreOverrideCursor()
+                    self.hosters_win.close()
+                    QMessageBox.critical(self, 'Internet Download Manager',
+                                            '<p>Could not connect to your local IDM application instance. Please check your ' +
+                                            'settings and ensure the IDM executable path is correct according to your ' +
+                                            'installation.</p><p>Error Code: %s</p>' % ProcError(self.idm.error()).name, QMessageBox.Ok)
             else:
                 dlpath, _ = QFileDialog.getSaveFileName(self, 'Save File', link.split('/')[-1])
                 if dlpath != '':
@@ -417,6 +412,7 @@ class TVLinker(QWidget):
         if self.proc.state() == QProcess.NotRunning:
             self.proc.start(cmd)
             self.proc.waitForFinished(-1)
+            self.proc.deleteLater()
             return self.proc.exitStatus() == QProcess.NormalExit and self.proc.exitCode() == 0
         return False
 
@@ -489,7 +485,7 @@ class FixedSettings:
 
 def main():
     if not sys.platform.startswith('linux'):
-        qApp.setStyle(QStyleFactory.create(FixedSettings.applicationStyle))
+       qApp.setStyle(QStyleFactory.create(FixedSettings.applicationStyle))
     app = QApplication(sys.argv)
     app.setApplicationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)

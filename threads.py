@@ -7,7 +7,7 @@ import sys
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from qtpy.QtCore import QSettings, QThread, Signal as pyqtSignal
+from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from bs4 import BeautifulSoup, FeatureNotFound
 
 

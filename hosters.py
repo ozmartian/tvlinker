@@ -3,9 +3,9 @@
 
 import sys
 
-from qtpy.QtCore import QTimer, QUrl, Qt, Signal as pyqtSignal, Slot as pyqtSlot
-from qtpy.QtGui import QCloseEvent, QDesktopServices, QIcon, QPixmap
-from qtpy.QtWidgets import (QBoxLayout, QButtonGroup, QDialog, QFrame, QGroupBox, QHBoxLayout, QLabel, QLayout,
+from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon, QPixmap
+from PyQt5.QtWidgets import (QBoxLayout, QButtonGroup, QDialog, QFrame, QGroupBox, QHBoxLayout, QLabel, QLayout,
                              QProgressBar, QPushButton, QSizePolicy, QSpacerItem, QStyleFactory, QVBoxLayout, qApp)
 
 
@@ -24,7 +24,7 @@ class HosterLinks(QDialog):
         self.copy_icon = QIcon(self.parent.get_path('images/copy_icon.png'))
         self.open_icon = QIcon(self.parent.get_path('images/open_icon.png'))
         self.download_icon = QIcon(self.parent.get_path('images/download_icon.png'))
-        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        #self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         self.copy_group = QButtonGroup(exclusive=False)
         self.copy_group.buttonClicked[int].connect(self.copy_link)
         self.open_group = QButtonGroup(exclusive=False)
@@ -33,10 +33,9 @@ class HosterLinks(QDialog):
         self.download_group.buttonClicked[int].connect(self.download_link)
         self.setWindowTitle('Hoster Links')
         busy_label = QLabel('Retrieving hoster links...', alignment=Qt.AlignCenter)
-        busy_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        busy_label.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
         busy_indicator = QProgressBar(parent=self, minimum=0, maximum=0)
-        if sys.platform.startswith('linux'):
-            busy_indicator.setStyle(QStyleFactory.create('Fusion'))
+        busy_indicator.setStyle(QStyleFactory.create('Fusion'))
         self.layout.addWidget(busy_label)
         self.layout.addSpacerItem(QSpacerItem(1, 10))
         self.layout.addWidget(busy_indicator)

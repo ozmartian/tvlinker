@@ -16,6 +16,7 @@ QHeaderView::up-arrow {
 }
 
 QTableView {
+    border: 1px solid #BABABA;
     border-top: none;
     margin-top: 0;
     margin-bottom: 0;
@@ -30,23 +31,18 @@ QTableView::item:selected {
 }
 
 QGroupBox {
-    background-color: rgba(0, 0, 0, 0.05);
     border: 1px inset #BABABA;
     margin: 0;
     padding: 6px;
 }
 
-QLineInput, QPushButton {
-    padding: 5px;
-}
-
 QLabel#heading {
-    color: #555;
+    color: #444;
     font-size: 12pt;
-    font-weight: 500;
+    font-weight: 400;
     text-align: center;
-    padding: 15px 10px;
-    border: 1px groove #BABABA;
+    padding: 10px;
+    border: 1px solid #BABABA;
     background-color: #FAFAFA;
     margin-bottom: 15px;
 }
