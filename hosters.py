@@ -19,12 +19,13 @@ class HosterLinks(QDialog):
         self.title = title
         self.setWindowModality(Qt.ApplicationModal)
         self.hosters = []
-        self.layout = QVBoxLayout(spacing=0)
+        self.layout = QVBoxLayout()
+        self.layout.setContentsMargins(20, 20, 20, 20)
         self.setLayout(self.layout)
         self.copy_icon = QIcon(self.parent.get_path('images/copy_icon.png'))
         self.open_icon = QIcon(self.parent.get_path('images/open_icon.png'))
         self.download_icon = QIcon(self.parent.get_path('images/download_icon.png'))
-        #self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        # self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         self.copy_group = QButtonGroup(exclusive=False)
         self.copy_group.buttonClicked[int].connect(self.copy_link)
         self.open_group = QButtonGroup(exclusive=False)
@@ -64,28 +65,28 @@ class HosterLinks(QDialog):
         for hoster in hosters:
             hoster_logo = QLabel(pixmap=QPixmap(self.parent.get_path('images/hoster_%s' % QUrl(hoster[0]).fileName())),
                                  toolTip=hoster[1])
-            hoster_logo.setMinimumWidth(185)
+            hoster_logo.setMinimumWidth(200)
             hoster_logo.setAlignment(Qt.AlignCenter)
-            copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard', flat=False,
+            copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard',
                                    cursor=Qt.PointingHandCursor)
-            # copy_btn.setFixedSize(90, 30)
             self.copy_group.addButton(copy_btn, index)
-            open_btn = QPushButton(self, icon=self.open_icon, text=' OPEN', toolTip='Open in browser', flat=False,
+            open_btn = QPushButton(self, icon=self.open_icon, text=' OPEN', toolTip='Open in browser',
                                    cursor=Qt.PointingHandCursor)
-            # open_btn.setFixedSize(90, 30)
             self.open_group.addButton(open_btn, index)
             download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download link',
-                                       flat=False, cursor=Qt.PointingHandCursor)
-            # download_btn.setFixedSize(120, 30)
+                                       cursor=Qt.PointingHandCursor)
             self.download_group.addButton(download_btn, index)
-            layout = QHBoxLayout(spacing=10)
-            layout.addWidget(hoster_logo)
-            layout.addWidget(copy_btn, Qt.AlignRight)
-            layout.addWidget(open_btn, Qt.AlignRight)
-            layout.addWidget(download_btn, Qt.AlignRight)
-            groupbox = QGroupBox(self, objectName='hosters')
-            groupbox.setLayout(layout)
-            self.layout.addWidget(groupbox)
+
+            actions_layout = QHBoxLayout(spacing=0)
+            actions_layout.addWidget(copy_btn, Qt.AlignRight)
+            actions_layout.addWidget(open_btn, Qt.AlignRight)
+            actions_layout.addWidget(download_btn, Qt.AlignRight)
+            groupbox = QGroupBox(self, flat=True, objectName='hosters')
+            groupbox.setLayout(actions_layout)
+            hoster_layout = QHBoxLayout()
+            hoster_layout.addWidget(hoster_logo)
+            hoster_layout.addWidget(groupbox)
+            self.layout.addLayout(hoster_layout)
             index += 1
         qApp.restoreOverrideCursor()
         QTimer.singleShot(800, self.updateGeometry)

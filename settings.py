@@ -24,7 +24,7 @@ class Settings(QDialog):
         button_box = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, Qt.Horizontal, self)
         button_box.accepted.connect(self.save_settings)
         button_box.rejected.connect(self.close)
-        layout = QVBoxLayout()
+        layout = QVBoxLayout()  
         # layout.setSizeConstraint(QLayout.SetFixedSize)
         layout.addWidget(tabs)
         layout.addWidget(button_box)

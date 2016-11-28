@@ -19,23 +19,21 @@ from PyQt5.QtGui import (QCloseEvent, QColor, QDesktopServices, QFont,
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QComboBox, QDialog, QFileDialog, QGroupBox, QHBoxLayout,
                              QHeaderView, QLabel, QLayout, QLineEdit, QMenu,
-                             QMessageBox, QProgressBar, QPushButton,
-                             QSizePolicy, QStyleFactory, QTableWidget, QTableWidgetItem,
+                             QMessageBox, QProgressBar, QPushButton, QSizePolicy,
+                             QStyle, QStyleFactory, QTableWidget, QTableWidgetItem,
                              QToolButton, QVBoxLayout, QWidget, qApp)
 
 try:
     from tvlinker.hosters import HosterLinks
     from tvlinker.pyload import PyloadConfig, PyloadConnection
-    from tvlinker.settings import Settingskcolor
-    from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread,
-                        RealDebridThread, ScrapeThread)
+    from tvlinker.settings import Settings
+    from tvlinker.threads import Aria2Thread, DownloadThread, HostersThread, RealDebridThread, ScrapeThread
     import tvlinker.assets
-except:
+except ImportError:
     from hosters import HosterLinks
     from pyload import PyloadConfig, PyloadConnection
     from settings import Settings
-    from threads import (Aria2Thread, DownloadThread, HostersThread,
-                        RealDebridThread, ScrapeThread)
+    from threads import Aria2Thread, DownloadThread, HostersThread, RealDebridThread, ScrapeThread
     import assets
 
 
@@ -84,9 +82,9 @@ class DirectDownload(QDialog):
         self.close()
 
 
-class TVLinker(QDialog):
-    def __init__(self, settings: QSettings, parent=None):
-        super(TVLinker, self).__init__(parent)
+class TVLinker(QWidget):
+    def __init__(self, settings: QSettings):
+        super(TVLinker, self).__init__()
         self.rows, self.cols = 0, 0
         self.settings = settings
         self.init_styles()
@@ -111,7 +109,7 @@ class TVLinker(QDialog):
         qss = QFile(self.get_path(qss_stylesheet))
         qss.open(QFile.ReadOnly | QFile.Text)
         qApp.setStyleSheet(QTextStream(qss).readAll())
-        QFontDatabase.addApplicationFont(self.get_path('fonts/OpenSans.ttf'))
+        QFontDatabase.addApplicationFont(self.get_path('fonts/opensans.ttf'))
         qApp.setFont(QFont('Open Sans', 10))
 
     def init_icons(self) -> None:
@@ -348,7 +346,7 @@ class TVLinker(QDialog):
     def download_link(self, link: str) -> None:
         if len(self.realdebrid_api_token) > 0 and 'real-debrid.com' not in link:
             qApp.setOverrideCursor(Qt.BusyCursor)
-            link = self.unrestrict_link(link)
+            self.unrestrict_link(link)
         else:
             if self.download_manager == 'aria2':
                 self.aria2 = Aria2Thread(settings=self.settings, link_url=link)
@@ -361,7 +359,8 @@ class TVLinker(QDialog):
                 qApp.restoreOverrideCursor()
                 self.hosters_win.close()
                 msgbox = QMessageBox.information(self, 'pyLoad Download Manager',
-                                                 'Download link has been successfully queued in pyLoad.', QMessageBox.Ok)
+                                                 'Download link has been successfully queued in pyLoad.',
+                                                 QMessageBox.Ok)
                 open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
                 open_pyload.clicked.connect(self.open_pyload)
             elif self.download_manager == 'kget':
@@ -375,15 +374,17 @@ class TVLinker(QDialog):
                 if self.cmdexec(cmd):
                     qApp.restoreOverrideCursor()
                     self.hosters_win.close()
-                    QMessageBox.information(self, 'Internet Download Manager', 'Your link has been queued in IDM.', QMessageBox.Ok)       
+                    QMessageBox.information(self, 'Internet Download Manager', 'Your link has been queued in IDM.',
+                                            QMessageBox.Ok)
                 else:
                     print('IDM QProcess error = %s' % ProcError(self.idm.error()).name)
                     qApp.restoreOverrideCursor()
                     self.hosters_win.close()
                     QMessageBox.critical(self, 'Internet Download Manager',
-                                            '<p>Could not connect to your local IDM application instance. Please check your ' +
-                                            'settings and ensure the IDM executable path is correct according to your ' +
-                                            'installation.</p><p>Error Code: %s</p>' % ProcError(self.idm.error()).name, QMessageBox.Ok)
+                                         '<p>Could not connect to your local IDM application instance. ' +
+                                         'Please check your settings and ensure the IDM executable path is correct ' +
+                                         'according to your installation.</p><p>Error Code: %s</p>'
+                                         % ProcError(self.idm.error()).name, QMessageBox.Ok)
             else:
                 dlpath, _ = QFileDialog.getSaveFileName(self, 'Save File', link.split('/')[-1])
                 if dlpath != '':
@@ -421,7 +422,7 @@ class TVLinker(QDialog):
     def copy_download_link(self, link: str) -> None:
         if len(self.realdebrid_api_token) > 0 and 'real-debrid.com' not in link:
             qApp.setOverrideCursor(Qt.BusyCursor)
-            link = self.unrestrict_link(link)
+            self.unrestrict_link(link)
         else:
             clip = qApp.clipboard()
             clip.setText(link)
@@ -430,7 +431,8 @@ class TVLinker(QDialog):
 
     def unrestrict_link(self, link: str) -> None:
         caller = inspect.stack()[1].function
-        self.realdebrid = RealDebridThread(settings=self.settings, api_url=FixedSettings.realdebrid_api_url, link_url=link)
+        self.realdebrid = RealDebridThread(settings=self.settings, api_url=FixedSettings.realdebrid_api_url,
+                                           link_url=link)
         self.realdebrid.unrestrictedLink.connect(getattr(self, caller))
         self.realdebrid.start()
 
@@ -475,12 +477,23 @@ class FixedSettings:
     realdebrid_api_url = 'https://api.real-debrid.com/rest/1.0'
 
     @staticmethod
+    def get_style() -> QStyle:
+        if sys.platform.startswith('linux'):
+            style = 'Breeze'
+        elif sys.platform == 'darwin':
+            style = 'Macintosh'
+        else:
+            style = 'Fusion'
+        return QStyleFactory.create(style)
+
+    @staticmethod
     def get_app_settings() -> QSettings:
         config_path = QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation)
         settings_ini = os.path.join(config_path, '%s.ini' % FixedSettings.applicationName.lower())
         if not os.path.exists(settings_ini):
             os.makedirs(config_path, exist_ok=True)
-            QFile.copy(TVLinker.get_path(path='%s.ini' % FixedSettings.applicationName.lower(), override=True), settings_ini)
+            QFile.copy(TVLinker.get_path(path='%s.ini' % FixedSettings.applicationName.lower(), override=True),
+                       settings_ini)
         settings_ini_secret = os.path.join(config_path, '%s.ini.secret' % FixedSettings.applicationName.lower())
         settings_path = settings_ini_secret if os.path.exists(settings_ini_secret) else settings_ini
         return QSettings(settings_path, QSettings.IniFormat)

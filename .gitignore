@@ -107,3 +107,4 @@ build/dist/
 
 # Personal configuration secrets
 tvlinker.ini.secret
+tvlinker.BAK.py
