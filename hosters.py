@@ -69,28 +69,34 @@ class HosterLinks(QDialog):
             hoster_logo.setAlignment(Qt.AlignCenter)
             copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard',
                                    cursor=Qt.PointingHandCursor)
+            copy_btn.setMinimumHeight(35)
             self.copy_group.addButton(copy_btn, index)
             open_btn = QPushButton(self, icon=self.open_icon, text=' OPEN', toolTip='Open in browser',
                                    cursor=Qt.PointingHandCursor)
+            open_btn.setMinimumHeight(35)
             self.open_group.addButton(open_btn, index)
             download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download link',
                                        cursor=Qt.PointingHandCursor)
+            download_btn.setMinimumHeight(35)
             self.download_group.addButton(download_btn, index)
 
             actions_layout = QHBoxLayout(spacing=0)
             actions_layout.addWidget(copy_btn, Qt.AlignRight)
             actions_layout.addWidget(open_btn, Qt.AlignRight)
             actions_layout.addWidget(download_btn, Qt.AlignRight)
-            groupbox = QGroupBox(self, flat=True, objectName='hosters')
+            groupbox = QGroupBox(self, objectName='hosters')
             groupbox.setLayout(actions_layout)
             hoster_layout = QHBoxLayout()
             hoster_layout.addWidget(hoster_logo)
             hoster_layout.addWidget(groupbox)
             self.layout.addLayout(hoster_layout)
             index += 1
-        qApp.restoreOverrideCursor()
-        QTimer.singleShot(800, self.updateGeometry)
+        QTimer.singleShot(800, self.adjustAndShow)
+
+    def adjustAndShow(self):
         self.show()
+        self.updateGeometry()
+        qApp.restoreOverrideCursor()
 
     @pyqtSlot(int)
     def copy_link(self, button_id: int) -> None:

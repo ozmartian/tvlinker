@@ -124,7 +124,7 @@ class TVLinker(QWidget):
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
-        self.ui_style = self.settings.value('ui_style', FixedSettings.applicationStyle)
+        self.ui_style = self.settings.value('ui_style')
         self.dl_pagelinks = FixedSettings.linksPerPage
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
         self.download_manager = self.settings.value('download_manager')
@@ -477,14 +477,14 @@ class FixedSettings:
     realdebrid_api_url = 'https://api.real-debrid.com/rest/1.0'
 
     @staticmethod
-    def get_style() -> QStyle:
+    def get_style(label: bool = False):
         if sys.platform.startswith('linux'):
             style = 'Breeze'
         elif sys.platform == 'darwin':
             style = 'Macintosh'
         else:
             style = 'Fusion'
-        return QStyleFactory.create(style)
+        return style if label else QStyleFactory.create(style)
 
     @staticmethod
     def get_app_settings() -> QSettings:
@@ -501,11 +501,15 @@ class FixedSettings:
 
 def main():
     app = QApplication(sys.argv)
-    config = FixedSettings.get_app_settings()
-    qApp.setStyle(config.value('ui_style', FixedSettings.applicationStyle))
     app.setApplicationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)
+    config = FixedSettings.get_app_settings()
+    style = config.value('ui_style')
+    if not len(style.strip()):
+        style = FixedSettings.get_style(label=True)
+        config.setValue('ui_style', style)
+    qApp.setStyle(style)
     app.setQuitOnLastWindowClosed(True)
     tvlinker = TVLinker(config)
     sys.exit(app.exec_())

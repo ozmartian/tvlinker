@@ -19,7 +19,6 @@ QTableView {
     border: 1px solid #BABABA;
     margin-top: 10px;
     margin-bottom: 0;
-    border-left: none;
     background: #FFF url(:assets/images/watermark.png) no-repeat center center;
     background-attachment: fixed;
     alternate-background-color: rgba(0, 0, 0, 0.05);
