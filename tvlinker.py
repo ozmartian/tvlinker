@@ -505,7 +505,7 @@ def main():
     app.setApplicationVersion(FixedSettings.applicationVersion)
     config = FixedSettings.get_app_settings()
     style = config.value('ui_style')
-    if not len(style.strip()):
+    if style is not None and not len(style.strip()):
         style = FixedSettings.get_style(label=True)
         config.setValue('ui_style', style)
     qApp.setStyle(style)
