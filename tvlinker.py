@@ -83,9 +83,10 @@ class DirectDownload(QDialog):
 
 
 class TVLinker(QWidget):
-    def __init__(self, settings: QSettings):
-        super(TVLinker, self).__init__()
+    def __init__(self, settings: QSettings, parent=None):
+        super(TVLinker, self).__init__(parent)
         self.rows, self.cols = 0, 0
+        self.parent = parent
         self.settings = settings
         self.init_styles()
         self.init_settings()

@@ -88,6 +88,7 @@ class HosterLinks(QDialog):
             actions_layout.addWidget(open_btn, Qt.AlignRight)
             actions_layout.addWidget(download_btn, Qt.AlignRight)
             groupbox = QGroupBox(self, objectName='hosters')
+            groupbox.setContentsMargins(0, 0, 0, 0)
             groupbox.setLayout(actions_layout)
             hoster_layout = QHBoxLayout()
             hoster_layout.addWidget(hoster_logo)
