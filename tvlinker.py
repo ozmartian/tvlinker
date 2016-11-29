@@ -161,7 +161,6 @@ class TVLinker(QWidget):
         self.settings_button = QPushButton(parent=self, flat=True, toolTip='Menu', cursor=Qt.PointingHandCursor,
                                             icon=self.icon_menu)
         self.settings_button.setMenu(self.settings_menu())
-        self.settings_button.setStyle(QStyleFactory.create(FixedSettings.applicationStyle))
         layout = QHBoxLayout()
         logo = QPixmap(self.get_path('images/tvrelease.png'))
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
