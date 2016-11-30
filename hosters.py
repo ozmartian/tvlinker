@@ -19,7 +19,7 @@ class HosterLinks(QDialog):
         self.title = title
         self.setWindowModality(Qt.ApplicationModal)
         self.hosters = []
-        self.layout = QVBoxLayout()
+        self.layout = QVBoxLayout(spacing=15)
         self.layout.setContentsMargins(20, 10, 20, 20)
         self.setLayout(self.layout)
         self.copy_icon = QIcon(self.parent.get_path('images/copy_icon.png'))
@@ -83,17 +83,15 @@ class HosterLinks(QDialog):
             download_btn.setStyle(QStyleFactory.create('Fusion'))
             self.download_group.addButton(download_btn, index)
 
-            actions_layout = QHBoxLayout(spacing=5)
+            actions_layout = QHBoxLayout(spacing=10)
+            actions_layout.addWidget(hoster_logo)
             actions_layout.addWidget(copy_btn, Qt.AlignRight)
             actions_layout.addWidget(open_btn, Qt.AlignRight)
             actions_layout.addWidget(download_btn, Qt.AlignRight)
             groupbox = QGroupBox(self, objectName='hosters')
-            groupbox.setContentsMargins(0, 0, 0, 0)
+            groupbox.setContentsMargins(10, 10, 10, 10)
             groupbox.setLayout(actions_layout)
-            hoster_layout = QHBoxLayout()
-            hoster_layout.addWidget(hoster_logo)
-            hoster_layout.addWidget(groupbox)
-            self.layout.addLayout(hoster_layout)
+            self.layout.addWidget(groupbox)
             index += 1
         QTimer.singleShot(500, self.adjustAndShow)
 
