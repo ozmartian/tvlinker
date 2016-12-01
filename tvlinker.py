@@ -86,6 +86,7 @@ class TVLinker(QWidget):
     def __init__(self, settings: QSettings, parent=None):
         super(TVLinker, self).__init__(parent)
         self.rows, self.cols = 0, 0
+        self.valid_rows = []
         self.parent = parent
         self.settings = settings
         self.init_styles()
@@ -138,12 +139,14 @@ class TVLinker(QWidget):
             self.idm_exe_path = self.settings.value('idm_exe_path')
         elif self.download_manager == 'kget':
             self.kget_path = self.settings.value('kget_path')
+        self.favorites = self.settings.value('favorites')
 
     def init_form(self) -> QHBoxLayout:
         self.search_field = QLineEdit(self, clearButtonEnabled=True, placeholderText='Enter search criteria')
         self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.search_field.setFocus()
-        self.search_field.textChanged.connect(self.filter_table)
+        self.search_field.textChanged.connect(self.clear_filters)
+        self.search_field.returnPressed.connect(lambda: self.filter_table(self.search_field.text()))
         self.favorites_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
                                               toolTip='Favorites', icon=self.icon_faves_off,
                                               checkable=True, toggled=self.filter_faves)
@@ -263,12 +266,40 @@ class TVLinker(QWidget):
                 datetime.now().year, qApp.organizationDomain(), qApp.organizationDomain())
         QMessageBox.about(self, 'About %s' % qApp.applicationName(), about_html)
 
+    @pyqtSlot(str)
+    def filter_table(self, text: str) -> None:
+        filters = []
+        if self.favorites_button.isChecked():
+            filters = self.favorites
+        if len(text):
+            filters.append(text)
+        if not len(filters):
+            self.valid_rows = []
+        for search_term in filters:
+            for item in self.table.findItems(search_term, Qt.MatchContains):
+                self.valid_rows.append(item.row())
+        for row in range(0, self.table.rowCount()):
+            if not len(filters):
+                self.table.showRow(row)
+            else:
+                if row not in self.valid_rows:
+                    self.table.hideRow(row)
+                else:
+                    self.table.showRow(row)
+
     @pyqtSlot(bool)
     def filter_faves(self, checked: bool) -> None:
         if checked:
             self.favorites_button.setIcon(self.icon_faves_on)
         else:
             self.favorites_button.setIcon(self.icon_faves_off)
+        if self.scrape.isFinished():
+            self.filter_table(text='')
+
+    @pyqtSlot()
+    def clear_filters(self):
+        if not len(self.search_field.text()):
+            self.filter_table('')
 
     @pyqtSlot(bool)
     def refresh_links(self) -> None:
@@ -284,6 +315,7 @@ class TVLinker(QWidget):
     def scrape_finished(self) -> None:
         self.progress.hide()
         self.table.setSortingEnabled(True)
+        self.filter_table(text='')
         qApp.restoreOverrideCursor()
 
     @pyqtSlot(list)
@@ -318,18 +350,6 @@ class TVLinker(QWidget):
         self.links = HostersThread(settings=self.settings, link_url=self.table.item(self.table.currentRow(), 1).text())
         self.links.setHosters.connect(self.add_hosters)
         self.links.start()
-
-    @pyqtSlot(str)
-    def filter_table(self, text: str) -> None:
-        valid_rows = []
-        if len(text) > 0:
-            for item in self.table.findItems(text, Qt.MatchContains):
-                valid_rows.append(item.row())
-        for row in range(0, self.table.rowCount()):
-            if len(text) > 0 and row not in valid_rows:
-                self.table.hideRow(row)
-            else:
-                self.table.showRow(row)
 
     @pyqtSlot(bool)
     def aria2_confirmation(self, success: bool) -> None:

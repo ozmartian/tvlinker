@@ -257,6 +257,7 @@ class FavoritesTab(QWidget):
         faves_addItemButton = QPushButton(parent=self, flat=False, cursor=Qt.PointingHandCursor, text='Add',
                                           icon=qta.icon('fa.plus', color='#555'), toolTip='Add item',
                                           clicked=self.add_item)
+        faves_addItemButton.setDefault(True)
         faves_deleteItemButton = QPushButton(parent=self, flat=False, cursor=Qt.PointingHandCursor, text='Delete',
                                              icon=qta.icon('fa.minus', color='#555'), toolTip='Delete selected item',
                                              clicked=self.delete_items)
@@ -294,6 +295,7 @@ class FavoritesTab(QWidget):
             item = QListWidgetItem(self.faves_lineEdit.text(), self.faves_listWidget)
             item.setFlags(item.flags() | Qt.ItemIsEditable)
             self.faves_listWidget.sortItems(order=Qt.AscendingOrder)
+            self.faves_lineEdit.clear()
 
     def save(self) -> None:
         if self.faves_listWidget.count():
