@@ -195,7 +195,7 @@ class TVLinker(QWidget):
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.setHorizontalHeaderLabels(('Date', 'URL', 'Description', 'Format'))
+        self.table.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'FORMAT'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.horizontalHeader().setMinimumSectionSize(100)

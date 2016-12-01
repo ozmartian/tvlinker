@@ -5,7 +5,7 @@ import qtawesome as qta
 import sys
 
 from PyQt5.QtCore import QSettings, Qt, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QIcon, QPixmap
+from PyQt5.QtGui import QCloseEvent, QIcon, QKeyEvent, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogButtonBox,
                              QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLayout, QLineEdit,
                              QListWidget, QListWidgetItem, QPushButton, QSizePolicy, QStackedLayout, QStyleFactory,
@@ -27,12 +27,9 @@ class Settings(QDialog):
         button_box.accepted.connect(self.save_settings)
         button_box.rejected.connect(self.close)
         layout = QVBoxLayout()  
-        # layout.setSizeConstraint(QLayout.SetFixedSize)
         layout.addWidget(tabs)
         layout.addWidget(button_box)
-        
         self.setLayout(layout)
-
         self.setWindowTitle('%s Settings' % qApp.applicationName())
         self.setWindowIcon(self.parent.icon_settings)
 
@@ -42,11 +39,16 @@ class Settings(QDialog):
         self.parent.init_settings()
         self.close()
 
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() in (Qt.Key_Enter, Qt.Key_Return):
+            return
+        super(Settings, self).keyPressEvent(event)
+
     def closeEvent(self, event: QCloseEvent) -> None:
         self.tab_general.deleteLater()
         self.tab_favorites.deleteLater()
         self.deleteLater()
-        super(QDialog, self).closeEvent(event)
+        event.accept()
 
 
 class GeneralTab(QWidget):
@@ -253,53 +255,64 @@ class FavoritesTab(QWidget):
         self.settings = settings
         faves_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
         self.faves_lineEdit = QLineEdit(self)
+        self.faves_lineEdit.returnPressed.connect(self.add_item)
         self.faves_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         faves_addItemButton = QPushButton(parent=self, flat=False, cursor=Qt.PointingHandCursor, text='Add',
                                           icon=qta.icon('fa.plus', color='#555'), toolTip='Add item',
                                           clicked=self.add_item)
-        faves_addItemButton.setDefault(True)
         faves_deleteItemButton = QPushButton(parent=self, flat=False, cursor=Qt.PointingHandCursor, text='Delete',
                                              icon=qta.icon('fa.minus', color='#555'), toolTip='Delete selected item',
                                              clicked=self.delete_items)
-        faves_lineEditLayout = QHBoxLayout()
-        faves_lineEditLayout.addWidget(self.faves_lineEdit)
-        faves_lineEditLayout.addWidget(faves_addItemButton)
-        faves_lineEditLayout.addWidget(faves_deleteItemButton)
-        faves_formLayout.addRow('Item Label:', faves_lineEditLayout)
+        faves_buttonLayout = QHBoxLayout()
+        faves_buttonLayout.addWidget(faves_addItemButton)
+        faves_buttonLayout.addWidget(faves_deleteItemButton)
+        faves_formLayout.addRow('Item Label:', self.faves_lineEdit)
+        faves_formLayout.addRow(faves_buttonLayout)
+        faves_formLayout.addRow(self.get_notes())
         self.faves_listWidget = QListWidget(self)
         self.faves_listWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.faves_listWidget.setSortingEnabled(True)
-        self.add_items(self.settings.value('favorites'))
+        self.add_items(self.settings.value('favorites', ''))
 
-        tab_layout = QVBoxLayout()
+        tab_layout = QHBoxLayout()
         tab_layout.addLayout(faves_formLayout)
         tab_layout.addWidget(self.faves_listWidget)
 
         self.setLayout(tab_layout)
 
-    def add_items(self, items: list):
+    def add_items(self, items: list) -> None:
         for item in items:
             listitem = QListWidgetItem(item, self.faves_listWidget)
             listitem.setFlags(listitem.flags() | Qt.ItemIsEditable)
         self.faves_listWidget.sortItems(Qt.AscendingOrder)
 
     @pyqtSlot()
-    def delete_items(self):
+    def delete_items(self) -> None:
         for item in self.faves_listWidget.selectedItems():
             deleted_item = self.faves_listWidget.takeItem(self.faves_listWidget.row(item))
             del deleted_item
 
     @pyqtSlot()
-    def add_item(self):
-        if len(self.faves_lineEdit.text()) > 0:
+    def add_item(self) -> None:
+        if len(self.faves_lineEdit.text()):
             item = QListWidgetItem(self.faves_lineEdit.text(), self.faves_listWidget)
             item.setFlags(item.flags() | Qt.ItemIsEditable)
             self.faves_listWidget.sortItems(order=Qt.AscendingOrder)
             self.faves_lineEdit.clear()
 
+    def get_notes(self) -> QLabel:
+        content = QLabel()
+        content.setStyleSheet('margin:10px; border:1px solid #BABABA; padding:10px; color:#666;')
+        content.setTextFormat(Qt.RichText)
+        content.setWordWrap(True)
+        content.setText('''Labels from this list will be used to filter links. Filtering is NOT case-sensitive.
+                            <br/><br/>Example:<br/><br/>&nbsp;&nbsp;&nbsp;&nbsp;the simpsons<br/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;south park''')
+        return content
+
     def save(self) -> None:
         if self.faves_listWidget.count():
-            faves = list()
+            faves = []
             for row in range(0, self.faves_listWidget.count()):
                 faves.append(self.faves_listWidget.item(row).text())
             self.settings.setValue('favorites', faves)
