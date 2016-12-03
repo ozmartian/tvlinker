@@ -7,6 +7,46 @@ QHeaderView::section, QTableCornerButton::section {
     margin-top: 0;
 }
 
+QHeaderView::down-arrow {
+    image: url(:assets/images/down_arrow.png);
+}
+
+QHeaderView::up-arrow {
+    image: url(:assets/images/up_arrow.png);
+}
+
+QTableView {
+    border: 1px solid #adaacc;
+    margin-top: 0;
+    margin-bottom: 0;
+    background: #FFF url(:assets/images/watermark.png) no-repeat center center;
+    background-attachment: fixed;
+    alternate-background-color: rgba(0, 0, 0, 0.05);
+}
+
+QTableView::item:selected {
+    background-color: #898989;  
+    color: #FFF;
+}
+
+QGroupBox {
+    border: 1px solid #BABABA;
+    margin: 0;
+    padding: 6px;
+}
+
+QGroupBox#mainForm {
+    border: 1px solid #adaacc;
+    border-bottom: none;
+    background: rgba(152, 150, 171, 0.64);
+}
+
+QGroupBox#hosters {
+    border: 1px solid #BABABA;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 5px;
+}
+
 QLabel#heading {
     color: #444;
     font-size: 14pt;
@@ -15,5 +55,18 @@ QLabel#heading {
     padding: 10px;
     border: 1px solid #BABABA;
     background-color: #FAFAFA;
-    margin-bottom: 0;
+    margin-bottom: 0
+}
+
+QLabel#totals {
+    color: #6A687D;
+}
+
+QWidget#main {
+    border: 1px solid #BABABA;
+    margin: 0;
+}
+
+QLineEdit:read-only {
+    background-color:#EAEAEA;
 }

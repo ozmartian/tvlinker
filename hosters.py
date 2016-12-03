@@ -19,13 +19,11 @@ class HosterLinks(QDialog):
         self.title = title
         self.setWindowModality(Qt.ApplicationModal)
         self.hosters = []
-        self.layout = QVBoxLayout(spacing=15)
-        self.layout.setContentsMargins(20, 10, 20, 20)
+        self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self.copy_icon = QIcon(self.parent.get_path('images/copy_icon.png'))
         self.open_icon = QIcon(self.parent.get_path('images/open_icon.png'))
         self.download_icon = QIcon(self.parent.get_path('images/download_icon.png'))
-        # self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         self.copy_group = QButtonGroup(exclusive=False)
         self.copy_group.buttonClicked[int].connect(self.copy_link)
         self.open_group = QButtonGroup(exclusive=False)

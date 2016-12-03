@@ -44,8 +44,6 @@ QGroupBox#mainForm {
 QGroupBox#hosters {
     border: 1px solid #BABABA;
     background-color: rgba(0, 0, 0, 0.05);
-    padding: 0;
-    margin: 0;
     border-radius: 5px;
 }
 
