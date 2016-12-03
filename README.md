@@ -2,9 +2,9 @@
 
 ## TVLinker
 
-![TVLinker](http://tvlinker.ozmartians.com/images/header-logo.png)
-
 [![Build Status](https://travis-ci.org/ozmartian/tvlinker.svg?branch=master)](https://travis-ci.org/ozmartian/tvlinker)
+
+![TVLinker](http://tvlinker.ozmartians.com/images/header-logo.png)
 
 PyQt5 based desktop widget for scraping and organising links from various download feeds/sites. 
 
