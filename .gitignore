@@ -109,3 +109,6 @@ build/dist/
 tvlinker.ini.secret
 tvlinker.BAK.py
 .vscode/
+
+# OS X annoyances
+.DS_Store
