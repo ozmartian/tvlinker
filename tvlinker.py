@@ -106,7 +106,8 @@ class TVLinker(QWidget):
         self.start_scraping()
 
     def load_stylesheet(self, qssfile: str) -> None:
-        if os.path.exists(qssfile):
+        if QFileInfo(qssfile).exists():
+            print('loading stylesheet: %s' % qssfile)
             qss = QFile(qssfile)
             qss.open(QFile.ReadOnly | QFile.Text)
             qApp.setStyleSheet(QTextStream(qss).readAll())

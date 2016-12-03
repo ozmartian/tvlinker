@@ -18,5 +18,6 @@
     <file>assets/images/up_arrow.png</file>
     <file>assets/images/watermark.png</file>
     <file>assets/tvlinker.qss</file>
+    <file>assets/tvlinker_osx.qss</file>
   </qresource>
 </RCC>
