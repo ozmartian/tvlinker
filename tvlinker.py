@@ -489,13 +489,14 @@ class FixedSettings:
     realdebrid_api_url = 'https://api.real-debrid.com/rest/1.0'
 
     @staticmethod
-    def get_style(label: bool = False):
+    def get_style(label: bool=False):
+        style = 'Fusion'        
         if sys.platform.startswith('linux'):
-            style = 'Breeze'
-        elif sys.platform == 'darwin':
-            style = 'Macintosh'
-        else:
-            style = 'Fusion'
+            installed_styles = QStyleFactory.keys()
+            for stl in ['Breeze', 'GTK+']:
+                if stl.lower() in map(str.lower, installed_styles):
+                    style = stl
+                    break;
         return style if label else QStyleFactory.create(style)
 
     @staticmethod
