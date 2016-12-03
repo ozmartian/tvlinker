@@ -496,7 +496,7 @@ h2 {
   /*z-index: 1;*/
 }
 
-aside#sidebar {
+aside.sidebar {
   float: right;
   width: 200px;
   padding-left: 20px;
@@ -505,8 +505,8 @@ aside#sidebar {
   background: transparent url(../images/sidebar-bg.jpg) 0 0 no-repeat;
 }
 
-aside#sidebar p.repo-owner,
-aside#sidebar p.repo-owner a {
+aside.sidebar p.repo-owner,
+aside.sidebar p.repo-owner a {
   font-weight: bold;
 }
 
@@ -820,18 +820,18 @@ footer a:hover {
     font-size: 13px;
   }
   #main-content,
-  aside#sidebar {
+  aside.sidebar {
     float: none;
     width: 100% ! important;
   }
-  aside#sidebar {
+  aside.sidebar {
     min-height: 0;
     padding: 20px 0;
     margin-top: 20px;
     background-image: none;
     border-top: solid 1px #ddd;
   }
-  aside#sidebar a.button {
+  aside.sidebar a.button {
     display: none;
   }
   #main-content h1:before,
