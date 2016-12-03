@@ -1,7 +1,6 @@
 <RCC>
   <qresource>
     <file>assets/fonts/opensans.ttf</file>
-    <file>assets/images/comingsoon.png</file>
     <file>assets/images/copy_icon.png</file>
     <file>assets/images/direct.png</file>
     <file>assets/images/down_arrow.png</file>
