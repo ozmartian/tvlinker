@@ -128,11 +128,13 @@ class TVLinker(QWidget):
         self.icon_refresh = icon('ei.refresh', color='#555')
         self.icon_menu = icon('fa.navicon', scale_factor=1.5, color='#555')
         self.icon_settings = icon('ei.cog', color='#555')
-        self.icon_updates = icon('fa.download', color='#555')
+        self.icon_updates = icon('fa.cloud-download', color='#555')
 
     def init_settings(self) -> None:
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
+        self.updater_freq = self.settings.value('updater_freq')
+        self.updater_lastcheck = self.settings.value('updater_lastcheck')
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
         self.ui_style = self.settings.value('ui_style')
         self.dl_pagelinks = FixedSettings.linksPerPage

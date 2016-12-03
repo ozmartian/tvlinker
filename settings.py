@@ -6,10 +6,9 @@ import sys
 import qtawesome as qta
 from PyQt5.QtCore import QSettings, Qt, pyqtSlot
 from PyQt5.QtGui import QCloseEvent, QKeyEvent
-from PyQt5.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogButtonBox,
-                             QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-                             QListWidget, QListWidgetItem, QPushButton, QSizePolicy, QStackedLayout, QStyleFactory,
-                             QTabWidget, QVBoxLayout, QWidget, qApp)
+from PyQt5.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QGroupBox,
+                             QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSizePolicy,
+                             QStackedLayout, QStyleFactory, QTabWidget, QVBoxLayout, QWidget, qApp)
 
 
 class Settings(QDialog):
@@ -57,22 +56,31 @@ class GeneralTab(QWidget):
         self.settings = settings
         generalGroup = QGroupBox()
         general_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
-        self.sourceUrl_lineEdit = QLineEdit(self, text=self.settings.value('source_url'), readOnly=True)
-        self.sourceUrl_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        general_formLayout.addRow('Source URL:', self.sourceUrl_lineEdit)
-        self.useragent_lineEdit = QLineEdit(self, text=self.settings.value('user_agent'), readOnly=True)
-        self.useragent_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        general_formLayout.addRow('User Agent:', self.useragent_lineEdit)
+        self.updater_freq_comboBox = QComboBox(self, toolTip='Automatically check for application updates',
+                                               editable=False, cursor=Qt.PointingHandCursor)
+        self.updater_freq_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.updater_freq_comboBox.setFixedWidth(100)
+        self.updater_freq_comboBox.addItems(('Never', 'Daily', 'Weekly', 'Monthly'))
+        self.updater_freq_comboBox.setCurrentIndex(self.updater_freq_comboBox.findText(
+            str(self.settings.value('updater_freq', 'Never')), Qt.MatchFixedString))
+        general_formLayout.addRow('Check for Updates:', self.updater_freq_comboBox)
+        # self.sourceUrl_lineEdit = QLineEdit(self, text=self.settings.value('source_url'), readOnly=True)
+        # self.sourceUrl_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        # general_formLayout.addRow('Source URL:', self.sourceUrl_lineEdit)
+        # self.useragent_lineEdit = QLineEdit(self, text=self.settings.value('user_agent'), readOnly=True)
+        # self.useragent_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        # general_formLayout.addRow('User Agent:', self.useragent_lineEdit)
         self.dlpagecount_comboBox = QComboBox(self, toolTip='Default Page Count', editable=False,
                                               cursor=Qt.PointingHandCursor)
         self.dlpagecount_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.dlpagecount_comboBox.setFixedWidth(50)
+        self.dlpagecount_comboBox.setFixedWidth(100)
         self.dlpagecount_comboBox.addItems(('10', '20', '30', '40', '50'))
         self.dlpagecount_comboBox.setCurrentIndex(self.dlpagecount_comboBox.findText(
             str(self.settings.value('dl_pagecount')), Qt.MatchFixedString))
         general_formLayout.addRow('Default Page Count:', self.dlpagecount_comboBox)
         self.uistyle_comboBox = QComboBox(self, toolTip='UI Style', editable=False, cursor=Qt.PointingHandCursor)
         self.uistyle_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.uistyle_comboBox.setFixedWidth(100)
         self.uistyle_comboBox.addItems(QStyleFactory.keys())
         self.uistyle_comboBox.setCurrentIndex(
             self.uistyle_comboBox.findText(str(self.settings.value('ui_style')), Qt.MatchFixedString))
@@ -86,7 +94,8 @@ class GeneralTab(QWidget):
 
         realdebrid_apitoken_link = '''<tr>
                                         <td align="right">
-                                            <a href="https://real-debrid.com/apitoken" title="https://real-debrid.com/apitoken" target="_blank">
+                                            <a href="https://real-debrid.com/apitoken"
+                                            title="https://real-debrid.com/apitoken" target="_blank">
                                                 access your API token settings
                                             </a>
                                         </td>
@@ -103,7 +112,8 @@ class GeneralTab(QWidget):
                                        <table border="0" cellspacing="0" cellpadding="3">
                                            <tr valign="middle" align="left">
                                               <td>
-                                                  <img src=":assets/images/realdebrid.png" style="width:128px; height:26px;" />
+                                                  <img src=":assets/images/realdebrid.png" style="width:128px;
+                                                  height:26px;" />
                                                </td>
                                            </tr>
                                            %s
@@ -230,8 +240,9 @@ class GeneralTab(QWidget):
         self.setLayout(tab_layout)
 
     def save(self) -> None:
-        self.settings.setValue('source_url', self.sourceUrl_lineEdit.text())
-        self.settings.setValue('user_agent', self.useragent_lineEdit.text())
+        # self.settings.setValue('source_url', self.sourceUrl_lineEdit.text())
+        # self.settings.setValue('user_agent', self.useragent_lineEdit.text())
+        self.settings.setValue('updater_freq', self.updater_freq_comboBox.currentText())
         self.settings.setValue('dl_pagecount', self.dlpagecount_comboBox.currentText())
         self.settings.setValue('ui_style', self.uistyle_comboBox.currentText())
         self.settings.setValue('realdebrid_apitoken', self.realdebridtoken_lineEdit.text())
