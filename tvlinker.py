@@ -105,7 +105,8 @@ class TVLinker(QWidget):
         self.show()
         self.start_scraping()
 
-    def load_stylesheet(self, qssfile: str) -> None:
+    @staticmethod
+    def load_stylesheet(qssfile: str) -> None:
         if QFileInfo(qssfile).exists():
             print('loading stylesheet: %s' % qssfile)
             qss = QFile(qssfile)
@@ -113,11 +114,11 @@ class TVLinker(QWidget):
             qApp.setStyleSheet(QTextStream(qss).readAll())
 
     def init_styles(self) -> None:
-        qss_stylesheet = self.get_path('%s.qss' % qApp.applicationName().lower())
-        self.load_stylesheet(qss_stylesheet)
         if sys.platform == 'darwin':
-            osx_stylesheet = self.get_path('%s_osx.qss' % qApp.applicationName().lower())
-            self.load_stylesheet(osx_stylesheet)
+            qss_stylesheet = self.get_path('%s_osx.qss' % qApp.applicationName().lower())
+        else:
+            qss_stylesheet = self.get_path('%s.qss' % qApp.applicationName().lower())
+        self.load_stylesheet(qss_stylesheet)
         QFontDatabase.addApplicationFont(self.get_path('fonts/opensans.ttf'))
         if sys.platform == 'darwin':
             qApp.setFont(QFont('Open Sans', 12))
