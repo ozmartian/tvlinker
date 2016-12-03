@@ -1,0 +1,9 @@
+QHeaderView::section, QTableCornerButton::section {
+    font-weight: 800;
+    font-size: 11pt;
+}
+
+QLabel#heading {
+    font-size: 14pt;
+    font-weight: 500;
+}

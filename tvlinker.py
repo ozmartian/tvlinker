@@ -86,7 +86,6 @@ class TVLinker(QWidget):
     def __init__(self, settings: QSettings, parent=None):
         super(TVLinker, self).__init__(parent)
         self.rows, self.cols = 0, 0
-        self.valid_rows = []
         self.parent = parent
         self.settings = settings
         self.init_styles()
@@ -101,18 +100,28 @@ class TVLinker(QWidget):
         layout.addLayout(self.init_metabar())
         self.setLayout(layout)
         self.setWindowTitle(qApp.applicationName())
-        self.setWindowIcon(self.icon_app)
+        qApp.setWindowIcon(self.icon_app)
         self.resize(FixedSettings.windowSize)
         self.show()
         self.start_scraping()
 
+    def load_stylesheet(self, qssfile: str) -> None:
+        if os.path.exists(qssfile):
+            qss = QFile(qssfile)
+            qss.open(QFile.ReadOnly | QFile.Text)
+            qApp.setStyleSheet(QTextStream(qss).readAll())
+
     def init_styles(self) -> None:
-        qss_stylesheet = '%s.qss' % qApp.applicationName().lower()
-        qss = QFile(self.get_path(qss_stylesheet))
-        qss.open(QFile.ReadOnly | QFile.Text)
-        qApp.setStyleSheet(QTextStream(qss).readAll())
+        qss_stylesheet = self.get_path('%s.qss' % qApp.applicationName().lower())
+        self.load_stylesheet(qss_stylesheet)
+        if sys.platform == 'darwin':
+            osx_stylesheet = self.get_path('%s_osx.qss' % qApp.applicationName().lower())
+            self.load_stylesheet(osx_stylesheet)
         QFontDatabase.addApplicationFont(self.get_path('fonts/opensans.ttf'))
-        qApp.setFont(QFont('Open Sans', 10))
+        if sys.platform == 'darwin':
+            qApp.setFont(QFont('Open Sans', 12))
+        else:
+            qApp.setFont(QFont('Open Sans', 10))
 
     def init_icons(self) -> None:
         self.icon_app = QIcon(self.get_path('images/%s.png' % qApp.applicationName().lower()))
@@ -139,14 +148,12 @@ class TVLinker(QWidget):
             self.idm_exe_path = self.settings.value('idm_exe_path')
         elif self.download_manager == 'kget':
             self.kget_path = self.settings.value('kget_path')
-        self.favorites = self.settings.value('favorites')
 
     def init_form(self) -> QHBoxLayout:
         self.search_field = QLineEdit(self, clearButtonEnabled=True, placeholderText='Enter search criteria')
         self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.search_field.setFocus()
-        self.search_field.textChanged.connect(self.clear_filters)
-        self.search_field.returnPressed.connect(lambda: self.filter_table(self.search_field.text()))
+        self.search_field.textChanged.connect(self.filter_table)
         self.favorites_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
                                               toolTip='Favorites', icon=self.icon_faves_off,
                                               checkable=True, toggled=self.filter_faves)
@@ -195,7 +202,7 @@ class TVLinker(QWidget):
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'FORMAT'))
+        self.table.setHorizontalHeaderLabels(('Date', 'URL', 'Description', 'Format'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.horizontalHeader().setMinimumSectionSize(100)
@@ -266,40 +273,12 @@ class TVLinker(QWidget):
                 datetime.now().year, qApp.organizationDomain(), qApp.organizationDomain())
         QMessageBox.about(self, 'About %s' % qApp.applicationName(), about_html)
 
-    @pyqtSlot(str)
-    def filter_table(self, text: str) -> None:
-        filters = []
-        if self.favorites_button.isChecked():
-            filters = self.favorites
-        if len(text):
-            filters.append(text)
-        if not len(filters):
-            self.valid_rows = []
-        for search_term in filters:
-            for item in self.table.findItems(search_term, Qt.MatchContains):
-                self.valid_rows.append(item.row())
-        for row in range(0, self.table.rowCount()):
-            if not len(filters):
-                self.table.showRow(row)
-            else:
-                if row not in self.valid_rows:
-                    self.table.hideRow(row)
-                else:
-                    self.table.showRow(row)
-
     @pyqtSlot(bool)
     def filter_faves(self, checked: bool) -> None:
         if checked:
             self.favorites_button.setIcon(self.icon_faves_on)
         else:
             self.favorites_button.setIcon(self.icon_faves_off)
-        if self.scrape.isFinished():
-            self.filter_table(text='')
-
-    @pyqtSlot()
-    def clear_filters(self):
-        if not len(self.search_field.text()):
-            self.filter_table('')
 
     @pyqtSlot(bool)
     def refresh_links(self) -> None:
@@ -315,7 +294,6 @@ class TVLinker(QWidget):
     def scrape_finished(self) -> None:
         self.progress.hide()
         self.table.setSortingEnabled(True)
-        self.filter_table(text='')
         qApp.restoreOverrideCursor()
 
     @pyqtSlot(list)
@@ -350,6 +328,18 @@ class TVLinker(QWidget):
         self.links = HostersThread(settings=self.settings, link_url=self.table.item(self.table.currentRow(), 1).text())
         self.links.setHosters.connect(self.add_hosters)
         self.links.start()
+
+    @pyqtSlot(str)
+    def filter_table(self, text: str) -> None:
+        valid_rows = []
+        if len(text) > 0:
+            for item in self.table.findItems(text, Qt.MatchContains):
+                valid_rows.append(item.row())
+        for row in range(0, self.table.rowCount()):
+            if len(text) > 0 and row not in valid_rows:
+                self.table.hideRow(row)
+            else:
+                self.table.showRow(row)
 
     @pyqtSlot(bool)
     def aria2_confirmation(self, success: bool) -> None:
@@ -514,7 +504,9 @@ class FixedSettings:
             os.makedirs(config_path, exist_ok=True)
             QFile.copy(TVLinker.get_path(path='%s.ini' % FixedSettings.applicationName.lower(), override=True),
                        settings_ini)
-        return QSettings(settings_ini, QSettings.IniFormat)
+        settings_ini_secret = os.path.join(config_path, '%s.ini.secret' % FixedSettings.applicationName.lower())
+        settings_path = settings_ini_secret if os.path.exists(settings_ini_secret) else settings_ini
+        return QSettings(settings_path, QSettings.IniFormat)
 
 
 def main():
