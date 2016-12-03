@@ -34,4 +34,5 @@ class PyloadConnection:
     def __getattr__(self, name):
         def wrapper(**kargs):
             return self._call(name, kargs)
+
         return wrapper

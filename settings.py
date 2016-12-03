@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import qtawesome as qta
 import sys
 
+import qtawesome as qta
 from PyQt5.QtCore import QSettings, Qt, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QIcon, QKeyEvent, QPixmap
+from PyQt5.QtGui import QCloseEvent, QKeyEvent
 from PyQt5.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogButtonBox,
-                             QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLayout, QLineEdit,
+                             QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
                              QListWidget, QListWidgetItem, QPushButton, QSizePolicy, QStackedLayout, QStyleFactory,
                              QTabWidget, QVBoxLayout, QWidget, qApp)
 
@@ -26,7 +26,7 @@ class Settings(QDialog):
         button_box = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, Qt.Horizontal, self)
         button_box.accepted.connect(self.save_settings)
         button_box.rejected.connect(self.close)
-        layout = QVBoxLayout()  
+        layout = QVBoxLayout()
         layout.addWidget(tabs)
         layout.addWidget(button_box)
         self.setLayout(layout)
@@ -63,7 +63,8 @@ class GeneralTab(QWidget):
         self.useragent_lineEdit = QLineEdit(self, text=self.settings.value('user_agent'), readOnly=True)
         self.useragent_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         general_formLayout.addRow('User Agent:', self.useragent_lineEdit)
-        self.dlpagecount_comboBox = QComboBox(self, toolTip='Default Page Count', editable=False, cursor=Qt.PointingHandCursor)
+        self.dlpagecount_comboBox = QComboBox(self, toolTip='Default Page Count', editable=False,
+                                              cursor=Qt.PointingHandCursor)
         self.dlpagecount_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.dlpagecount_comboBox.setFixedWidth(50)
         self.dlpagecount_comboBox.addItems(('10', '20', '30', '40', '50'))
@@ -73,7 +74,8 @@ class GeneralTab(QWidget):
         self.uistyle_comboBox = QComboBox(self, toolTip='UI Style', editable=False, cursor=Qt.PointingHandCursor)
         self.uistyle_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.uistyle_comboBox.addItems(QStyleFactory.keys())
-        self.uistyle_comboBox.setCurrentIndex(self.uistyle_comboBox.findText(str(self.settings.value('ui_style')), Qt.MatchFixedString))
+        self.uistyle_comboBox.setCurrentIndex(
+            self.uistyle_comboBox.findText(str(self.settings.value('ui_style')), Qt.MatchFixedString))
         uistyle_infotext = QLabel('* requires restart')
         uistyle_infotext.setStyleSheet('font-weight:300;')
         uistyle_layout = QHBoxLayout()
@@ -106,7 +108,8 @@ class GeneralTab(QWidget):
                                            </tr>
                                            %s
                                        </table>''' % realdebrid_apitoken_link)
-        self.realdebridtoken_lineEdit = QLineEdit(self, text=self.settings.value('realdebrid_apitoken'), alignment=Qt.AlignVCenter)
+        self.realdebridtoken_lineEdit = QLineEdit(self, text=self.settings.value('realdebrid_apitoken'),
+                                                  alignment=Qt.AlignVCenter)
         self.realdebridtoken_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         realdebrid_formLayout = QFormLayout(labelAlignment=Qt.AlignRight, formAlignment=Qt.AlignVCenter)
         realdebrid_formLayout.addRow('API Token:', self.realdebridtoken_lineEdit)
@@ -146,7 +149,7 @@ class GeneralTab(QWidget):
         self.aria2rpcport_lineEdit.setFixedWidth(100)
         self.aria2rpcsecret_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_secret'))
         self.aria2rpcsecret_lineEdit.setFixedWidth(100)
-        self.aria2rpcuser_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_username'))    
+        self.aria2rpcuser_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_username'))
         self.aria2rpcuser_lineEdit.setFixedWidth(150)
         self.aria2rpcpass_lineEdit = QLineEdit(self, text=self.settings.value('aria2_rpc_password'))
         self.aria2rpcpass_lineEdit.setFixedWidth(150)

@@ -6,8 +6,10 @@ import os
 import sys
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
+from PyQt5.QtWidgets import QMessageBox, qApp
 from bs4 import BeautifulSoup, FeatureNotFound
 
 
@@ -54,7 +56,7 @@ class ScrapeThread(QThread):
 
 class HostersThread(QThread):
     setHosters = pyqtSignal(list)
-    
+
     def __init__(self, settings: QSettings, link_url: str):
         QThread.__init__(self)
         self.user_agent = settings.value('user_agent')
@@ -96,17 +98,25 @@ class RealDebridThread(QThread):
         self.wait()
 
     def unrestrict_link(self):
-        headers = {
-            'Authorization': 'Bearer %s' % self.api_token,
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Cache-Control': 'no-cache'
-        }
-        payload = urlencode({'link': self.link_url}).encode('utf-8')
-        req = Request('%s/unrestrict/link' % self.api_url, headers=headers, data=payload)
-        res = urlopen(req).read().decode('utf-8')
-        jsonres = json.loads(res)
-        if 'download' in jsonres.keys():
-            self.unrestrictedLink.emit(jsonres['download'])
+        try:
+            headers = {
+                'Authorization': 'Bearer %s' % self.api_token,
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Cache-Control': 'no-cache'
+            }
+            payload = urlencode({'link': self.link_url}).encode('utf-8')
+            req = Request('%s/unrestrict/link' % self.api_url, headers=headers, data=payload)
+            res = urlopen(req).read().decode('utf-8')
+            jsonres = json.loads(res)
+            if 'download' in jsonres.keys():
+                self.unrestrictedLink.emit(jsonres['download'])
+        except HTTPError:
+            QMessageBox.critical(self, 'Real-Debrid API Error',
+                                 'A problem occurred whilst communicating with Real-Debrid. Please check your '
+                                 'Internet connection.<br/><br/>' +
+                                 '<b>ERROR LOG:</b><br/>(Error Code %s) %s' % (
+                                 qApp.applicationName(), HTTPError.code, HTTPError.reason), QMessageBox.Ok)
+            self.exit()
 
     def run(self) -> None:
         self.unrestrict_link()
@@ -133,12 +143,12 @@ class Aria2Thread(QThread):
             user = self.rpc_username
             passwd = self.rpc_password
         elif len(self.rpc_secret) > 0:
-            user = 'token'  
+            user = 'token'
             passwd = self.rpc_secret
         aria2_endpoint = '%s:%s/jsonrpc' % (self.rpc_host, self.rpc_port)
-        headers = { 'Content-Type': 'application/json' }
+        headers = {'Content-Type': 'application/json'}
         payload = json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'aria2.addUri',
-                             'params': ['%s:%s' % (user, passwd), [self.link_url]]}, sort_keys=False).encode('utf-8')
+                              'params': ['%s:%s' % (user, passwd), [self.link_url]]}, sort_keys=False).encode('utf-8')
         req = Request(aria2_endpoint, headers=headers, data=payload)
         res = urlopen(req).read().decode('utf-8')
         jsonres = json.loads(res)
@@ -176,13 +186,13 @@ class DownloadThread(QThread):
                 chunk = res.read(blocksize)
                 if not chunk or self.cancel_download:
                     self.exit()
-                    break;
+                    break
                 downloaded_chunk += len(chunk)
                 f.write(chunk)
                 progress = float(downloaded_chunk) / filesize
                 self.dlProgress.emit(progress * 100)
-                progress_text = '<b>Downloading {0}</b>:<br/>{1} <b>of</b> {3} <b>bytes</b> [{2:.2%}]'\
-                                  . format(filename, downloaded_chunk, progress, filesize)
+                progress_text = '<b>Downloading {0}</b>:<br/>{1} <b>of</b> {3} <b>bytes</b> [{2:.2%}]' \
+                    .format(filename, downloaded_chunk, progress, filesize)
                 self.dlProgressTxt.emit(progress_text)
         self.dlComplete.emit()
 

@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
-
 from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon, QPixmap
-from PyQt5.QtWidgets import (QBoxLayout, QButtonGroup, QDialog, QFrame, QGroupBox, QHBoxLayout, QLabel, QLayout,
-                             QProgressBar, QPushButton, QSizePolicy, QSpacerItem, QStyleFactory, QVBoxLayout, qApp)
+from PyQt5.QtWidgets import (QBoxLayout, QButtonGroup, QDialog, QGroupBox, QHBoxLayout, QLabel, QProgressBar,
+                             QPushButton, QSizePolicy, QSpacerItem, QStyleFactory, QVBoxLayout, qApp)
 
 
 class HosterLinks(QDialog):
