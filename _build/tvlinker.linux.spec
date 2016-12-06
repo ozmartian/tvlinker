@@ -1,12 +1,25 @@
 #!/usr/bin/env python3
 # -*- mode: python -*-
 
+import os
+import sys
+
+import PyQt5
+import qtawesome
+
 block_cipher = None
 
 a = Analysis(['../tvlinker.py'],
-            pathex=['..'],
-            binaries=[],
-            datas=[],
+             pathex=[
+                 os.path.join(sys.modules['PyQt5'].__path__[0], 'Qt', 'bin'),
+                 '..'
+             ], 
+             binaries=[],
+             datas=[
+                 ('../tvlinker.ini', '.'),
+                 ('../__init__.py', '.'),
+                 (os.path.join(sys.modules['qtawesome'].__path__[0], 'fonts', '*'), './qtawesome/fonts')
+             ],
             hiddenimports=[],
             hookspath=[],
             runtime_hooks=[],

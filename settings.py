@@ -5,7 +5,7 @@ import sys
 
 import qtawesome as qta
 from PyQt5.QtCore import QSettings, Qt, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QKeyEvent
+from PyQt5.QtGui import QCloseEvent, QKeyEvent, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QGroupBox,
                              QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSizePolicy,
                              QStackedLayout, QStyleFactory, QTabWidget, QVBoxLayout, QWidget, qApp)
@@ -54,22 +54,22 @@ class GeneralTab(QWidget):
     def __init__(self, settings: QSettings):
         super(GeneralTab, self).__init__()
         self.settings = settings
-        generalGroup = QGroupBox()
-        general_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
+        general_formLayout_right = QFormLayout(labelAlignment=Qt.AlignRight)
         self.updater_freq_comboBox = QComboBox(self, toolTip='Automatically check for application updates',
                                                editable=False, cursor=Qt.PointingHandCursor)
         self.updater_freq_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.updater_freq_comboBox.setFixedWidth(100)
         self.updater_freq_comboBox.addItems(('Never', 'Daily', 'Weekly', 'Monthly'))
+        self.updater_freq_comboBox.insertSeparator(1)
         self.updater_freq_comboBox.setCurrentIndex(self.updater_freq_comboBox.findText(
             str(self.settings.value('updater_freq', 'Never')), Qt.MatchFixedString))
-        general_formLayout.addRow('Check for Updates:', self.updater_freq_comboBox)
+        general_formLayout_right.addRow('Check for Updates:', self.updater_freq_comboBox)
         # self.sourceUrl_lineEdit = QLineEdit(self, text=self.settings.value('source_url'), readOnly=True)
         # self.sourceUrl_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        # general_formLayout.addRow('Source URL:', self.sourceUrl_lineEdit)
+        # general_formLayout_right.addRow('Source URL:', self.sourceUrl_lineEdit)
         # self.useragent_lineEdit = QLineEdit(self, text=self.settings.value('user_agent'), readOnly=True)
         # self.useragent_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        # general_formLayout.addRow('User Agent:', self.useragent_lineEdit)
+        # general_formLayout_right.addRow('User Agent:', self.useragent_lineEdit)
         self.dlpagecount_comboBox = QComboBox(self, toolTip='Default Page Count', editable=False,
                                               cursor=Qt.PointingHandCursor)
         self.dlpagecount_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -77,59 +77,53 @@ class GeneralTab(QWidget):
         self.dlpagecount_comboBox.addItems(('10', '20', '30', '40', '50'))
         self.dlpagecount_comboBox.setCurrentIndex(self.dlpagecount_comboBox.findText(
             str(self.settings.value('dl_pagecount')), Qt.MatchFixedString))
-        general_formLayout.addRow('Default Page Count:', self.dlpagecount_comboBox)
+        general_formLayout_right.addRow('Default Page Count:', self.dlpagecount_comboBox)
         self.uistyle_comboBox = QComboBox(self, toolTip='UI Style', editable=False, cursor=Qt.PointingHandCursor)
         self.uistyle_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.uistyle_comboBox.setFixedWidth(100)
         self.uistyle_comboBox.addItems(QStyleFactory.keys())
         self.uistyle_comboBox.setCurrentIndex(
             self.uistyle_comboBox.findText(str(self.settings.value('ui_style')), Qt.MatchFixedString))
-        uistyle_infotext = QLabel('* requires restart')
+        uistyle_infotext = QLabel()
         uistyle_infotext.setStyleSheet('font-weight:300;')
         uistyle_layout = QHBoxLayout()
         uistyle_layout.addWidget(self.uistyle_comboBox)
         uistyle_layout.addWidget(uistyle_infotext)
-        general_formLayout.addRow('UI Style', uistyle_layout)
-        generalGroup.setLayout(general_formLayout)
+        general_formLayout_right.addRow(
+            '<div align="right">UI Style<br/><font size="-1" color="#888">* requires restart</font></div>',
+            uistyle_layout)
 
-        realdebrid_apitoken_link = '''<tr>
-                                        <td align="right">
-                                            <a href="https://real-debrid.com/apitoken"
-                                            title="https://real-debrid.com/apitoken" target="_blank">
-                                                access your API token settings
-                                            </a>
-                                        </td>
-                                    </tr>''' if len(self.settings.value('realdebrid_apitoken')) == 0 else ''
-        realdebrid_label = QLabel(textFormat=Qt.RichText, alignment=Qt.AlignVCenter, openExternalLinks=True)
-        realdebrid_label.setText('''<style>
-                                           a {
-                                               text-decoration: none;
-                                               font-size: 8pt;
-                                               font-weight: 500;
-                                               color: #481953;
-                                           }
-                                       </style>
-                                       <table border="0" cellspacing="0" cellpadding="3">
-                                           <tr valign="middle" align="left">
-                                              <td>
-                                                  <img src=":assets/images/realdebrid.png" style="width:128px;
-                                                  height:26px;" />
-                                               </td>
-                                           </tr>
-                                           %s
-                                       </table>''' % realdebrid_apitoken_link)
+        realdebrid_logo = QLabel(pixmap=QPixmap(':assets/images/realdebrid.png'))
+        realdebrid_logo.setStyleSheet('margin-left:15px;')
         self.realdebridtoken_lineEdit = QLineEdit(self, text=self.settings.value('realdebrid_apitoken'),
                                                   alignment=Qt.AlignVCenter)
-        self.realdebridtoken_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        realdebrid_formLayout = QFormLayout(labelAlignment=Qt.AlignRight, formAlignment=Qt.AlignVCenter)
+        self.realdebridtoken_lineEdit.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+        self.realdebridtoken_lineEdit.setMinimumWidth(150)
+        self.realdebridtoken_lineEdit.setMaximumWidth(230)
+        realdebrid_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
         realdebrid_formLayout.addRow('API Token:', self.realdebridtoken_lineEdit)
-        realdebrid_logoLayout = QHBoxLayout()
-        realdebrid_logoLayout.addWidget(realdebrid_label)
-        realdebrid_logoLayout.addLayout(realdebrid_formLayout)
-        debridGroup = QGroupBox()
-        debridGroup.setLayout(realdebrid_logoLayout)
+        apitoken_link = '<a href="https://real-debrid.com/apitoken" title="https://real-debrid.com/apitoken" ' \
+                        'target="_blank">access your API token settings</a> '
+        realdebrid_apitoken_link = QLabel(text=apitoken_link, textFormat=Qt.RichText, openExternalLinks=True)
+        realdebrid_apitoken_link.setStyleSheet('margin-left:15px;')
 
-        dlmanagerGroup = QGroupBox()
+        general_formLayout_left = QVBoxLayout()
+        general_formLayout_left.addWidget(realdebrid_logo)
+        general_formLayout_left.addLayout(realdebrid_formLayout)
+        if not len(self.settings.value('realdebrid_apitoken')):
+            general_formLayout_left.addWidget(realdebrid_apitoken_link)
+
+        # realdebrid_logoLayout = QVBoxLayout()
+        # realdebrid_logoLayout.addWidget(realdebrid_label, 1, Qt.AlignLeft)
+        # realdebrid_logoLayout.addLayout(realdebrid_formLayout)
+
+        general_formLayout = QHBoxLayout()
+        general_formLayout.setContentsMargins(0, 0, 0, 0)
+        general_formLayout.addLayout(general_formLayout_left)
+        general_formLayout.addLayout(general_formLayout_right)
+        generalGroup = QGroupBox()
+        generalGroup.setLayout(general_formLayout)
+
         dlmanager_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
         dlmanager_formLayout.setAlignment(Qt.AlignVCenter)
         self.dlmanager_comboBox = QComboBox(self, editable=False, cursor=Qt.PointingHandCursor)
@@ -147,9 +141,10 @@ class GeneralTab(QWidget):
         dlmanager_layout.addStretch(1)
         dlmanager_layout.addLayout(dlmanager_formLayout)
         dlmanager_layout.addStretch(1)
+        dlmanagerGroup = QGroupBox()
         dlmanagerGroup.setLayout(dlmanager_layout)
 
-        directdl_label = QLabel('No settings available for built-in downloader')
+        directdl_label = QLabel('No settings for built-in downloader')
         directdl_label.setStyleSheet('font-weight:300; text-align:center;')
         directdl_label.setAlignment(Qt.AlignCenter)
 
@@ -233,7 +228,6 @@ class GeneralTab(QWidget):
 
         tab_layout = QVBoxLayout()
         tab_layout.addWidget(generalGroup)
-        tab_layout.addWidget(debridGroup)
         tab_layout.addWidget(dlmanagerGroup)
         tab_layout.addWidget(dlmanagersettingsGroup)
 

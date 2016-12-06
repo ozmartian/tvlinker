@@ -78,7 +78,6 @@ class DirectDownload(QDialog):
         self.close()
 
 
-# noinspection PyAttributeOutsideInit
 class TVLinker(QWidget):
     def __init__(self, settings: QSettings, parent=None):
         super(TVLinker, self).__init__(parent)
@@ -205,7 +204,7 @@ class TVLinker(QWidget):
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.setHorizontalHeaderLabels(('Date', 'URL', 'Description', 'Format'))
+        self.table.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'FORMAT'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.horizontalHeader().setMinimumSectionSize(100)
@@ -489,7 +488,6 @@ class ProcError:
 class FixedSettings:
     applicationName = 'TVLinker'
     applicationVersion = TVLinker.get_version()
-    applicationStyle = 'Fusion'
     organizationDomain = 'http://tvlinker.ozmartians.com'
     windowSize = QSize(1000, 785)
     linksPerPage = 30
@@ -515,9 +513,7 @@ class FixedSettings:
             os.makedirs(config_path, exist_ok=True)
             QFile.copy(TVLinker.get_path(path='%s.ini' % FixedSettings.applicationName.lower(), override=True),
                        settings_ini)
-        settings_ini_secret = os.path.join(config_path, '%s.ini.secret' % FixedSettings.applicationName.lower())
-        settings_path = settings_ini_secret if os.path.exists(settings_ini_secret) else settings_ini
-        return QSettings(settings_path, QSettings.IniFormat)
+        return QSettings(settings_ini, QSettings.IniFormat)
 
 
 def main():
