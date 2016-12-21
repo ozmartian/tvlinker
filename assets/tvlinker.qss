@@ -42,9 +42,9 @@ QGroupBox#mainForm {
 }
 
 QGroupBox#hosters {
-    border: 1px solid #BABABA;
+    border: 1px inset #BABABA;
     background-color: rgba(0, 0, 0, 0.05);
-    border-radius: 5px;
+    border-radius: 3px;
 }
 
 QLabel#heading {
