@@ -180,7 +180,7 @@ class DownloadThread(QThread):
         filesize = int(res.info()['Content-Length'])
         filename = os.path.basename(self.download_path)
         downloaded_chunk = 0
-        blocksize = 1024
+        blocksize = 8192
         with open(self.download_path, 'wb') as f:
             while True:
                 chunk = res.read(blocksize)

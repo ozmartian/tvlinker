@@ -10,12 +10,15 @@ import warnings
 from datetime import datetime
 from signal import SIGINT, SIG_DFL, SIGTERM, signal
 
-from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, Qt, QTextStream,
-                          QUrl, pyqtSignal, pyqtSlot)
+from PyQt5.QtCore import (QDateTime, QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, Qt,
+                          QTextStream, QUrl, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
-from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QDialog, QFileDialog, QGroupBox,
+from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QDialog, QFileDialog, QFrame, QGroupBox,
                              QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QStyleFactory, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, qApp)
+if sys.platform == 'win32':
+    from PyQt5.QtWinExtras import QWinTaskbarButton, QWinTaskbarProgress
+
 from qtawesome import icon
 
 try:
@@ -63,6 +66,8 @@ class DirectDownload(QDialog):
     @pyqtSlot(int)
     def update_progress(self, progress: int) -> None:
         self.progress.setValue(progress)
+        if sys.platform == 'win32':
+            self.win_taskprogress.setValue(progress)
 
     @pyqtSlot(str)
     def update_progress_label(self, progress_txt: str) -> None:
@@ -109,6 +114,7 @@ class TVLinker(QWidget):
             qApp.setStyleSheet(QTextStream(qss).readAll())
 
     def init_styles(self) -> None:
+        # QApplication.setStyle(QStyleFactory.create(self.settings.value('ui_style')))
         if sys.platform == 'darwin':
             qss_stylesheet = self.get_path('%s_osx.qss' % qApp.applicationName().lower())
         else:
@@ -148,12 +154,14 @@ class TVLinker(QWidget):
             self.idm_exe_path = self.settings.value('idm_exe_path')
         elif self.download_manager == 'kget':
             self.kget_path = self.settings.value('kget_path')
+        self.favorites = self.settings.value('favorites')
 
     def init_form(self) -> QHBoxLayout:
         self.search_field = QLineEdit(self, clearButtonEnabled=True, placeholderText='Enter search criteria')
         self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.search_field.setFocus()
-        self.search_field.textChanged.connect(self.filter_table)
+        self.search_field.textChanged.connect(self.clear_filters)
+        self.search_field.returnPressed.connect(lambda: self.filter_table(self.search_field.text()))
         self.favorites_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
                                             toolTip='Favorites', icon=self.icon_faves_off,
                                             checkable=True, toggled=self.filter_faves)
@@ -205,6 +213,7 @@ class TVLinker(QWidget):
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'FORMAT'))
+        self.table.horizontalHeader().setStyle(QStyleFactory.create('Fusion'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.horizontalHeader().setMinimumSectionSize(100)
@@ -229,7 +238,7 @@ class TVLinker(QWidget):
     def check_update(self) -> None:
         self.updater = Updater(parent=self, update_url=FixedSettings.update_check_url)
         update_available = self.updater.update_check()
-        pass
+        self.settings.setValue('updater_lastcheck', QDateTime.currentDateTime())
 
     @pyqtSlot()
     def show_settings(self) -> None:
@@ -240,20 +249,33 @@ class TVLinker(QWidget):
         rowcount = self.table.rowCount()
         self.meta_label.setText(self.meta_template % rowcount)
         self.progress.setValue(rowcount)
+        # if sys.platform == 'win32':
+        #     self.win_taskprogress.setValue(rowcount)
         return True
 
-    def start_scraping(self, maxpages: int = 10) -> None:
+    def init_win_taskbar_progress(self) -> None:
+        self.win_taskbutton = QWinTaskbarButton(self)
+        self.win_taskbutton.setWindow(self.windowHandle())
+        self.win_taskbutton.setOverlayIcon(qApp.windowIcon())
+        self.win_taskprogress = self.win_taskbutton.progress()
+        self.win_taskprogress.setVisible(True)
+        self.win_taskprogress.setRange(0, self.dl_pagecount * self.dl_pagelinks)
+        self.win_taskprogress.setValue(0)
+
+    def start_scraping(self) -> None:
         self.rows = 0
         qApp.setOverrideCursor(Qt.WaitCursor)
         if self.table.rowCount() > 0:
             self.table.clearContents()
             self.table.setRowCount(0)
         self.table.setSortingEnabled(False)
-        self.scrape = ScrapeThread(settings=self.settings, maxpages=maxpages)
+        self.scrape = ScrapeThread(settings=self.settings, maxpages=self.dl_pagecount)
         self.scrape.addRow.connect(self.add_row)
         self.scrape.started.connect(self.progress.show)
         self.scrape.finished.connect(self.scrape_finished)
         self.progress.setValue(0)
+        if sys.platform == 'win32':
+            self.init_win_taskbar_progress()
         self.scrape.start()
 
     @pyqtSlot()
@@ -282,13 +304,6 @@ class TVLinker(QWidget):
         QMessageBox.about(self, 'About %s' % qApp.applicationName(), about_html)
 
     @pyqtSlot(bool)
-    def filter_faves(self, checked: bool) -> None:
-        if checked:
-            self.favorites_button.setIcon(self.icon_faves_on)
-        else:
-            self.favorites_button.setIcon(self.icon_faves_off)
-
-    @pyqtSlot(bool)
     def refresh_links(self) -> None:
         self.start_scraping(int(self.dlpages_field.currentText()))
 
@@ -296,12 +311,18 @@ class TVLinker(QWidget):
     def update_pagecount(self, index: int) -> None:
         pagecount = int(self.dlpages_field.itemText(index))
         self.progress.setMaximum(pagecount * self.dl_pagelinks)
+        if sys.platform == 'win32':
+            self.win_taskprogress.setMaximum(pagecount * self.dl_pagelinks)
         self.start_scraping(pagecount)
 
     @pyqtSlot()
     def scrape_finished(self) -> None:
         self.progress.hide()
+        if sys.platform == 'win32':
+            self.win_taskprogress.hide()
+            self.win_taskprogress.reset()
         self.table.setSortingEnabled(True)
+        self.filter_table(text='')
         qApp.restoreOverrideCursor()
 
     @pyqtSlot(list)
@@ -337,17 +358,40 @@ class TVLinker(QWidget):
         self.links.setHosters.connect(self.add_hosters)
         self.links.start()
 
+    @pyqtSlot(bool)
+    def filter_faves(self, checked: bool) -> None:
+        if checked:
+            self.favorites_button.setIcon(self.icon_faves_on)
+        else:
+            self.favorites_button.setIcon(self.icon_faves_off)
+        if self.scrape.isFinished():
+            self.filter_table(text='')
+
     @pyqtSlot(str)
     def filter_table(self, text: str) -> None:
-        valid_rows = []
-        if len(text) > 0:
-            for item in self.table.findItems(text, Qt.MatchContains):
-                valid_rows.append(item.row())
+        filters = []
+        if self.favorites_button.isChecked():
+            filters = self.favorites
+        if len(text):
+            filters.append(text)
+        if not len(filters):
+            self.valid_rows = []
+        for search_term in filters:
+            for item in self.table.findItems(search_term, Qt.MatchContains):
+                self.valid_rows.append(item.row())
         for row in range(0, self.table.rowCount()):
-            if len(text) > 0 and row not in valid_rows:
-                self.table.hideRow(row)
-            else:
+            if not len(filters):
                 self.table.showRow(row)
+            else:
+                if row not in self.valid_rows:
+                    self.table.hideRow(row)
+                else:
+                    self.table.showRow(row)
+
+    @pyqtSlot()
+    def clear_filters(self):
+        if not len(self.search_field.text()):
+            self.filter_table('')
 
     @pyqtSlot(bool)
     def aria2_confirmation(self, success: bool) -> None:
@@ -492,10 +536,9 @@ class FixedSettings:
     windowSize = QSize(1000, 785)
     linksPerPage = 30
     realdebrid_api_url = 'https://api.real-debrid.com/rest/1.0'
-    update_check_url = 'https://tvlinker.ozmartians.com/update_checker'
 
     @staticmethod
-    def get_style(label: bool = False):
+    def get_style(label: bool = False) -> str:
         style = 'Fusion'
         if sys.platform.startswith('linux'):
             installed_styles = QStyleFactory.keys()
@@ -503,7 +546,9 @@ class FixedSettings:
                 if stl.lower() in map(str.lower, installed_styles):
                     style = stl
                     break
-        return style if label else QStyleFactory.create(style)
+        elif sys.platform == 'darwin':
+            style = 'Macintosh'
+        return style
 
     @staticmethod
     def get_app_settings() -> QSettings:
@@ -526,7 +571,6 @@ def main():
     if style is not None and not len(style.strip()):
         style = FixedSettings.get_style(label=True)
         config.setValue('ui_style', style)
-    qApp.setStyle(style)
     app.setQuitOnLastWindowClosed(True)
     tvlinker = TVLinker(config)
     sys.exit(app.exec_())
