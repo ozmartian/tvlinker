@@ -61,7 +61,7 @@ class HosterLinks(QDialog):
         for hoster in hosters:
             hoster_logo = QLabel(pixmap=QPixmap(self.parent.get_path('images/hoster_%s' % QUrl(hoster[0]).fileName())),
                                  toolTip=hoster[1])
-            hoster_logo.setMinimumWidth(200)
+            hoster_logo.setMinimumWidth(285)
             hoster_logo.setAlignment(Qt.AlignCenter)
             copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard',
                                    autoDefault=False, default=False, cursor=Qt.PointingHandCursor)
