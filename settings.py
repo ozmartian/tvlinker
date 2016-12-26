@@ -4,11 +4,11 @@
 import sys
 
 import qtawesome as qta
-from PyQt5.QtCore import QSettings, Qt, pyqtSlot
+from PyQt5.QtCore import pyqtSlot, QSettings, Qt
 from PyQt5.QtGui import QCloseEvent, QKeyEvent, QPixmap
-from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QGroupBox,
-                             QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSizePolicy,
-                             QStackedLayout, QStyleFactory, QTabWidget, QVBoxLayout, QWidget, qApp)
+from PyQt5.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
+                             QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton,
+                             QSizePolicy, QStackedLayout, QTabWidget, QVBoxLayout, QWidget, qApp)
 
 
 class Settings(QDialog):
@@ -36,8 +36,6 @@ class Settings(QDialog):
         self.tab_general.save()
         self.tab_favorites.save()
         self.parent.init_settings()
-        if self.settings.value('ui_style').lower() != QApplication.style().objectName().lower():
-            QApplication.setStyle(QStyleFactory.create(self.settings.value('ui_style')))
         self.close()
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
@@ -98,15 +96,7 @@ class GeneralTab(QWidget):
         self.dlpagecount_comboBox.addItems(('10', '20', '30', '40', '50'))
         self.dlpagecount_comboBox.setCurrentIndex(self.dlpagecount_comboBox.findText(
             str(self.settings.value('dl_pagecount')), Qt.MatchFixedString))
-        self.uistyle_comboBox = QComboBox(self, toolTip='UI Style', editable=False, cursor=Qt.PointingHandCursor)
-        self.uistyle_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.uistyle_comboBox.setMinimumContentsLength(len(max(QStyleFactory.keys(), key=len)))
-        self.uistyle_comboBox.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        self.uistyle_comboBox.addItems(QStyleFactory.keys())
-        self.uistyle_comboBox.setCurrentIndex(
-            self.uistyle_comboBox.findText(str(self.settings.value('ui_style')), Qt.MatchFixedString))
 
-        field_width = self.uistyle_comboBox.minimumContentsLength()
         self.dlpagecount_comboBox.setMinimumContentsLength(field_width)
         self.dlmanager_comboBox.setMinimumContentsLength(field_width)
         self.updater_freq_comboBox.setMinimumContentsLength(field_width)
@@ -116,7 +106,6 @@ class GeneralTab(QWidget):
         general_formlayout_left.addRow('Download Manager:', self.dlmanager_comboBox)
         general_formlayout_right = QFormLayout(labelAlignment=Qt.AlignRight)
         general_formlayout_right.addRow('Check for Updates:', self.updater_freq_comboBox)
-        general_formlayout_right.addRow('UI Style:', self.uistyle_comboBox)
         general_formlayout = QHBoxLayout()
         general_formlayout.addStretch(1)
         general_formlayout.addLayout(general_formlayout_left)
@@ -174,6 +163,11 @@ class GeneralTab(QWidget):
         pyload_settings = QWidget()
         pyload_settings.setLayout(pyload_formLayout)
 
+        self.dlmanagersettings_layout = QStackedLayout()
+        self.dlmanagersettings_layout.addWidget(directdl_label)
+        self.dlmanagersettings_layout.addWidget(aria2_settings)
+        self.dlmanagersettings_layout.addWidget(pyload_settings)
+
         if sys.platform == 'win32':
             self.idmexepath_lineEdit = QLineEdit(self, text=self.settings.value('idm_exe_path'))
             self.idmexepath_lineEdit.setPlaceholderText('C:\Program Files (x86)\Internet Download Manager\IDMan.exe')
@@ -182,6 +176,7 @@ class GeneralTab(QWidget):
             idm_formLayout.addRow('IDM EXE Path:', self.idmexepath_lineEdit)
             idm_settings = QWidget()
             idm_settings.setLayout(idm_formLayout)
+            self.dlmanagersettings_layout.addWidget(idm_settings)
 
         if sys.platform.startswith('linux'):
             self.kgetpath_lineEdit = QLineEdit(self, text=self.settings.value('kget_path'))
@@ -190,14 +185,6 @@ class GeneralTab(QWidget):
             kget_formLayout.addRow('kget Path:', self.kgetpath_lineEdit)
             kget_settings = QWidget()
             kget_settings.setLayout(kget_formLayout)
-
-        self.dlmanagersettings_layout = QStackedLayout()
-        self.dlmanagersettings_layout.addWidget(directdl_label)
-        self.dlmanagersettings_layout.addWidget(aria2_settings)
-        self.dlmanagersettings_layout.addWidget(pyload_settings)
-        if sys.platform == 'win32':
-            self.dlmanagersettings_layout.addWidget(idm_settings)
-        if sys.platform.startswith('linux'):
             self.dlmanagersettings_layout.addWidget(kget_settings)
 
         self.dlmanagersettings_layout.setCurrentIndex(self.dlmanager_comboBox.currentIndex())
@@ -215,7 +202,6 @@ class GeneralTab(QWidget):
     def save(self) -> None:
         self.settings.setValue('updater_freq', self.updater_freq_comboBox.currentText())
         self.settings.setValue('dl_pagecount', self.dlpagecount_comboBox.currentText())
-        self.settings.setValue('ui_style', self.uistyle_comboBox.currentText())
         self.settings.setValue('realdebrid_apitoken', self.realdebridtoken_lineEdit.text())
         self.settings.setValue('download_manager', self.dlmanager_comboBox.currentText())
         if self.dlmanager_comboBox.currentText() == 'aria2':

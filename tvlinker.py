@@ -13,23 +13,16 @@ from signal import SIGINT, SIG_DFL, SIGTERM, signal
 from PyQt5.QtCore import (QDateTime, QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, Qt,
                           QTextStream, QUrl, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
-from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QDialog, QFileDialog, QFrame, QGroupBox,
+from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QDialog, QFileDialog, QGroupBox,
                              QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QStyleFactory, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, qApp)
-
-try:
-    if sys.platform == 'win32':
-        from PyQt5.QtWinExtras import QWinTaskbarButton, QWinTaskbarProgress
-except:
-    pass
-
 from qtawesome import icon
 
 try:
     from tvlinker.hosters import HosterLinks
     from tvlinker.pyload import PyloadConfig, PyloadConnection
     from tvlinker.settings import Settings
-    from tvlinker.threads import Aria2Thread, DownloadThread, HostersThread, RealDebridThread, ScrapeThread
+    from tvlinker.threads import Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread, ScrapeThread
     from tvlinker.updater import Updater
     import tvlinker.assets
 except ImportError:
@@ -145,7 +138,6 @@ class TVLinker(QWidget):
         self.updater_freq = self.settings.value('updater_freq')
         self.updater_lastcheck = self.settings.value('updater_lastcheck')
         self.dl_pagecount = int(self.settings.value('dl_pagecount'))
-        self.ui_style = self.settings.value('ui_style')
         self.dl_pagelinks = FixedSettings.linksPerPage
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
         self.download_manager = self.settings.value('download_manager')
@@ -209,7 +201,7 @@ class TVLinker(QWidget):
 
     def init_table(self) -> QTableWidget:
         self.table = QTableWidget(0, 4, self)
-        self.table.setStyle(QStyleFactory.create('Fusion'))
+        # self.table.setStyle(QStyleFactory.create('Fusion'))
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.hideColumn(1)
         self.table.setCursor(Qt.PointingHandCursor)
@@ -218,7 +210,7 @@ class TVLinker(QWidget):
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'FORMAT'))
-        self.table.horizontalHeader().setStyle(QStyleFactory.create('Fusion'))
+        # self.table.horizontalHeader().setStyle(QStyleFactory.create('Fusion'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.horizontalHeader().setMinimumSectionSize(100)
@@ -231,9 +223,6 @@ class TVLinker(QWidget):
         self.meta_template = 'Total number of links retrieved: <b>%i</b>'
         self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks),
                                      visible=False)
-        if sys.platform == 'win32':
-            self.win_progress = QWinTaskbarProgress(parent=self, maximum=(self.dl_pagecount * self.dl_pagelinks),
-                                                    visible=False)
         self.meta_label = QLabel(textFormat=Qt.RichText, alignment=Qt.AlignRight, objectName='totals')
         self.update_metabar()
         layout = QHBoxLayout()
@@ -244,9 +233,18 @@ class TVLinker(QWidget):
 
     @pyqtSlot()
     def check_update(self) -> None:
-        self.updater = Updater(parent=self, update_url=FixedSettings.update_check_url)
-        update_available = self.updater.update_check()
-        self.settings.setValue('updater_lastcheck', QDateTime.currentDateTime())
+        self.updater = Updater()
+        self.updater.updateAvailable.connect(self.updateHandler)
+        self.updater_lastcheck = QDateTime.currentDateTime().toString('dd-MM-yyyy HH:mm:ss')
+        self.settings.setValue('updater_lastcheck', self.updater_lastcheck)
+        self.updater.start()
+
+    def updateHandler(self, updateExists: bool, version: str = None):
+        if updateExists:
+            if Updater.notify_update(self, version) == QMessageBox.AcceptRole:
+                self.updater.install_update(self)
+        else:
+            Updater.notify_no_update(self)
 
     @pyqtSlot()
     def show_settings(self) -> None:
@@ -257,18 +255,7 @@ class TVLinker(QWidget):
         rowcount = self.table.rowCount()
         self.meta_label.setText(self.meta_template % rowcount)
         self.progress.setValue(rowcount)
-        if sys.platform == 'win32':
-            self.win_progress.setValue(rowcount)
         return True
-
-    def init_win_taskbar_progress(self) -> None:
-        self.win_taskbutton = QWinTaskbarButton(self)
-        self.win_taskbutton.setWindow(self.windowHandle())
-        self.win_taskbutton.setOverlayIcon(qApp.windowIcon())
-        self.win_taskprogress = self.win_taskbutton.progress()
-        self.win_taskprogress.setVisible(True)
-        self.win_taskprogress.setRange(0, self.dl_pagecount * self.dl_pagelinks)
-        self.win_taskprogress.setValue(0)
 
     def start_scraping(self) -> None:
         self.rows = 0
@@ -282,9 +269,6 @@ class TVLinker(QWidget):
         self.scrape.started.connect(self.show_progress)
         self.scrape.finished.connect(self.scrape_finished)
         self.progress.setValue(0)
-        if sys.platform == 'win32':
-            self.init_win_taskbar_progress()
-            self.win_progress.setValue(0)
         self.scrape.start()
 
     @pyqtSlot()
@@ -320,22 +304,15 @@ class TVLinker(QWidget):
     def update_pagecount(self, index: int) -> None:
         pagecount = int(self.dlpages_field.itemText(index))
         self.progress.setMaximum(pagecount * self.dl_pagelinks)
-        if sys.platform == 'win32':
-            self.win_progress.setMaximum(pagecount * self.dl_pagelinks)
         self.start_scraping()
 
     @pyqtSlot()
     def show_progress(self):
         self.progress.show()
-        if sys.platform == 'win32':
-            self.win_progress.show()
 
     @pyqtSlot()
     def scrape_finished(self) -> None:
         self.progress.hide()
-        if sys.platform == 'win32':
-            self.win_progress.hide()
-            self.win_progress.reset()
         self.table.setSortingEnabled(True)
         self.filter_table(text='')
         qApp.restoreOverrideCursor()
@@ -357,7 +334,7 @@ class TVLinker(QWidget):
             self.update_metabar()
             self.cols += 1
         self.rows += 1
-
+        
     @pyqtSlot(list)
     def add_hosters(self, hosters: list) -> None:
         self.hosters_win.show_hosters(hosters)
@@ -368,7 +345,6 @@ class TVLinker(QWidget):
         self.hosters_win = HosterLinks(parent=self, title=self.table.item(self.table.currentRow(), 2).text())
         self.hosters_win.downloadLink.connect(self.download_link)
         self.hosters_win.copyLink.connect(self.copy_download_link)
-        self.hosters_win.show()
         self.links = HostersThread(settings=self.settings, link_url=self.table.item(self.table.currentRow(), 1).text())
         self.links.setHosters.connect(self.add_hosters)
         self.links.start()
@@ -509,7 +485,7 @@ class TVLinker(QWidget):
     def unrestrict_link(self, link: str) -> None:
         caller = inspect.stack()[1].function
         self.realdebrid = RealDebridThread(settings=self.settings, api_url=FixedSettings.realdebrid_api_url,
-                                           link_url=link)
+                                           link_url=link, action=RealDebridAction.UNRESTRICT_LINK)
         self.realdebrid.unrestrictedLink.connect(getattr(self, caller))
         self.realdebrid.start()
 
@@ -581,13 +557,8 @@ def main():
     app.setApplicationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)
-    config = FixedSettings.get_app_settings()
-    style = config.value('ui_style')
-    if style is not None and not len(style.strip()):
-        style = FixedSettings.get_style(label=True)
-        config.setValue('ui_style', style)
     app.setQuitOnLastWindowClosed(True)
-    tvlinker = TVLinker(config)
+    tvlinker = TVLinker(FixedSettings.get_app_settings())
     sys.exit(app.exec_())
 
 

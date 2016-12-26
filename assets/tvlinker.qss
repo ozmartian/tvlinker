@@ -43,13 +43,8 @@ QGroupBox#mainForm {
 }
 
 QGroupBox#hosters {
-    border: 1px inset #BABABA;
+    border: 1px solid #BABABA;
     background-color: rgba(0, 0, 0, 0.05);
-<<<<<<< HEAD
-    /*border-radius: 5px;*/
-=======
-    border-radius: 3px;
->>>>>>> 52cb5403e9d89eaa662c5879c336de51c1535ae1
 }
 
 QLabel#heading {
@@ -69,10 +64,6 @@ QLabel#totals {
 
 QLineEdit:read-only {
     background-color: #EAEAEA;
-}
-
-QPushButton::menu-indicator {
-    image: url(none.jpg);
 }
 
 QDialogButtonBox {

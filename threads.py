@@ -85,41 +85,68 @@ class HostersThread(QThread):
         self.get_hoster_links()
 
 
+class RealDebridAction:
+    UNRESTRICT_LINK = 0,
+    SUPPORTED_HOSTS = 1,
+    HOST_STATUS = 2
+
+
 class RealDebridThread(QThread):
     unrestrictedLink = pyqtSignal(str)
+    supportedHosts = pyqtSignal(dict)
+    hostStatus = pyqtSignal(dict)
 
-    def __init__(self, settings: QSettings, api_url: str, link_url: str):
+    def __init__(self, settings: QSettings, api_url: str, link_url: str,
+                 action: RealDebridAction = RealDebridAction.UNRESTRICT_LINK, check_host: str = None):
         QThread.__init__(self)
         self.api_url = api_url
         self.api_token = settings.value('realdebrid_apitoken')
         self.link_url = link_url
+        self.action = action
+        self.check_host = check_host
 
     def __del__(self):
         self.wait()
 
-    def unrestrict_link(self):
+    def connect(self, endpoint: str, payload: object=None) -> object:
         try:
             headers = {
                 'Authorization': 'Bearer %s' % self.api_token,
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cache-Control': 'no-cache'
             }
-            payload = urlencode({'link': self.link_url}).encode('utf-8')
-            req = Request('%s/unrestrict/link' % self.api_url, headers=headers, data=payload)
+            req = Request('%s%s' % (self.api_url, self.endpoint), headers=headers, data=payload)
             res = urlopen(req).read().decode('utf-8')
-            jsonres = json.loads(res)
-            if 'download' in jsonres.keys():
-                self.unrestrictedLink.emit(jsonres['download'])
+            return json.loads(res)
         except HTTPError:
             QMessageBox.critical(self, 'Real-Debrid API Error',
                                  'A problem occurred whilst communicating with Real-Debrid. Please check your '
                                  'Internet connection.<br/><br/>' +
-                                 '<b>ERROR LOG:</b><br/>(Error Code %s) %s' % (
-                                 qApp.applicationName(), HTTPError.code, HTTPError.reason), QMessageBox.Ok)
+                                 '<b>ERROR LOG:</b><br/>(Error Code %s) %s<br/>%s'
+                                 % (qApp.applicationName(), HTTPError.code, HTTPError.reason), QMessageBox.Ok)
             self.exit()
 
+    def unrestrict_link(self) -> None:
+        data = urlencode({'link': self.link_url}).encode('utf-8')
+        jsonres = self.connect(endpoint='/unrestrict/link', payload=data)
+        if 'download' in jsonres.keys():
+            self.unrestrictedLink.emit(jsonres['download'])
+
+    def supported_hosts(self) -> None:
+        jsonres = self.connect(endpoint='/hosts')
+        self.supportedHosts.emit(jsonres)
+
+    def host_status(self, host: str) -> None:
+        jsonres = self.connect(endpoint='/hosts/status')
+        self.hostStatus.emit(jsonres)
+
     def run(self) -> None:
-        self.unrestrict_link()
+        if self.action == RealDebridAction.UNRESTRICT_LINK:
+            self.unrestrict_link()
+        elif self.action == RealDebridAction.SUPPORTED_HOSTS:
+            self.supported_hosts()
+        elif self.action == RealDebridAction.HOST_STATUS:
+            self.host_status(self.check_host)
 
 
 class Aria2Thread(QThread):
