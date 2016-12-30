@@ -115,7 +115,7 @@ class RealDebridThread(QThread):
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cache-Control': 'no-cache'
             }
-            req = Request('%s%s' % (self.api_url, self.endpoint), headers=headers, data=payload)
+            req = Request('%s%s' % (self.api_url, endpoint), headers=headers, data=payload)
             res = urlopen(req).read().decode('utf-8')
             return json.loads(res)
         except HTTPError:

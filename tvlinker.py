@@ -29,7 +29,7 @@ except ImportError:
     from hosters import HosterLinks
     from pyload import PyloadConfig, PyloadConnection
     from settings import Settings
-    from threads import Aria2Thread, DownloadThread, HostersThread, RealDebridThread, ScrapeThread
+    from threads import Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread, ScrapeThread
     from updater import Updater
     import assets
 
@@ -75,7 +75,8 @@ class DirectDownload(QDialog):
     @pyqtSlot()
     def download_complete(self) -> None:
         qApp.restoreOverrideCursor()
-        QMessageBox.information(self.parent, 'Confirmation', 'The download is complete...                    ',
+        QMessageBox.information(self.parent, 'Confirmation', '<table width="350" border="0">' +
+                                '<tr><td>The download is complete...</td></tr></table>',
                                 buttons=QMessageBox.Ok)
         self.close()
 
@@ -111,7 +112,6 @@ class TVLinker(QWidget):
             qApp.setStyleSheet(QTextStream(qss).readAll())
 
     def init_styles(self) -> None:
-        # QApplication.setStyle(QStyleFactory.create(self.settings.value('ui_style')))
         if sys.platform == 'darwin':
             qss_stylesheet = self.get_path('%s_osx.qss' % qApp.applicationName().lower())
         else:
@@ -128,7 +128,7 @@ class TVLinker(QWidget):
         self.icon_faves_off = icon('ei.star', color='#555')
         self.icon_faves_on = icon('ei.star', color='#FFF')
         self.icon_refresh = icon('ei.refresh', color='#555')
-        self.icon_menu = icon('fa.navicon', scale_factor=1.5, color='#555')
+        self.icon_menu = icon('fa.navicon', scale_factor=1.15, color='#555')
         self.icon_settings = icon('ei.cog', color='#555')
         self.icon_updates = icon('fa.cloud-download', color='#555')
 
@@ -165,10 +165,6 @@ class TVLinker(QWidget):
         self.refresh_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
                                           toolTip='Refresh', icon=self.icon_refresh, clicked=self.refresh_links)
         self.refresh_button.setIconSize(QSize(22, 22))
-        toolbar_buttons = QHBoxLayout(spacing=0)
-        toolbar_buttons.setContentsMargins(0, 0, 0, 0)
-        toolbar_buttons.addWidget(self.favorites_button)
-        toolbar_buttons.addWidget(self.refresh_button)
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
         self.dlpages_field.addItems(('10', '20', '30', '40', '50'))
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
@@ -176,11 +172,14 @@ class TVLinker(QWidget):
         self.settings_button = QPushButton(parent=self, flat=True, toolTip='Menu', cursor=Qt.PointingHandCursor,
                                            icon=self.icon_menu)
         self.settings_button.setMenu(self.settings_menu())
+        self.settings_button.setIconSize(QSize(22, 22))
+        self.settings_button.setStyleSheet('padding-right:5px;')
         layout = QHBoxLayout()
         logo = QPixmap(self.get_path('images/tvrelease.png'))
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
         layout.addWidget(self.search_field)
-        layout.addLayout(toolbar_buttons)
+        layout.addWidget(self.favorites_button)
+        layout.addWidget(self.refresh_button)
         layout.addWidget(QLabel('Pages:'))
         layout.addWidget(self.dlpages_field)
         layout.addWidget(self.settings_button)
@@ -188,7 +187,7 @@ class TVLinker(QWidget):
 
     def settings_menu(self) -> QMenu:
         settings_action = QAction(self.icon_settings, 'Settings', self, triggered=self.show_settings)
-        updates_action = QAction(self.icon_updates, 'Check for Updates', self, triggered=self.check_update)
+        updates_action = QAction(self.icon_updates, 'Check for updates', self, triggered=self.check_update)
         aboutqt_action = QAction('About Qt', self, triggered=qApp.aboutQt)
         about_action = QAction('About %s' % qApp.applicationName(), self, triggered=self.about_app)
         menu = QMenu()
@@ -201,7 +200,8 @@ class TVLinker(QWidget):
 
     def init_table(self) -> QTableWidget:
         self.table = QTableWidget(0, 4, self)
-        # self.table.setStyle(QStyleFactory.create('Fusion'))
+        if sys.platform == 'win32':
+            self.table.setStyle(QStyleFactory.create('Fusion'))
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.hideColumn(1)
         self.table.setCursor(Qt.PointingHandCursor)
@@ -210,7 +210,6 @@ class TVLinker(QWidget):
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'FORMAT'))
-        # self.table.horizontalHeader().setStyle(QStyleFactory.create('Fusion'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.horizontalHeader().setMinimumSectionSize(100)

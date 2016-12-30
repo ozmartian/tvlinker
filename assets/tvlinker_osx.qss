@@ -8,6 +8,10 @@ QTableCornerButton::section {
     margin-top: 0;
 }
 
+QHeaderView::section:checked {
+    background-color: #6A687D;
+}
+
 QHeaderView::down-arrow {
     image: url(:assets/images/down_arrow.png);
 }

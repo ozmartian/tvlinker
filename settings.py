@@ -97,9 +97,11 @@ class GeneralTab(QWidget):
         self.dlpagecount_comboBox.setCurrentIndex(self.dlpagecount_comboBox.findText(
             str(self.settings.value('dl_pagecount')), Qt.MatchFixedString))
 
-        self.dlpagecount_comboBox.setMinimumContentsLength(field_width)
+        field_width = 350
+
         self.dlmanager_comboBox.setMinimumContentsLength(field_width)
         self.updater_freq_comboBox.setMinimumContentsLength(field_width)
+        self.dlpagecount_comboBox.setMinimumContentsLength(field_width)
 
         general_formlayout_left = QFormLayout(labelAlignment=Qt.AlignRight)
         general_formlayout_left.addRow('Default Page Count:', self.dlpagecount_comboBox)
