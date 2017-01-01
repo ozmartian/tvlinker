@@ -22,7 +22,8 @@ try:
     from tvlinker.hosters import HosterLinks
     from tvlinker.pyload import PyloadConfig, PyloadConnection
     from tvlinker.settings import Settings
-    from tvlinker.threads import Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread, ScrapeThread
+    from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread,
+                                  ScrapeThread)
     from tvlinker.updater import Updater
     import tvlinker.assets
 except ImportError:
@@ -333,7 +334,7 @@ class TVLinker(QWidget):
             self.update_metabar()
             self.cols += 1
         self.rows += 1
-        
+
     @pyqtSlot(list)
     def add_hosters(self, hosters: list) -> None:
         self.hosters_win.show_hosters(hosters)
