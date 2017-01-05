@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
 from os import path
 from re import match
 
@@ -29,8 +30,8 @@ def get_description(filename='README.md'):
 def get_data_files():
     if sys.platform.startswith('linux'):
         return [
-            ('/usr/share/pixmaps', ['data/pixmaps/vidcutter.png']),
-            ('/usr/share/applications', ['data/desktop/vidcutter.desktop'])
+            ('/usr/share/pixmaps', ['data/icons/tvlinker.png']),
+            ('/usr/share/applications', ['data/desktop/tvlinker.desktop'])
         ]
     else:
         return []
@@ -52,7 +53,8 @@ setup(
     setup_requires=['setuptools >= 26.1.1'],
     install_requires=['beautifulsoup4', 'QtAwesome'],
     extras_require={':sys_platform!="win32"': ['lxml']},
-    package_data={'tvlinker': ['tvlinker.ini', 'assets/images/tvlinker.ico', 'assets/images/tvlinker.png']},
+    package_data={'tvlinker': ['tvlinker.ini']},
+    data_files=get_data_files(),
     entry_points={'gui_scripts': ['tvlinker = tvlinker.tvlinker:main']},
     keywords='tvlinker scraping tv-release filesharing internet',
     classifiers=[
