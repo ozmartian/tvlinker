@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=TVLinker
+GenericName=TVLinker
+X-GNOME-FullName=TVLinker
+Comment=TV link scraper and downloader for tv-release.net
+Exec=tvlinker
+Terminal=false
+Type=Application
+Icon=tvlinker
+Categories=Qt;KDE;Internet;
+Keywords=television;downloader;internet;qt;python;pyqt5;
+MimeType=application/x-tvlinker;
+StartupNotify=true
