@@ -53,14 +53,20 @@ class HosterLinks(QDialog):
             hoster_logo.setAlignment(Qt.AlignCenter)
             copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard',
                                    autoDefault=False, default=False, cursor=Qt.PointingHandCursor)
+            copy_btn.setStyle(QStyleFactory.create('Fusion'))
+            copy_btn.setStyleSheet('padding:2px 10px;')
             copy_btn.setMinimumHeight(35)
             self.copy_group.addButton(copy_btn, index)
             open_btn = QPushButton(self, icon=self.open_icon, text=' OPEN', toolTip='Open in browser',
                                    autoDefault=False, default=False, cursor=Qt.PointingHandCursor)
+            open_btn.setStyle(QStyleFactory.create('Fusion'))
+            open_btn.setStyleSheet('padding:2px 10px;')
             open_btn.setMinimumHeight(35)
             self.open_group.addButton(open_btn, index)
             download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download link',
                                        autoDefault=False, default=False, cursor=Qt.PointingHandCursor)
+            download_btn.setStyle(QStyleFactory.create('Fusion'))
+            download_btn.setStyleSheet('padding:2px 10px;')
             download_btn.setMinimumHeight(35)
             self.download_group.addButton(download_btn, index)
 
