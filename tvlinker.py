@@ -164,7 +164,7 @@ class TVLinker(QWidget):
                                             checkable=True, toggled=self.filter_faves)
         self.favorites_button.setIconSize(QSize(22, 22))
         self.refresh_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
-                                          toolTip='Refresh', icon=self.icon_refresh, clicked=self.refresh_links)
+                                          toolTip='Refresh', icon=self.icon_refresh, clicked=self.start_scraping)
         self.refresh_button.setIconSize(QSize(22, 22))
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
         self.dlpages_field.addItems(('10', '20', '30', '40', '50'))
@@ -294,14 +294,10 @@ class TVLinker(QWidget):
                datetime.now().year, qApp.organizationDomain(), qApp.organizationDomain())
         QMessageBox.about(self, 'About %s' % qApp.applicationName(), about_html)
 
-    @pyqtSlot(bool)
-    def refresh_links(self) -> None:
-        self.start_scraping(int(self.dlpages_field.currentText()))
-
     @pyqtSlot(int)
     def update_pagecount(self, index: int) -> None:
-        pagecount = int(self.dlpages_field.itemText(index))
-        self.progress.setMaximum(pagecount * self.dl_pagelinks)
+        self.dl_pagecount = int(self.dlpages_field.itemText(index))
+        self.progress.setMaximum(self.dl_pagecount * self.dl_pagelinks)
         self.start_scraping()
 
     @pyqtSlot()
