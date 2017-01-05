@@ -201,8 +201,6 @@ class TVLinker(QWidget):
 
     def init_table(self) -> QTableWidget:
         self.table = QTableWidget(0, 4, self)
-        if sys.platform == 'win32':
-            self.table.setStyle(QStyleFactory.create('Fusion'))
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.hideColumn(1)
         self.table.verticalHeader().hide()
