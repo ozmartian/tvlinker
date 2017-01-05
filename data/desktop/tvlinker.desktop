@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=TVLinker
-GenericName=TVLinker
+GenericName=TV link scraper + downloader
 X-GNOME-FullName=TVLinker
 Comment=TV link scraper and downloader for tv-release.net
 Exec=tvlinker
