@@ -112,3 +112,9 @@ tvlinker.BAK.py
 
 # OS X annoyances
 .DS_Store
+
+# Arch packaging
+_packaging/archlinux/pkg
+_packaging/archlinux/src
+_packaging/archlinux/*.tar.gz
+_packaging/archlinux/*.pkg.*
