@@ -8,7 +8,7 @@ QTableCornerButton::section {
     margin-top: 0;
 }
 
-QHeaderView::section:checked {
+QHeaderView {
     background-color: #6A687D;
 }
 
