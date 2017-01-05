@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon, QPixmap
+from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon, QPixmap, QShowEvent
 from PyQt5.QtWidgets import (QBoxLayout, QButtonGroup, QDialog, QGroupBox, QHBoxLayout, QLabel, QProgressDialog,
                              QPushButton, QSizePolicy, QSpacerItem, QStyleFactory, QVBoxLayout, qApp)
 
@@ -14,12 +14,19 @@ class HosterLinks(QDialog):
     def __init__(self, parent, title=None, f=Qt.WindowCloseButtonHint):
         super(HosterLinks, self).__init__(parent, f)
         self.parent = parent
+        self.loading_progress = QProgressDialog('Retrieving hoster links...', None, 0, 0,
+                                                None, Qt.WindowCloseButtonHint)
+        self.loading_progress.setStyle(QStyleFactory.create('Fusion'))
+        self.loading_progress.setWindowTitle('Hoster Links')
+        self.loading_progress.setMinimumWidth(485)
+        self.loading_progress.setWindowModality(Qt.ApplicationModal)
+        self.loading_progress.show()
         self.title = title
-        self.show_loading()
         self.hosters = []
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self.setWindowTitle('Hoster Links')
+        self.setWindowModality(Qt.ApplicationModal)
         self.copy_icon = QIcon(self.parent.get_path('images/copy_icon.png'))
         self.open_icon = QIcon(self.parent.get_path('images/open_icon.png'))
         self.download_icon = QIcon(self.parent.get_path('images/download_icon.png'))
@@ -29,11 +36,6 @@ class HosterLinks(QDialog):
         self.open_group.buttonClicked[int].connect(self.open_link)
         self.download_group = QButtonGroup(exclusive=False)
         self.download_group.buttonClicked[int].connect(self.download_link)
-        
-    def show_loading(self) -> None:
-        self.loading_progress = QProgressDialog('Retrieving hoster links...', None, 0,  0, self, Qt.Dialog)
-        self.loading_progress.setWindowModality(Qt.WindowModal)
-        self.loading_progress.setMinimumWidth(485)
 
     def show_hosters(self, hosters: list) -> None:
         self.hosters = hosters

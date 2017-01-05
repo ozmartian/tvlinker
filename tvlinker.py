@@ -205,7 +205,6 @@ class TVLinker(QWidget):
             self.table.setStyle(QStyleFactory.create('Fusion'))
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.hideColumn(1)
-        self.table.setCursor(Qt.PointingHandCursor)
         self.table.verticalHeader().hide()
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -259,7 +258,6 @@ class TVLinker(QWidget):
 
     def start_scraping(self) -> None:
         self.rows = 0
-        qApp.setOverrideCursor(Qt.WaitCursor)
         if self.table.rowCount() > 0:
             self.table.clearContents()
             self.table.setRowCount(0)
@@ -315,12 +313,13 @@ class TVLinker(QWidget):
         self.progress.hide()
         self.table.setSortingEnabled(True)
         self.filter_table(text='')
-        qApp.restoreOverrideCursor()
 
     @pyqtSlot(list)
     def add_row(self, row: list) -> None:
         self.cols = 0
         self.table.setRowCount(self.rows + 1)
+        if self.table.cursor() != Qt.PointingHandCursor:
+            self.table.setCursor(Qt.PointingHandCursor)
         for item in row:
             table_item = QTableWidgetItem(item)
             table_item.setToolTip('%s\n\nDouble-click to view hoster links.' % row[1])
@@ -365,7 +364,7 @@ class TVLinker(QWidget):
             filters = self.favorites
         if len(text):
             filters.append(text)
-        if not len(filters):
+        if not len(filters) or not hasattr(self, 'valid_rows'):
             self.valid_rows = []
         for search_term in filters:
             for item in self.table.findItems(search_term, Qt.MatchContains):
