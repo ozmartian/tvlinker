@@ -2,29 +2,35 @@
 # -*- coding: utf-8 -*-
 
 import sys
+from codecs import open
 from os import path
 from re import match
 
 from setuptools import setup
 
-here = path.abspath(path.dirname(__file__))
 
-
-def get_version(filename='__init__.py'):
-    with open(path.join(here, filename), 'r') as initfile:
+def get_value(varname, filename='__init__.py'):
+    with open(path.join(here, filename), encoding='utf-8') as initfile:
         for line in initfile.readlines():
-            m = match('__version__ *= *[\'](.*)[\']', line)
+            m = match('__%s__ *= *[\'](.*)[\']' % varname, line)
             if m:
                 return m.group(1)
 
 
 def get_description(filename='README.md'):
-    with open(path.join(here, filename), 'r') as f:
+    with open(path.join(here, filename), encoding='utf-8') as f:
         file = list(f)
     desc = ''
     for item in file[8: len(file)]:
         desc += item
     return desc
+
+
+def get_install_requires():
+    if packager == 'pypi':
+        return ['PyQt5 >= 5.5', 'qtawesome', 'beautifulsoup4', 'lxml']
+    else:
+        return []
 
 
 def get_data_files():
@@ -37,9 +43,13 @@ def get_data_files():
         return []
 
 
+here = path.abspath(path.dirname(__file__))
+
+packager = get_value('packager')
+
 setup(
     name='tvlinker',
-    version=get_version(),
+    version=get_value('version'),
     author='Pete Alexandrou',
     author_email='pete@ozmartians.com',
     description='''tv-release.net link scraper integrated with real-debrid to unrestrict links + supporting
@@ -51,9 +61,8 @@ setup(
     packages=['tvlinker'],
     package_dir={'tvlinker': '.'},
     setup_requires=['setuptools >= 26.1.1'],
-    install_requires=['beautifulsoup4', 'QtAwesome'],
-    extras_require={':sys_platform!="win32"': ['lxml']},
-    package_data={'tvlinker': ['tvlinker.ini']},
+    install_requires=get_install_requires(),
+    package_data={'tvlinker': ['tvlinker.ini', 'LICENSE']},
     data_files=get_data_files(),
     entry_points={'gui_scripts': ['tvlinker = tvlinker.tvlinker:main']},
     keywords='tvlinker scraping tv-release filesharing internet',
