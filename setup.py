@@ -60,7 +60,7 @@ setup(
     license='GPLv3+',
     packages=['tvlinker'],
     package_dir={'tvlinker': '.'},
-    setup_requires=['setuptools >= 26.1.1'],
+    setup_requires=['setuptools'],
     install_requires=get_install_requires(),
     package_data={'tvlinker': ['tvlinker.ini', 'LICENSE']},
     data_files=get_data_files(),

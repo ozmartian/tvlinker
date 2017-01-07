@@ -37,7 +37,7 @@ exe = EXE(pyz,
           debug=False,
           strip=True,
           upx=True,
-          console=False , icon='../assets/images/tvlinker.icns')
+          console=False , icon='../data/icons/tvlinker.icns')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
@@ -47,5 +47,5 @@ coll = COLLECT(exe,
                name='TVLinker')
 app = BUNDLE(coll,
              name='TVLinker.app',
-             icon='../assets/images/tvlinker.icns',
+             icon='../data/icons/tvlinker.icns',
              bundle_identifier='com.ozmartians.tvlinker')
