@@ -6,7 +6,7 @@ import os
 import sys
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, qApp
@@ -30,14 +30,16 @@ class ScrapeThread(QThread):
         for page in range(1, self.maxpages + 1):
             url = self.source_url % page
             req = Request(url, headers={'User-Agent': self.user_agent})
-            res = urlopen(req)
-            if sys.platform == 'win32':
+            try:
+                res = urlopen(req)
+            except URLError:
+                print(sys.exc_info())
+                QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
+                self.exit()
+            try:
+                bs = BeautifulSoup(res.read(), 'lxml')
+            except FeatureNotFound:
                 bs = BeautifulSoup(res.read(), 'html.parser')
-            else:
-                try:
-                    bs = BeautifulSoup(res.read(), 'lxml')
-                except FeatureNotFound:
-                    bs = BeautifulSoup(res.read(), 'html.parser')
             links = bs.find_all('table', class_='posts_table')
             for link_table in links:
                 cols = link_table.tr.find_all('td')
@@ -68,17 +70,19 @@ class HostersThread(QThread):
     def get_hoster_links(self) -> None:
         hosters = []
         req = Request(self.link_url, headers={'User-Agent': self.user_agent})
-        res = urlopen(req)
-        if sys.platform == 'win32':
+        try:
+            res = urlopen(req)
+        except URLError:
+            print(sys.exc_info())
+            QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
+            self.exit()
+        try:
+            bs = BeautifulSoup(res.read(), 'lxml')
+        except FeatureNotFound:
             bs = BeautifulSoup(res.read(), 'html.parser')
-        else:
-            try:
-                bs = BeautifulSoup(res.read(), 'lxml')
-            except FeatureNotFound:
-                bs = BeautifulSoup(res.read(), 'html.parser')
         dltable = bs.find('table', id='download_table').find_all('tr')
         for hoster_html in dltable:
-            hosters.append([hoster_html.td.img.get('src'), hoster_html.find('td', class_='td_cols').a.get('href')])
+            hosters.append([hoster_html.td.img.get('src'), hoster_html.find('td', class_='td_cols').a.sget('href')])
         self.setHosters.emit(hosters)
 
     def run(self) -> None:
@@ -119,7 +123,9 @@ class RealDebridThread(QThread):
             res = urlopen(req).read().decode('utf-8')
             return json.loads(res)
         except HTTPError:
-            QMessageBox.critical(self, 'Real-Debrid API Error',
+            print(sys.exc_info())
+            QMessageBox.critical(self, 'ERROR NOTIFICATION',
+                                 '<h3>Real-Debrid API Error</h3>' +
                                  'A problem occurred whilst communicating with Real-Debrid. Please check your '
                                  'Internet connection.<br/><br/>' +
                                  '<b>ERROR LOG:</b><br/>(Error Code %s) %s<br/>%s'
@@ -177,12 +183,18 @@ class Aria2Thread(QThread):
         payload = json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'aria2.addUri',
                               'params': ['%s:%s' % (user, passwd), [self.link_url]]}, sort_keys=False).encode('utf-8')
         req = Request(aria2_endpoint, headers=headers, data=payload)
-        res = urlopen(req).read().decode('utf-8')
-        jsonres = json.loads(res)
-        if 'result' in jsonres.keys():
-            self.aria2Confirmation.emit(True)
-        else:
+        try:
+            res = urlopen(req).read().decode('utf-8')
+            jsonres = json.loads(res)
+            if 'result' in jsonres.keys():
+                self.aria2Confirmation.emit(True)
+            else:
+                self.aria2Confirmation.emit(False)
+        except (URLError, HTTPError) as e:
+            print(sys.exc_info())
+            QMessageBox.critical(self, 'ERROR NOTIFICATION', e.reason, QMessageBox.Ok)
             self.aria2Confirmation.emit(False)
+            # self.exit()
 
     def run(self) -> None:
         self.add_uri()
