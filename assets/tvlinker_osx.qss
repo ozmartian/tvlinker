@@ -21,6 +21,7 @@ QHeaderView::up-arrow {
 }
 
 QTableView {
+    color: #444;
     border: 1px solid #ADAACC;
     margin-top: 0;
     margin-bottom: 0;
@@ -73,4 +74,3 @@ QLineEdit:read-only {
 QDialogButtonBox {
     dialogbuttonbox-buttons-have-icons: 1;
 }
-    

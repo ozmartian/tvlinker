@@ -25,7 +25,7 @@ try:
     from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread,
                                   ScrapeThread)
     from tvlinker.updater import Updater
-    import tvlinker.assets
+    import tvlinker.assets as assets
 except ImportError:
     from hosters import HosterLinks
     from pyload import PyloadConfig, PyloadConnection
