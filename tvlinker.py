@@ -121,12 +121,12 @@ class TVLinker(QWidget):
 
     def init_icons(self) -> None:
         self.icon_app = QIcon(self.get_path('images/%s.png' % qApp.applicationName().lower()))
-        self.icon_faves_off = QIcon('assets/images/star_off.png')
-        self.icon_faves_on = QIcon('assets/images/star_on.png')
-        self.icon_refresh = QIcon('assets/images/refresh.png')
-        self.icon_menu = QIcon('assets/images/menu.png')
-        self.icon_settings = QIcon('assets/images/cog.png')
-        self.icon_updates = QIcon('assets/images/cloud.png')
+        self.icon_faves_off = QIcon(':assets/images/star_off.png')
+        self.icon_faves_on = QIcon(':assets/images/star_on.png')
+        self.icon_refresh = QIcon(':assets/images/refresh.png')
+        self.icon_menu = QIcon(':assets/images/menu.png')
+        self.icon_settings = QIcon(':assets/images/cog.png')
+        self.icon_updates = QIcon(':assets/images/cloud.png')
 
     def init_settings(self) -> None:
         self.source_url = self.settings.value('source_url')

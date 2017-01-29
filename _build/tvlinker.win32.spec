@@ -5,7 +5,7 @@ import os
 import sys
 
 import PyQt5
-import qtawesome
+
 
 
 block_cipher = None
@@ -19,8 +19,7 @@ a = Analysis(['..\\tvlinker.py'],
              binaries=[],
              datas=[
                  ('..\\tvlinker.ini', '.'),
-                 ('..\\__init__.py', '.'),
-                 (os.path.join(sys.modules['qtawesome'].__path__[0], 'fonts', '*'), '.\\qtawesome\\fonts')
+                 ('..\\__init__.py', '.')
              ],
              hiddenimports=[],
              hookspath=[],

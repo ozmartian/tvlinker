@@ -15,13 +15,16 @@ AppSupportURL=http://tvlinker.ozmartians.com
 AppUpdatesURL=http://tvlinker.ozmartians.com
 DefaultDirName={pf}\TVLinker
 LicenseFile=C:\DEV\tvlinker\LICENSE
-OutputBaseFilename=TVLinker_3.0.5_Installer
+OutputBaseFilename=TVLinker_3.2.0_Installer
 SetupIconFile=C:\DEV\tvlinker\data\icons\tvlinker.ico
 Compression=lzma
 SolidCompression=yes
-ArchitecturesInstallIn64BitMode=x64
 WizardSmallImageFile=C:\DEV\tvlinker\data\icons\tvlinker_setup.bmp
 DefaultGroupName=TVLinker
+ArchitecturesInstallIn64BitMode=x64
+
+[InstallDelete]
+Type: filesandordirs; Name: "{app}"
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -40,4 +43,4 @@ Name: "{commondesktop}\TVLinker"; Filename: "{app}\tvlinker.exe"; Tasks: desktop
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\TVLinker"; Filename: "{app}\tvlinker.exe"; Tasks: quicklaunchicon
 
 [Run]
-Filename: "{app}\tvlinker.exe"; Description: "{cm:LaunchProgram,TVLinker}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\tvlinker.exe"; Description: "{cm:LaunchProgram,TVLinker}"; Flags: nowait postinstall skipifsilent 64bit
