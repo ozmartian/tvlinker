@@ -1,3 +1,12 @@
+tvlinker (3.2.0-1) unstable; urgency=low
+
+  * removed qtawesome dependency so things work on older Ubuntu versions
+  * support for Persepolis download manager added
+  * bug fixes for handling networking issues
+  * improved download speeds for built-in downloader option
+
+ -- Pete Alexandrou <pete@ozmartians.com>  Mon, 30 Jan 2017 00:19:30 +0800
+
 tvlinker (3.0.5-1) unstable; urgency=low
 
   * source package automatically created by stdeb 0.8.5

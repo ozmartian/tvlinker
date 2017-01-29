@@ -74,3 +74,9 @@ QLineEdit:read-only {
 QDialogButtonBox {
     dialogbuttonbox-buttons-have-icons: 1;
 }
+
+#mainForm QPushButton {
+    border: none;
+    outline: none;
+    margin: 10px;
+}

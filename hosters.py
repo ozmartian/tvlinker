@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon, QPixmap, QShowEvent
-from PyQt5.QtWidgets import (QBoxLayout, QButtonGroup, QDialog, QGroupBox, QHBoxLayout, QLabel, QProgressDialog,
-                             QProxyStyle, QPushButton, QSizePolicy, QSpacerItem, QStyle, QStyleFactory, QVBoxLayout,
+from PyQt5.QtCore import QUrl, Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon, QPixmap
+from PyQt5.QtWidgets import (QButtonGroup, QDialog, QGroupBox, QHBoxLayout, QLabel, QProgressDialog,
+                             QProxyStyle, QPushButton, QSizePolicy, QStyle, QStyleFactory, QVBoxLayout,
                              qApp)
 
 
@@ -64,19 +64,19 @@ class HosterLinks(QDialog):
             hoster_logo.setAlignment(Qt.AlignCenter)
             copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard',
                                    autoDefault=False, default=False, cursor=Qt.PointingHandCursor)
-            copy_btn.setStyle(FusionProxyStyle())
+            copy_btn.setStyle(OverrideProxyStyle())
             copy_btn.setStyleSheet('padding:2px 10px;')
             copy_btn.setMinimumHeight(35)
             self.copy_group.addButton(copy_btn, index)
             open_btn = QPushButton(self, icon=self.open_icon, text=' OPEN', toolTip='Open in browser',
                                    autoDefault=False, default=False, cursor=Qt.PointingHandCursor)
-            open_btn.setStyle(FusionProxyStyle())
+            open_btn.setStyle(OverrideProxyStyle())
             open_btn.setStyleSheet('padding:2px 10px;')
             open_btn.setMinimumHeight(35)
             self.open_group.addButton(open_btn, index)
             download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download link',
                                        autoDefault=False, default=False, cursor=Qt.PointingHandCursor)
-            download_btn.setStyle(FusionProxyStyle())
+            download_btn.setStyle(OverrideProxyStyle())
             download_btn.setStyleSheet('padding:2px 10px;')
             download_btn.setMinimumHeight(35)
             self.download_group.addButton(download_btn, index)

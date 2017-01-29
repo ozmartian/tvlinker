@@ -10,13 +10,12 @@ import warnings
 from datetime import datetime
 from signal import SIGINT, SIG_DFL, SIGTERM, signal
 
-from PyQt5.QtCore import (QDateTime, QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, Qt,
+from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, Qt,
                           QTextStream, QUrl, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QDialog, QFileDialog, QGroupBox,
                              QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
-                             QSizePolicy, QStyleFactory, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, qApp)
-from qtawesome import icon
+                             QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, qApp)
 
 try:
     from tvlinker.hosters import HosterLinks
@@ -24,14 +23,12 @@ try:
     from tvlinker.settings import Settings
     from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread,
                                   ScrapeThread)
-    from tvlinker.updater import Updater
     import tvlinker.assets as assets
 except ImportError:
     from hosters import HosterLinks
     from pyload import PyloadConfig, PyloadConnection
     from settings import Settings
     from threads import Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread, ScrapeThread
-    from updater import Updater
     import assets
 
 signal(SIGINT, SIG_DFL)
@@ -64,8 +61,6 @@ class DirectDownload(QDialog):
     @pyqtSlot(int)
     def update_progress(self, progress: int) -> None:
         self.progress.setValue(progress)
-        if sys.platform == 'win32':
-            self.win_taskprogress.setValue(progress)
 
     @pyqtSlot(str)
     def update_progress_label(self, progress_txt: str) -> None:
@@ -126,12 +121,12 @@ class TVLinker(QWidget):
 
     def init_icons(self) -> None:
         self.icon_app = QIcon(self.get_path('images/%s.png' % qApp.applicationName().lower()))
-        self.icon_faves_off = icon('ei.star', color='#555')
-        self.icon_faves_on = icon('ei.star', color='#FFF')
-        self.icon_refresh = icon('ei.refresh', color='#555')
-        self.icon_menu = icon('fa.navicon', scale_factor=1.15, color='#555')
-        self.icon_settings = icon('ei.cog', color='#555')
-        self.icon_updates = icon('fa.cloud-download', color='#555')
+        self.icon_faves_off = QIcon('assets/images/star_off.png')
+        self.icon_faves_on = QIcon('assets/images/star_on.png')
+        self.icon_refresh = QIcon('assets/images/refresh.png')
+        self.icon_menu = QIcon('assets/images/menu.png')
+        self.icon_settings = QIcon('assets/images/cog.png')
+        self.icon_updates = QIcon('assets/images/cloud.png')
 
     def init_settings(self) -> None:
         self.source_url = self.settings.value('source_url')
@@ -142,7 +137,9 @@ class TVLinker(QWidget):
         self.dl_pagelinks = FixedSettings.linksPerPage
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
         self.download_manager = self.settings.value('download_manager')
-        if self.download_manager == 'pyLoad':
+        if self.download_manager == 'persepolis':
+            self.persepolis_cmd = self.settings.value('persepolis_cmd')
+        elif self.download_manager == 'pyLoad':
             self.pyload_config = PyloadConfig()
             self.pyload_config.host = self.settings.value('pyload_host')
             self.pyload_config.username = self.settings.value('pyload_username')
@@ -150,7 +147,7 @@ class TVLinker(QWidget):
         elif self.download_manager == 'IDM':
             self.idm_exe_path = self.settings.value('idm_exe_path')
         elif self.download_manager == 'kget':
-            self.kget_path = self.settings.value('kget_path')
+            self.kget_cmd = self.settings.value('kget_cmd')
         self.favorites = self.settings.value('favorites')
 
     def init_form(self) -> QHBoxLayout:
@@ -162,10 +159,10 @@ class TVLinker(QWidget):
         self.favorites_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
                                             toolTip='Favorites', icon=self.icon_faves_off,
                                             checkable=True, toggled=self.filter_faves)
-        self.favorites_button.setIconSize(QSize(22, 22))
+        self.favorites_button.setIconSize(QSize(26, 26))
         self.refresh_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
                                           toolTip='Refresh', icon=self.icon_refresh, clicked=self.start_scraping)
-        self.refresh_button.setIconSize(QSize(22, 22))
+        self.refresh_button.setIconSize(QSize(26, 26))
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
         self.dlpages_field.addItems(('10', '20', '30', '40', '50'))
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
@@ -173,7 +170,7 @@ class TVLinker(QWidget):
         self.settings_button = QPushButton(parent=self, flat=True, toolTip='Menu', cursor=Qt.PointingHandCursor,
                                            icon=self.icon_menu)
         self.settings_button.setMenu(self.settings_menu())
-        self.settings_button.setIconSize(QSize(22, 22))
+        self.settings_button.setIconSize(QSize(26, 22))
         self.settings_button.setStyleSheet('padding-right:5px;')
         layout = QHBoxLayout()
         logo = QPixmap(self.get_path('images/tvrelease.png'))
@@ -217,7 +214,7 @@ class TVLinker(QWidget):
         return self.table
 
     def init_metabar(self) -> QHBoxLayout:
-        self.meta_template = 'Total number of links retrieved: <b>%i</b>'
+        self.meta_template = 'Total number of links retrieved: <b>%i</b> / <b>%i</b>'
         self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks),
                                      visible=False)
         self.meta_label = QLabel(textFormat=Qt.RichText, alignment=Qt.AlignRight, objectName='totals')
@@ -230,18 +227,7 @@ class TVLinker(QWidget):
 
     @pyqtSlot()
     def check_update(self) -> None:
-        self.updater = Updater()
-        self.updater.updateAvailable.connect(self.updateHandler)
-        self.updater_lastcheck = QDateTime.currentDateTime().toString('dd-MM-yyyy HH:mm:ss')
-        self.settings.setValue('updater_lastcheck', self.updater_lastcheck)
-        self.updater.start()
-
-    def updateHandler(self, updateExists: bool, version: str = None):
-        if updateExists:
-            if Updater.notify_update(self, version) == QMessageBox.AcceptRole:
-                self.updater.install_update(self)
-        else:
-            Updater.notify_no_update(self)
+        QDesktopServices.openUrl(QUrl(FixedSettings.latest_release_url))
 
     @pyqtSlot()
     def show_settings(self) -> None:
@@ -250,7 +236,7 @@ class TVLinker(QWidget):
 
     def update_metabar(self) -> bool:
         rowcount = self.table.rowCount()
-        self.meta_label.setText(self.meta_template % rowcount)
+        self.meta_label.setText(self.meta_template % (rowcount, self.dl_pagecount * self.dl_pagelinks))
         self.progress.setValue(rowcount)
         return True
 
@@ -409,12 +395,14 @@ class TVLinker(QWidget):
                                                  QMessageBox.Ok)
                 open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
                 open_pyload.clicked.connect(self.open_pyload)
-            elif self.download_manager == 'kget':
-                cmd = '%s --hideMainWindow %s' % (self.kget_path, link)
+            elif self.download_manager in ('kget', 'persepolis'):
+                provider = self.kget_cmd if self.download_manager == 'kget' else self.persepolis_cmd
+                cmd = '%s "%s"' % (provider, link)
                 if self.cmdexec(cmd):
                     qApp.restoreOverrideCursor()
                     self.hosters_win.close()
-                    QMessageBox.information(self, 'kget', 'Your link has been queued in kget.', QMessageBox.Ok)
+                    QMessageBox.information(self, self.download_manager, 'Your link has been queued in %s.'
+                                            % self.download_manager, QMessageBox.Ok)
             elif self.download_manager == 'IDM':
                 cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
                 if self.cmdexec(cmd):
@@ -518,21 +506,9 @@ class FixedSettings:
     applicationVersion = TVLinker.get_version()
     organizationDomain = 'http://tvlinker.ozmartians.com'
     windowSize = QSize(1000, 785)
-    linksPerPage = 30
+    linksPerPage = 20
+    latest_release_url = 'https://github.com/ozmartian/tvlinker/releases/latest'
     realdebrid_api_url = 'https://api.real-debrid.com/rest/1.0'
-
-    @staticmethod
-    def get_style(label: bool = False) -> str:
-        style = 'Fusion'
-        if sys.platform.startswith('linux'):
-            installed_styles = QStyleFactory.keys()
-            for stl in ('Breeze', 'GTK+'):
-                if stl.lower() in map(str.lower, installed_styles):
-                    style = stl
-                    break
-        elif sys.platform == 'darwin':
-            style = 'Macintosh'
-        return style
 
     @staticmethod
     def get_app_settings() -> QSettings:

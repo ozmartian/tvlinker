@@ -3,9 +3,8 @@
 
 import sys
 
-import qtawesome as qta
-from PyQt5.QtCore import pyqtSlot, QSettings, Qt
-from PyQt5.QtGui import QCloseEvent, QKeyEvent, QPixmap
+from PyQt5.QtCore import pyqtSlot, QSettings, QSize, Qt
+from PyQt5.QtGui import QCloseEvent, QIcon, QKeyEvent, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
                              QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton,
                              QSizePolicy, QStackedLayout, QTabWidget, QVBoxLayout, QWidget, qApp)
@@ -75,21 +74,14 @@ class GeneralTab(QWidget):
 
         self.dlmanager_comboBox = QComboBox(self, editable=False, cursor=Qt.PointingHandCursor)
         self.dlmanager_comboBox.setAutoFillBackground(True)
-        self.dlmanager_comboBox.addItems(('built-in', 'aria2', 'pyLoad'))
+        self.dlmanager_comboBox.addItems(('built-in', 'aria2', 'pyLoad', 'Persepolis'))
         if sys.platform == 'win32':
             self.dlmanager_comboBox.addItem('IDM')
         if sys.platform.startswith('linux'):
-            self.dlmanager_comboBox.addItem('kget')
+            self.dlmanager_comboBox.addItem('KGet')
         self.dlmanager_comboBox.setCurrentIndex(self.dlmanager_comboBox.findText(
             str(self.settings.value('download_manager')), Qt.MatchFixedString))
 
-        self.updater_freq_comboBox = QComboBox(self, toolTip='Automatically check for application updates',
-                                               editable=False, cursor=Qt.PointingHandCursor)
-        self.updater_freq_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.updater_freq_comboBox.addItems(('Never', 'Daily', 'Weekly', 'Monthly'))
-        self.updater_freq_comboBox.insertSeparator(1)
-        self.updater_freq_comboBox.setCurrentIndex(self.updater_freq_comboBox.findText(
-            str(self.settings.value('updater_freq', 'Never')), Qt.MatchFixedString))
         self.dlpagecount_comboBox = QComboBox(self, toolTip='Default Page Count', editable=False,
                                               cursor=Qt.PointingHandCursor)
         self.dlpagecount_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -100,22 +92,17 @@ class GeneralTab(QWidget):
         minchars = 20
 
         self.dlmanager_comboBox.setMinimumContentsLength(minchars)
-        self.updater_freq_comboBox.setMinimumContentsLength(minchars)
         self.dlpagecount_comboBox.setMinimumContentsLength(minchars)
 
-        general_formlayout_left = QFormLayout(labelAlignment=Qt.AlignRight)
-        general_formlayout_left.addRow('Default Page Count:', self.dlpagecount_comboBox)
-        general_formlayout_left.addRow('Download Manager:', self.dlmanager_comboBox)
-        general_formlayout_right = QFormLayout(labelAlignment=Qt.AlignRight)
-        general_formlayout_right.addRow('Check for Updates:', self.updater_freq_comboBox)
-        general_formlayout = QHBoxLayout()
-        general_formlayout.addStretch(1)
-        general_formlayout.addLayout(general_formlayout_left)
-        general_formlayout.addStretch(1)
-        general_formlayout.addLayout(general_formlayout_right)
-        general_formlayout.addStretch(1)
+        general_formlayout = QFormLayout(labelAlignment=Qt.AlignRight)
+        general_formlayout.addRow('Default Page Count:', self.dlpagecount_comboBox)
+        general_formlayout.addRow('Download Manager:', self.dlmanager_comboBox)
+        general_layout = QHBoxLayout()
+        general_layout.addStretch(1)
+        general_layout.addLayout(general_formlayout)
+        general_layout.addStretch(1)
         general_group = QGroupBox()
-        general_group.setLayout(general_formlayout)
+        general_group.setLayout(general_layout)
 
         directdl_label = QLabel('No settings for built-in downloader')
         directdl_label.setStyleSheet('font-weight:300; text-align:center;')
@@ -165,10 +152,18 @@ class GeneralTab(QWidget):
         pyload_settings = QWidget()
         pyload_settings.setLayout(pyload_formLayout)
 
+        self.persepoliscmd_lineEdit = QLineEdit(self, text=self.settings.value('persepolis_cmd'))
+        self.persepoliscmd_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        persepolis_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
+        persepolis_formLayout.addRow('persepolis command:', self.persepoliscmd_lineEdit)
+        persepolis_settings = QWidget()
+        persepolis_settings.setLayout(persepolis_formLayout)
+
         self.dlmanagersettings_layout = QStackedLayout()
         self.dlmanagersettings_layout.addWidget(directdl_label)
         self.dlmanagersettings_layout.addWidget(aria2_settings)
         self.dlmanagersettings_layout.addWidget(pyload_settings)
+        self.dlmanagersettings_layout.addWidget(persepolis_settings)
 
         if sys.platform == 'win32':
             self.idmexepath_lineEdit = QLineEdit(self, text=self.settings.value('idm_exe_path'))
@@ -181,10 +176,10 @@ class GeneralTab(QWidget):
             self.dlmanagersettings_layout.addWidget(idm_settings)
 
         if sys.platform.startswith('linux'):
-            self.kgetpath_lineEdit = QLineEdit(self, text=self.settings.value('kget_path'))
-            self.kgetpath_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            self.kgetcmd_lineEdit = QLineEdit(self, text=self.settings.value('kget_cmd'))
+            self.kgetcmd_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             kget_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
-            kget_formLayout.addRow('kget Path:', self.kgetpath_lineEdit)
+            kget_formLayout.addRow('kget command:', self.kgetcmd_lineEdit)
             kget_settings = QWidget()
             kget_settings.setLayout(kget_formLayout)
             self.dlmanagersettings_layout.addWidget(kget_settings)
@@ -202,7 +197,6 @@ class GeneralTab(QWidget):
         self.setLayout(tab_layout)
 
     def save(self) -> None:
-        self.settings.setValue('updater_freq', self.updater_freq_comboBox.currentText())
         self.settings.setValue('dl_pagecount', self.dlpagecount_comboBox.currentText())
         self.settings.setValue('realdebrid_apitoken', self.realdebridtoken_lineEdit.text())
         self.settings.setValue('download_manager', self.dlmanager_comboBox.currentText())
@@ -218,8 +212,10 @@ class GeneralTab(QWidget):
             self.settings.setValue('pyload_password', self.pyloadpass_lineEdit.text())
         elif self.dlmanager_comboBox.currentText() == 'IDM':
             self.settings.setValue('idm_exe_path', self.idmexepath_lineEdit.text())
-        elif self.dlmanager_comboBox.currentText() == 'kget':
-            self.settings.setValue('kget_path', self.kgetpath_lineEdit.text())
+        elif self.dlmanager_comboBox.currentText() == 'KGet':
+            self.settings.setValue('kget_cmd', self.kgetcmd_lineEdit.text())
+        elif self.dlmanager_comboBox.currentText() == 'Persepolis':
+            self.settings.setValue('persepolis_cmd', self.persepoliscmd_lineEdit.text())
 
 
 class FavoritesTab(QWidget):
@@ -231,11 +227,13 @@ class FavoritesTab(QWidget):
         self.faves_lineEdit.returnPressed.connect(self.add_item)
         self.faves_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         faves_addItemButton = QPushButton(parent=self, flat=False, cursor=Qt.PointingHandCursor, text='Add',
-                                          icon=qta.icon('fa.plus', color='#555'), toolTip='Add item',
+                                          icon=QIcon(':assets/images/plus.png'), toolTip='Add item',
                                           clicked=self.add_item)
+        faves_addItemButton.setIconSize(QSize(14, 14))
         faves_deleteItemButton = QPushButton(parent=self, flat=False, cursor=Qt.PointingHandCursor, text='Delete',
-                                             icon=qta.icon('fa.minus', color='#555'), toolTip='Delete selected item',
+                                             icon=QIcon(':assets/images/minus.png'), toolTip='Delete selected item',
                                              clicked=self.delete_items)
+        faves_deleteItemButton.setIconSize(QSize(14, 14))
         faves_buttonLayout = QHBoxLayout()
         faves_buttonLayout.addWidget(faves_addItemButton)
         faves_buttonLayout.addWidget(faves_deleteItemButton)
