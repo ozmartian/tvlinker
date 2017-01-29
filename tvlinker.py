@@ -157,21 +157,19 @@ class TVLinker(QWidget):
         self.search_field.textChanged.connect(self.clear_filters)
         self.search_field.returnPressed.connect(lambda: self.filter_table(self.search_field.text()))
         self.favorites_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
-                                            toolTip='Favorites', icon=self.icon_faves_off,
-                                            checkable=True, toggled=self.filter_faves)
-        self.favorites_button.setIconSize(QSize(26, 26))
+                                            objectName='favesButton', toolTip='Favorites', checkable=True,
+                                            toggled=self.filter_faves)
         self.refresh_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
-                                          toolTip='Refresh', icon=self.icon_refresh, clicked=self.start_scraping)
-        self.refresh_button.setIconSize(QSize(26, 26))
+                                          objectName='refreshButton', toolTip='Refresh', clicked=self.start_scraping)
+        self.refresh_button.setIconSize(QSize(24, 24))
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
         self.dlpages_field.addItems(('10', '20', '30', '40', '50'))
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
         self.dlpages_field.currentIndexChanged.connect(self.update_pagecount)
-        self.settings_button = QPushButton(parent=self, flat=True, toolTip='Menu', cursor=Qt.PointingHandCursor,
-                                           icon=self.icon_menu)
+        self.settings_button = QPushButton(parent=self, flat=True, toolTip='Menu',
+                                           objectName='menuButton', cursor=Qt.PointingHandCursor)
         self.settings_button.setMenu(self.settings_menu())
-        self.settings_button.setIconSize(QSize(26, 22))
-        self.settings_button.setStyleSheet('padding-right:5px;')
+        self.settings_button.setIconSize(QSize(24, 20))
         layout = QHBoxLayout()
         logo = QPixmap(self.get_path('images/tvrelease.png'))
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
@@ -330,10 +328,6 @@ class TVLinker(QWidget):
 
     @pyqtSlot(bool)
     def filter_faves(self, checked: bool) -> None:
-        if checked:
-            self.favorites_button.setIcon(self.icon_faves_on)
-        else:
-            self.favorites_button.setIcon(self.icon_faves_off)
         if self.scrape.isFinished():
             self.filter_table(text='')
 

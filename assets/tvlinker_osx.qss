@@ -80,3 +80,41 @@ QDialogButtonBox {
     outline: none;
     margin: 10px;
 }
+
+#mainForm QPushButton#favesButton {
+    border-image: url(:assets/images/star_off.png);
+    width: 24px;
+    height: 23px;
+}
+
+#mainForm QPushButton:hover#favesButton {
+    border-image: url(:assets/images/star_hover.png);
+}
+
+#mainForm QPushButton:checked#favesButton {
+    border-image: url(:assets/images/star_on.png);
+}
+
+#mainForm QPushButton#refreshButton {
+    border-image: url(:assets/images/refresh.png);
+    width: 24px;
+    height: 24px;
+}
+
+#mainForm QPushButton:hover#refreshButton {
+    border-image: url(:assets/images/refresh_hover.png);
+}
+
+#mainForm QPushButton#menuButton {
+    border-image: url(:assets/images/menu.png);
+    width: 24px;
+    height: 20px;
+}
+
+#mainForm QPushButton:hover#menuButton {
+    border-image: url(:assets/images/menu_hover.png);
+}
+
+#mainForm QPushButton::menu-indicator#menuButton {
+    left: -1000px;
+}

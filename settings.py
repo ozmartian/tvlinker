@@ -229,11 +229,11 @@ class FavoritesTab(QWidget):
         faves_addItemButton = QPushButton(parent=self, flat=False, cursor=Qt.PointingHandCursor, text='Add',
                                           icon=QIcon(':assets/images/plus.png'), toolTip='Add item',
                                           clicked=self.add_item)
-        faves_addItemButton.setIconSize(QSize(14, 14))
+        faves_addItemButton.setIconSize(QSize(12, 12))
         faves_deleteItemButton = QPushButton(parent=self, flat=False, cursor=Qt.PointingHandCursor, text='Delete',
                                              icon=QIcon(':assets/images/minus.png'), toolTip='Delete selected item',
                                              clicked=self.delete_items)
-        faves_deleteItemButton.setIconSize(QSize(14, 14))
+        faves_deleteItemButton.setIconSize(QSize(12, 12))
         faves_buttonLayout = QHBoxLayout()
         faves_buttonLayout.addWidget(faves_addItemButton)
         faves_buttonLayout.addWidget(faves_deleteItemButton)

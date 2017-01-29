@@ -12,11 +12,14 @@
     <file>assets/images/hoster_uploaded.png</file>
     <file>assets/images/hoster_uploadingsite.png</file>
     <file>assets/images/menu.png</file>
+    <file>assets/images/menu_hover.png</file>
     <file>assets/images/minus.png</file>
     <file>assets/images/open_icon.png</file>
     <file>assets/images/plus.png</file>
     <file>assets/images/realdebrid.png</file>
     <file>assets/images/refresh.png</file>
+    <file>assets/images/refresh_hover.png</file>
+    <file>assets/images/star_hover.png</file>
     <file>assets/images/star_off.png</file>
     <file>assets/images/star_on.png</file>
     <file>assets/images/tvlinker.png</file>
