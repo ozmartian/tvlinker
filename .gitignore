@@ -119,4 +119,4 @@ _packaging/archlinux/src
 _packaging/archlinux/*.tar.gz
 _packaging/archlinux/*.pkg.*
 
-_build/InnoSetup/Output
+_build/InnoSetup/Output/*
