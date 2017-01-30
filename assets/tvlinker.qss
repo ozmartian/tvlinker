@@ -83,8 +83,8 @@ QDialogButtonBox {
 
 #mainForm QPushButton#favesButton {
     border-image: url(:assets/images/star_off.png);
-    width: 24px;
-    height: 23px;
+    width: 23px;
+    height: 24px;
 }
 
 #mainForm QPushButton:hover#favesButton {
@@ -97,8 +97,8 @@ QDialogButtonBox {
 
 #mainForm QPushButton#refreshButton {
     border-image: url(:assets/images/refresh.png);
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 21px;
 }
 
 #mainForm QPushButton:hover#refreshButton {
@@ -107,8 +107,8 @@ QDialogButtonBox {
 
 #mainForm QPushButton#menuButton {
     border-image: url(:assets/images/menu.png);
-    width: 24px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
 }
 
 #mainForm QPushButton:hover#menuButton {
@@ -117,4 +117,15 @@ QDialogButtonBox {
 
 #mainForm QPushButton::menu-indicator#menuButton {
     left: -1000px;
+}
+
+#mainForm QLineEdit#searchInput {
+    padding: 4px;
+    font-size: 10pt;
+    font-weight: 400;
+    font-family: 'Open Sans', sans-serif;
+}
+
+#mainForm QComboBox {
+    padding: 4px;
 }

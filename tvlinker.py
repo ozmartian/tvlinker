@@ -152,6 +152,7 @@ class TVLinker(QWidget):
 
     def init_form(self) -> QHBoxLayout:
         self.search_field = QLineEdit(self, clearButtonEnabled=True, placeholderText='Enter search criteria')
+        self.search_field.setObjectName('searchInput')
         self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.search_field.setFocus()
         self.search_field.textChanged.connect(self.clear_filters)
@@ -161,7 +162,6 @@ class TVLinker(QWidget):
                                             toggled=self.filter_faves)
         self.refresh_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
                                           objectName='refreshButton', toolTip='Refresh', clicked=self.start_scraping)
-        self.refresh_button.setIconSize(QSize(24, 24))
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
         self.dlpages_field.addItems(('10', '20', '30', '40', '50'))
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
@@ -169,8 +169,7 @@ class TVLinker(QWidget):
         self.settings_button = QPushButton(parent=self, flat=True, toolTip='Menu',
                                            objectName='menuButton', cursor=Qt.PointingHandCursor)
         self.settings_button.setMenu(self.settings_menu())
-        self.settings_button.setIconSize(QSize(24, 20))
-        layout = QHBoxLayout()
+        layout = QHBoxLayout(spacing=10)
         logo = QPixmap(self.get_path('images/tvrelease.png'))
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
         layout.addWidget(self.search_field)
