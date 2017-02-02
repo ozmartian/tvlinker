@@ -1,5 +1,4 @@
-QHeaderView::section,
-QTableCornerButton::section {
+QHeaderView::section, QTableCornerButton::section {
     background-color: #6A687D;
     color: #FFF;
     font-weight: 800;
@@ -119,13 +118,3 @@ QDialogButtonBox {
     left: -1000px;
 }
 
-#mainForm QLineEdit#searchInput {
-    padding: 4px;
-    font-size: 10pt;
-    font-weight: 400;
-    font-family: 'Open Sans', sans-serif;
-}
-
-#mainForm QComboBox {
-    padding: 4px;
-}

@@ -82,7 +82,7 @@ class HostersThread(QThread):
             bs = BeautifulSoup(res.read(), 'html.parser')
         dltable = bs.find('table', id='download_table').find_all('tr')
         for hoster_html in dltable:
-            hosters.append([hoster_html.td.img.get('src'), hoster_html.find('td', class_='td_cols').a.sget('href')])
+            hosters.append([hoster_html.td.img.get('src'), hoster_html.find('td', class_='td_cols').a.get('href')])
         self.setHosters.emit(hosters)
 
     def run(self) -> None:

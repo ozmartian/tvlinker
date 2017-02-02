@@ -5,21 +5,24 @@ import os
 import platform
 import shlex
 import sys
-from zipfile import ZipFile
+from distutils.spawn import find_executable
 
 from PyQt5.QtCore import QFileInfo, QProcess, QSize, pyqtSlot
 from PyQt5.QtWidgets import QDialog, QMessageBox, QTextEdit, QVBoxLayout, qApp
 
 
 class Downloader(QDialog):
+    dltool_cmd = 'aria2c'
+    dltool_args = '-x 12 -d {dl_path} {dl_link}'
+
     def __init__(self, link_url: str, dl_path: str, parent=None):
         super(Downloader, self).__init__(parent)
         self.parent = parent
+        self.dltool_cmd = find_executable(self.download_cmd)
         self.download_link = link_url
         self.download_path = dl_path
-        if self.check_aria_install():
-            self.aria2_cmd = 'aria2c'
-            self.aria2_args = '-x 6 -d %s %s' % (self.download_path, self.download_link)
+        if self.dltool_cmd.strip():
+            self.dltool_args = self.dltool_args.format(dl_path=self.download_path, dl_link=self.download_link)
             self.console = QTextEdit(self.parent)
             self.console.setWindowTitle('%s Downloader' % qApp.applicationName())
             self.proc = QProcess(self.parent)
@@ -44,31 +47,6 @@ class Downloader(QDialog):
             self.proc.kill()
 
     @staticmethod
-    def aria_clients() -> dict:
-        return {
-            'darwin': {
-                'target_path': Downloader.get_path('bin/aria2c'),
-                'bin_archive': Downloader.get_path('bin/macOS/aria2c.zip')
-            },
-            'linux32': {
-                'target_path': Downloader.get_path('bin/aria2c'),
-                'bin_archive': Downloader.get_path('bin/linux32/aria2c.zip')
-            },
-            'linux64': {
-                'target_path': Downloader.get_path('bin/aria2c'),
-                'bin_archive': Downloader.get_path('bin/linux64/aria2c.zip')
-            },
-            'win32': {
-                'target_path': Downloader.get_path('bin/aria2c.exe'),
-                'bin_archive': Downloader.get_path('bin/win32/aria2c.zip')
-            },
-            'win64': {
-                'target_path': Downloader.get_path('bin/aria2c.exe'),
-                'bin_archive': Downloader.get_path('bin/win64/aria2c.zip')
-            }
-        }
-
-    @staticmethod
     def get_machine_code() -> str:
         mcode = ''
         if sys.platform == 'darwin':
@@ -82,10 +60,6 @@ class Downloader(QDialog):
         elif sys.platform.startswith('linux') and platform.machine().endswith('64'):
             mcode = 'linux64'
         return mcode
-
-    @staticmethod
-    def check_aria_install() -> bool:
-        return os.path.exists(Downloader.aria_clients()[Downloader.get_machine_code()]['target_path'])
 
     @staticmethod
     def setup_aria() -> bool:
