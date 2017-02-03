@@ -199,7 +199,7 @@ class GeneralTab(QWidget):
     def save(self) -> None:
         self.settings.setValue('dl_pagecount', self.dlpagecount_comboBox.currentText())
         self.settings.setValue('realdebrid_apitoken', self.realdebridtoken_lineEdit.text())
-        self.settings.setValue('download_manager', self.dlmanager_comboBox.currentText())
+        self.settings.setValue('download_manager', self.dlmanager_comboBox.currentText().lower())
         if self.dlmanager_comboBox.currentText() == 'aria2':
             self.settings.setValue('aria2_rpc_host', self.aria2rpchost_lineEdit.text())
             self.settings.setValue('aria2_rpc_port', self.aria2rpcport_lineEdit.text())
