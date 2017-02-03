@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 # -*- mode: python -*-
 
-from PyQt5.QtCore import QLibraryInfo
+import os
+import sys
+import PyQt5
 
 block_cipher = None
 
 a = Analysis(['..\\tvlinker.py'],
              pathex=[
-                 QLibraryInfo.location(QLibraryInfo.LibrariesPath),
+                 os.path.join(sys.modules['PyQt5'].__path__[0], 'Qt', 'bin'),
                  'C:\\Program Files (x86)\\Windows Kits\\10\Redist\\ucrt\\DLLs\\x64',
                  '..'
              ], 
