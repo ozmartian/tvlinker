@@ -113,9 +113,10 @@ class TVLinker(QWidget):
         else:
             qss_stylesheet = self.get_path('%s.qss' % qApp.applicationName().lower())
         self.load_stylesheet(qss_stylesheet)
-        QFontDatabase.addApplicationFont(self.get_path('fonts/opensans.ttf'))
+        QFontDatabase.addApplicationFont(':assets/fonts/opensans.ttf')
         if sys.platform == 'darwin':
             qApp.setFont(QFont('Open Sans', 12))
+            QFontDatabase.addApplicationFont(':assets/fonts/opensans-bold.ttf')
         else:
             qApp.setFont(QFont('Open Sans', 10))
 
@@ -302,7 +303,7 @@ class TVLinker(QWidget):
             table_item.setToolTip('%s\n\nDouble-click to view hoster links.' % row[1])
             table_item.setFont(QFont('Open Sans', weight=QFont.Normal))
             if self.cols == 2:
-                table_item.setFont(QFont('Open Sans', weight=QFont.DemiBold))
+                table_item.setFont(QFont('Open Sans Bold', weight=QFont.Bold, pointSize=13))
                 table_item.setText('  ' + table_item.text())
             elif self.cols in (0, 3):
                 table_item.setTextAlignment(Qt.AlignCenter)
