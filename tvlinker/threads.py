@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import json
 import os
 import sys
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
 
+import requests
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, qApp
-from bs4 import BeautifulSoup, FeatureNotFound
+from bs4 import BeautifulSoup
+from requests.exceptions import HTTPError
 
 
 class ScrapeThread(QThread):
@@ -25,32 +23,29 @@ class ScrapeThread(QThread):
     def __del__(self) -> None:
         self.wait()
 
+    def scrape(self, pagenum: int) -> None:
+        try:
+            url = self.source_url % pagenum
+            req = requests.get(url, headers={'User-Agent': self.user_agent})
+        except HTTPError:
+            print(sys.exc_info())
+            QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
+            self.exit()
+        bs = BeautifulSoup(req.text, 'lxml')
+        links = bs.find_all('table', class_='posts_table')
+        for link_table in links:
+            cols = link_table.tr.find_all('td')
+            table_row = [
+                cols[2].get_text().replace('\n', '').strip(),
+                cols[1].find('a').get('href').replace('\n', '').strip(),
+                cols[1].find('a').get_text().replace('\n', '').strip(),
+                cols[0].find('a').get_text().replace('TV-', '').replace('\n', '').strip()
+            ]
+            self.addRow.emit(table_row)
+
     def scrape_links(self) -> None:
-        row = 0
         for page in range(1, self.maxpages + 1):
-            url = self.source_url % page
-            req = Request(url, headers={'User-Agent': self.user_agent})
-            try:
-                res = urlopen(req)
-            except URLError:
-                print(sys.exc_info())
-                QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
-                self.exit()
-            try:
-                bs = BeautifulSoup(res.read(), 'lxml')
-            except FeatureNotFound:
-                bs = BeautifulSoup(res.read(), 'html.parser')
-            links = bs.find_all('table', class_='posts_table')
-            for link_table in links:
-                cols = link_table.tr.find_all('td')
-                table_row = [
-                    cols[2].get_text().replace('\n', '').strip(),
-                    cols[1].find('a').get('href').replace('\n', '').strip(),
-                    cols[1].find('a').get_text().replace('\n', '').strip(),
-                    cols[0].find('a').get_text().replace('TV-', '').replace('\n', '').strip()
-                ]
-                self.addRow.emit(table_row)
-                row += 1
+            self.scrape(page)
 
     def run(self) -> None:
         self.scrape_links()
@@ -69,17 +64,13 @@ class HostersThread(QThread):
 
     def get_hoster_links(self) -> None:
         hosters = []
-        req = Request(self.link_url, headers={'User-Agent': self.user_agent})
         try:
-            res = urlopen(req)
-        except URLError:
+            req = requests.get(self.link_url, headers={'User-Agent': self.user_agent})
+        except HTTPError:
             print(sys.exc_info())
             QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
             self.exit()
-        try:
-            bs = BeautifulSoup(res.read(), 'lxml')
-        except FeatureNotFound:
-            bs = BeautifulSoup(res.read(), 'html.parser')
+        bs = BeautifulSoup(req.text, 'lxml')
         dltable = bs.find('table', id='download_table').find_all('tr')
         for hoster_html in dltable:
             hosters.append([hoster_html.td.img.get('src'), hoster_html.find('td', class_='td_cols').a.get('href')])
@@ -119,9 +110,8 @@ class RealDebridThread(QThread):
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cache-Control': 'no-cache'
             }
-            req = Request('%s%s' % (self.api_url, endpoint), headers=headers, data=payload)
-            res = urlopen(req).read().decode('utf-8')
-            return json.loads(res)
+            res = requests.post('%s%s' % (self.api_url, endpoint), headers=headers, data=payload)
+            return res.json()
         except HTTPError:
             print(sys.exc_info())
             QMessageBox.critical(self, 'ERROR NOTIFICATION',
@@ -133,8 +123,7 @@ class RealDebridThread(QThread):
             self.exit()
 
     def unrestrict_link(self) -> None:
-        data = urlencode({'link': self.link_url}).encode('utf-8')
-        jsonres = self.connect(endpoint='/unrestrict/link', payload=data)
+        jsonres = self.connect(endpoint='/unrestrict/link', payload={'link': self.link_url})
         if 'download' in jsonres.keys():
             self.unrestrictedLink.emit(jsonres['download'])
 
@@ -180,19 +169,18 @@ class Aria2Thread(QThread):
             passwd = self.rpc_secret
         aria2_endpoint = '%s:%s/jsonrpc' % (self.rpc_host, self.rpc_port)
         headers = {'Content-Type': 'application/json'}
-        payload = json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'aria2.addUri',
-                              'params': ['%s:%s' % (user, passwd), [self.link_url]]}, sort_keys=False).encode('utf-8')
-        req = Request(aria2_endpoint, headers=headers, data=payload)
+        payload = {'jsonrpc': '2.0', 'id': 1, 'method': 'aria2.addUri',
+                   'params': ['%s:%s' % (user, passwd), [self.link_url]]}
         try:
-            res = urlopen(req).read().decode('utf-8')
-            jsonres = json.loads(res)
+            res = requests.post(aria2_endpoint, headers=headers, data=payload)
+            jsonres = res.json()
             if 'result' in jsonres.keys():
                 self.aria2Confirmation.emit(True)
             else:
                 self.aria2Confirmation.emit(False)
-        except (URLError, HTTPError) as e:
+        except HTTPError:
             print(sys.exc_info())
-            QMessageBox.critical(self, 'ERROR NOTIFICATION', e.reason, QMessageBox.Ok)
+            QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
             self.aria2Confirmation.emit(False)
             # self.exit()
 
@@ -215,24 +203,23 @@ class DownloadThread(QThread):
         self.wait()
 
     def download_file(self) -> None:
-        res = urlopen(self.download_link)
-        filesize = int(res.info()['Content-Length'])
+        req = requests.get(self.download_link, stream=True)
+        filesize = int(req.headers['Content-Length'])
         filename = os.path.basename(self.download_path)
-        downloaded_chunk = 0
-        blocksize = 8192
+        downloadedChunk = 0
+        blockSize = 8192
         with open(self.download_path, 'wb') as f:
-            while True:
-                chunk = res.read(blocksize)
-                if not chunk or self.cancel_download:
-                    self.exit()
+            for chunk in req.iter_content(chunk_size=blockSize):
+                if self.cancel_download or not chunk:
+                    req.close()
                     break
-                downloaded_chunk += len(chunk)
                 f.write(chunk)
-                progress = float(downloaded_chunk) / filesize
+                downloadedChunk += len(chunk)
+                progress = float(downloadedChunk) / filesize
                 self.dlProgress.emit(progress * 100)
-                progress_text = '<b>Downloading {0}</b>:<br/>{1} <b>of</b> {3} <b>bytes</b> [{2:.2%}]' \
-                    .format(filename, downloaded_chunk, progress, filesize)
-                self.dlProgressTxt.emit(progress_text)
+                progressTxt = '<b>Downloading {0}</b>:<br/>{1} <b>of</b> {3} <b>bytes</b> [{2:.2%}]' \
+                    .format(filename, downloadedChunk, progress, filesize)
+                self.dlProgressTxt.emit(progressTxt)
         self.dlComplete.emit()
 
     def run(self) -> None:

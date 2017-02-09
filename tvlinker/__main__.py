@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import inspect
+import logging
 import os
 import platform
 import re
@@ -13,71 +14,27 @@ from signal import SIGINT, SIG_DFL, SIGTERM, signal
 from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, Qt,
                           QTextStream, QUrl, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
-from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QDialog, QFileDialog, QGroupBox,
+from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QFileDialog, QGroupBox,
                              QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, qApp)
 
-try:
-    from tvlinker.hosters import HosterLinks
-    from tvlinker.pyload import PyloadConfig, PyloadConnection
-    from tvlinker.settings import Settings
-    from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread,
-                                  ScrapeThread)
-    import tvlinker.assets as assets
-except ImportError:
-    from hosters import HosterLinks
-    from pyload import PyloadConfig, PyloadConnection
-    from settings import Settings
-    from threads import Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread, ScrapeThread
-    import assets
+from tvlinker.direct_download import DirectDownload
+from tvlinker.hosters import HosterLinks
+from tvlinker.pyload import PyloadConfig, PyloadConnection
+from tvlinker.settings import Settings
+from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread,
+                              ScrapeThread)
+import tvlinker.assets
+
 
 signal(SIGINT, SIG_DFL)
 signal(SIGTERM, SIG_DFL)
 warnings.filterwarnings('ignore')
 
 
-class DirectDownload(QDialog):
-    cancelDownload = pyqtSignal()
-
-    def __init__(self, parent, f=Qt.WindowCloseButtonHint):
-        super(DirectDownload, self).__init__(parent, f)
-        self.parent = parent
-        self.setWindowModality(Qt.ApplicationModal)
-        self.setMinimumWidth(485)
-        self.setContentsMargins(20, 20, 20, 20)
-        layout = QVBoxLayout()
-        self.progress_label = QLabel(alignment=Qt.AlignCenter)
-        self.progress = QProgressBar(self.parent, minimum=0, maximum=100)
-        layout.addWidget(self.progress_label)
-        layout.addWidget(self.progress)
-        self.setLayout(layout)
-        self.setWindowTitle('Download Progress')
-
-    def closeEvent(self, event: QCloseEvent) -> None:
-        qApp.restoreOverrideCursor()
-        self.cancelDownload.emit()
-        super(DirectDownload, self).closeEvent(event)
-
-    @pyqtSlot(int)
-    def update_progress(self, progress: int) -> None:
-        self.progress.setValue(progress)
-
-    @pyqtSlot(str)
-    def update_progress_label(self, progress_txt: str) -> None:
-        if not self.isVisible():
-            self.show()
-        self.progress_label.setText(progress_txt)
-
-    @pyqtSlot()
-    def download_complete(self) -> None:
-        qApp.restoreOverrideCursor()
-        QMessageBox.information(self.parent, 'Confirmation', '<table width="350" border="0">' +
-                                '<tr><td>The download is complete...</td></tr></table>',
-                                buttons=QMessageBox.Ok)
-        self.close()
-
-
 class TVLinker(QWidget):
+    errorSignal = pyqtSignal()
+
     def __init__(self, settings: QSettings, parent=None):
         super(TVLinker, self).__init__(parent)
         self.rows, self.cols = 0, 0
@@ -303,7 +260,10 @@ class TVLinker(QWidget):
             table_item.setToolTip('%s\n\nDouble-click to view hoster links.' % row[1])
             table_item.setFont(QFont('Open Sans', weight=QFont.Normal))
             if self.cols == 2:
-                table_item.setFont(QFont('Open Sans Bold', weight=QFont.Bold, pointSize=13))
+                row_font = QFont('Open Sans', weight=QFont.DemiBold, pointSize=10)
+                if sys.platform == 'darwin':
+                    row_font = QFont('Open Sans Bold', weight=QFont.Bold, pointSize=13)
+                table_item.setFont(row_font)
                 table_item.setText('  ' + table_item.text())
             elif self.cols in (0, 3):
                 table_item.setTextAlignment(Qt.AlignCenter)
@@ -469,6 +429,17 @@ class TVLinker(QWidget):
         self.deleteLater()
         qApp.quit()
 
+    def init_logging(self) -> None:
+        log_path = QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation).lower()
+        os.makedirs(log_path, exist_ok=True)
+        logging.basicConfig(filename=os.path.join(log_path, '%s.log' % qApp.applicationName().lower()),
+                            level=logging.INFO)
+        logging.captureWarnings(capture=True)
+
+    @staticmethod
+    def error_handler(type, value, traceback):
+        pass
+
     @staticmethod
     def get_path(path: str = None, override: bool = False) -> str:
         if override:
@@ -510,8 +481,8 @@ class FixedSettings:
         settings_ini = os.path.join(config_path, '%s.ini' % FixedSettings.applicationName.lower())
         if not os.path.exists(settings_ini):
             os.makedirs(config_path, exist_ok=True)
-            QFile.copy(TVLinker.get_path(path='%s.ini' % FixedSettings.applicationName.lower(), override=True),
-                       settings_ini)
+            QFile.copy(fileName=TVLinker.get_path(path='%s.ini' % FixedSettings.applicationName.lower(), override=True),
+                       newName=settings_ini)
         return QSettings(settings_ini, QSettings.IniFormat)
 
 
@@ -521,9 +492,11 @@ def main():
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)
     app.setQuitOnLastWindowClosed(True)
+    app.setAttribute(Qt.AA_NativeWindows, True)
     tvlinker = TVLinker(FixedSettings.get_app_settings())
     sys.exit(app.exec_())
 
+sys.excepthook = TVLinker.error_handler
 
 if __name__ == '__main__':
     main()

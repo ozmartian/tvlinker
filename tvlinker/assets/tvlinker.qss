@@ -62,6 +62,12 @@ QLabel#heading {
     margin-bottom: 0
 }
 
+QLabel#pages {
+    color: #555;
+    font-size: 7pt;
+    font-weight: 500;
+}
+
 QLabel#totals {
     color: #6A687D;
 }
@@ -82,8 +88,8 @@ QDialogButtonBox {
 
 #mainForm QPushButton#favesButton {
     border-image: url(:assets/images/star_off.png);
-    width: 23px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
 }
 
 #mainForm QPushButton:hover#favesButton {
