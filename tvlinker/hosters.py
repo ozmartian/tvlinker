@@ -9,9 +9,6 @@ from PyQt5.QtWidgets import (QButtonGroup, QDialog, QGroupBox, QHBoxLayout, QLab
 
 
 class OverrideProxyStyle(QProxyStyle):
-    def __init__(self):
-        super(OverrideProxyStyle, self).__init__('Fusion')
-
     def styleHint(self, hint, option, widget, returnData) -> int:
         if hint == QStyle.SH_UnderlineShortcut:
             return 0;

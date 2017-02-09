@@ -260,10 +260,10 @@ class TVLinker(QWidget):
             table_item.setToolTip('%s\n\nDouble-click to view hoster links.' % row[1])
             table_item.setFont(QFont('Open Sans', weight=QFont.Normal))
             if self.cols == 2:
-                row_font = QFont('Open Sans', weight=QFont.DemiBold, pointSize=10)
                 if sys.platform == 'darwin':
-                    row_font = QFont('Open Sans Bold', weight=QFont.Bold, pointSize=13)
-                table_item.setFont(row_font)
+                    table_item.setFont(QFont('Open Sans Bold', pointSize=13))
+                else:
+                    table_item.setFont(QFont('Open Sans', weight=QFont.DemiBold, pointSize=10))
                 table_item.setText('  ' + table_item.text())
             elif self.cols in (0, 3):
                 table_item.setTextAlignment(Qt.AlignCenter)
