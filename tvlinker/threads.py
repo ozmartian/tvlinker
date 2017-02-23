@@ -3,12 +3,26 @@
 
 import os
 import sys
+import time
 
 import requests
+from hurry.filesize import size, alternative
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, qApp
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
+
+
+def check_process(name: str) -> bool:
+    c = os.popen('ps -Af').read().count(name)
+    return True if c > 0 else False
+
+
+def shadowsocks() -> dict:
+    proxy = dict()
+    if check_process('ss-qt5'):
+        proxy = dict(http='socks5://127.0.0.1:1080', https='socks5://127.0.0.1:1080')
+    return proxy
 
 
 class ScrapeThread(QThread):
@@ -19,6 +33,7 @@ class ScrapeThread(QThread):
         self.source_url = settings.value('source_url')
         self.user_agent = settings.value('user_agent')
         self.maxpages = maxpages
+        self.proxy = shadowsocks()
 
     def __del__(self) -> None:
         self.wait()
@@ -26,7 +41,7 @@ class ScrapeThread(QThread):
     def scrape(self, pagenum: int) -> None:
         try:
             url = self.source_url % pagenum
-            req = requests.get(url, headers={'User-Agent': self.user_agent})
+            req = requests.get(url, headers={'User-Agent': self.user_agent}, proxies=self.proxy)
         except HTTPError:
             print(sys.exc_info())
             QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
@@ -58,6 +73,7 @@ class HostersThread(QThread):
         QThread.__init__(self)
         self.user_agent = settings.value('user_agent')
         self.link_url = link_url
+        self.proxy = shadowsocks()
 
     def __del__(self) -> None:
         self.wait()
@@ -65,7 +81,7 @@ class HostersThread(QThread):
     def get_hoster_links(self) -> None:
         hosters = []
         try:
-            req = requests.get(self.link_url, headers={'User-Agent': self.user_agent})
+            req = requests.get(self.link_url, headers={'User-Agent': self.user_agent}, proxies=self.proxy)
         except HTTPError:
             print(sys.exc_info())
             QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
@@ -73,7 +89,7 @@ class HostersThread(QThread):
         bs = BeautifulSoup(req.text, 'lxml')
         dltable = bs.find('table', id='download_table').find_all('tr')
         for hoster_html in dltable:
-            hosters.append([hoster_html.td.img.get('src'), hoster_html.find('td', class_='td_cols').a.get('href')])
+            hosters.append(hoster_html.find('td', class_='td_cols').a.get('href'))
         self.setHosters.emit(hosters)
 
     def run(self) -> None:
@@ -99,6 +115,7 @@ class RealDebridThread(QThread):
         self.link_url = link_url
         self.action = action
         self.check_host = check_host
+        self.proxy = shadowsocks()
 
     def __del__(self):
         self.wait()
@@ -110,7 +127,8 @@ class RealDebridThread(QThread):
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cache-Control': 'no-cache'
             }
-            res = requests.post('%s%s' % (self.api_url, endpoint), headers=headers, data=payload)
+            res = requests.post('%s%s' % (self.api_url, endpoint), headers=headers, data=payload,
+                                proxies=self.proxy, verify=False)
             return res.json()
         except HTTPError:
             print(sys.exc_info())
@@ -198,16 +216,18 @@ class DownloadThread(QThread):
         self.download_link = link_url
         self.download_path = dl_path
         self.cancel_download = False
+        self.proxy = shadowsocks()
 
     def __del__(self) -> None:
         self.wait()
 
     def download_file(self) -> None:
-        req = requests.get(self.download_link, stream=True)
+        req = requests.get(self.download_link, stream=True, proxies=self.proxy)
         filesize = int(req.headers['Content-Length'])
         filename = os.path.basename(self.download_path)
         downloadedChunk = 0
         blockSize = 8192
+        start = time.clock()
         with open(self.download_path, 'wb') as f:
             for chunk in req.iter_content(chunk_size=blockSize):
                 if self.cancel_download or not chunk:
@@ -217,8 +237,9 @@ class DownloadThread(QThread):
                 downloadedChunk += len(chunk)
                 progress = float(downloadedChunk) / filesize
                 self.dlProgress.emit(progress * 100)
-                progressTxt = '<b>Downloading {0}</b>:<br/>{1} <b>of</b> {3} <b>bytes</b> [{2:.2%}]' \
-                    .format(filename, downloadedChunk, progress, filesize)
+                dlspeed = downloadedChunk//(time.clock() - start)
+                progressTxt = '<b>Downloading {0}</b>:<br/>{1} of <b>{3}</b> [{2:.2%}] [{4} bps]' \
+                    .format(filename, downloadedChunk, progress, size(filesize, system=alternative), dlspeed)
                 self.dlProgressTxt.emit(progressTxt)
         self.dlComplete.emit()
 

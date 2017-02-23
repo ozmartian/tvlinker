@@ -7,7 +7,7 @@ from PyQt5.QtCore import pyqtSlot, QSettings, QSize, Qt
 from PyQt5.QtGui import QCloseEvent, QIcon, QKeyEvent, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
                              QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton,
-                             QSizePolicy, QStackedLayout, QTabWidget, QVBoxLayout, QWidget, qApp)
+                             QSizePolicy, QStackedLayout, QTabWidget, QVBoxLayout, QWidget, qApp, QSpacerItem)
 
 
 class Settings(QDialog):
@@ -101,8 +101,6 @@ class GeneralTab(QWidget):
         general_layout.addStretch(1)
         general_layout.addLayout(general_formlayout)
         general_layout.addStretch(1)
-        general_group = QGroupBox()
-        general_group.setLayout(general_layout)
 
         directdl_label = QLabel('No settings for built-in downloader')
         directdl_label.setStyleSheet('font-weight:300; text-align:center;')
@@ -186,13 +184,18 @@ class GeneralTab(QWidget):
 
         self.dlmanagersettings_layout.setCurrentIndex(self.dlmanager_comboBox.currentIndex())
         self.dlmanager_comboBox.currentIndexChanged.connect(self.dlmanagersettings_layout.setCurrentIndex)
-        dlmanagersettings_group = QGroupBox()
-        dlmanagersettings_group.setLayout(self.dlmanagersettings_layout)
+        # dlmanagersettings_group = QGroupBox()
+        # dlmanagersettings_group.setLayout(self.dlmanagersettings_layout)
+
+        general_formlayout.addRow(QLabel(styleSheet='height:5px;'))
+        general_formlayout.addRow(self.dlmanagersettings_layout)
+        general_group = QGroupBox()
+        general_group.setLayout(general_layout)
 
         tab_layout = QVBoxLayout()
         tab_layout.addWidget(realdebrid_group)
         tab_layout.addWidget(general_group)
-        tab_layout.addWidget(dlmanagersettings_group)
+        # tab_layout.addWidget(dlmanagersettings_group)
 
         self.setLayout(tab_layout)
 

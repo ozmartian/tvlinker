@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QButtonGroup, QDialog, QGroupBox, QHBoxLayout, QLab
 class OverrideProxyStyle(QProxyStyle):
     def styleHint(self, hint, option, widget, returnData) -> int:
         if hint == QStyle.SH_UnderlineShortcut:
-            return 0;
+            return 0
         return super(OverrideProxyStyle, self).styleHint(hint, option, widget, returnData)
 
 
@@ -53,10 +53,11 @@ class HosterLinks(QDialog):
             title_label = QLabel(self.title, alignment=Qt.AlignCenter, objectName='heading')
             title_label.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
             self.layout.addWidget(title_label)
-        index = 0
         for hoster in hosters:
-            hoster_logo = QLabel(pixmap=QPixmap(self.parent.get_path('images/hoster_%s' % QUrl(hoster[0]).fileName())),
-                                 toolTip=hoster[1])
+            index = hosters.index(hoster)
+            hoster_name = self.get_hoster_name(self.hosters[index])
+            hoster_logo = QLabel(pixmap=QPixmap(self.parent.get_path('images/hoster_%s.png' % hoster_name)),
+                                 toolTip=hoster_name)
             hoster_logo.setMinimumWidth(285)
             hoster_logo.setAlignment(Qt.AlignCenter)
             copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard',
@@ -91,22 +92,24 @@ class HosterLinks(QDialog):
             groupbox.setContentsMargins(6, 6, 6, 6)
             groupbox.setLayout(actions_layout)
             self.layout.addWidget(groupbox)
-            index += 1
         self.show()
         qApp.restoreOverrideCursor()
 
+    def get_hoster_name(self, link: str) -> str:
+        return QUrl(link).host().replace('www.', '').replace('.com', '').replace('.net', '')
+
     @pyqtSlot(int)
     def copy_link(self, button_id: int) -> None:
-        self.copyLink.emit(self.hosters[button_id][1])
+        self.copyLink.emit(self.hosters[button_id])
 
     @pyqtSlot(int)
     def open_link(self, button_id: int) -> None:
-        QDesktopServices.openUrl(QUrl(self.hosters[button_id][1]))
+        QDesktopServices.openUrl(QUrl(self.hosters[button_id]))
         self.close()
 
     @pyqtSlot(int)
     def download_link(self, button_id: int) -> None:
-        self.downloadLink.emit(self.hosters[button_id][1])
+        self.downloadLink.emit(self.hosters[button_id])
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.deleteLater()

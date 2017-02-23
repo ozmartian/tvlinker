@@ -10,8 +10,8 @@
     <file>assets/images/download_icon.png</file>
     <file>assets/images/hoster_filefactory.png</file>
     <file>assets/images/hoster_rapidgator.png</file>
-    <file>assets/images/hoster_uploaded.png</file>
-    <file>assets/images/hoster_uploadingsite.png</file>
+    <file>assets/images/hoster_ul.to.png</file>
+    <file>assets/images/hoster_uploading.site.png</file>
     <file>assets/images/menu.png</file>
     <file>assets/images/menu_hover.png</file>
     <file>assets/images/minus.png</file>
@@ -23,6 +23,7 @@
     <file>assets/images/star_hover.png</file>
     <file>assets/images/star_off.png</file>
     <file>assets/images/star_on.png</file>
+    <file>assets/images/thumbsup.png</file>
     <file>assets/images/tvlinker.png</file>
     <file>assets/images/tvrelease.png</file>
     <file>assets/images/up_arrow.png</file>

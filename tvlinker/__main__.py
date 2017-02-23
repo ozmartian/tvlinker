@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import inspect
-import logging
 import os
 import platform
 import re
@@ -277,7 +276,7 @@ class TVLinker(QWidget):
         self.hosters_win.show_hosters(hosters)
 
     @pyqtSlot(QModelIndex)
-    def show_hosters(self, index: QModelIndex) -> bool:
+    def show_hosters(self, index: QModelIndex) -> None:
         qApp.setOverrideCursor(Qt.BusyCursor)
         self.hosters_win = HosterLinks(parent=self, title=self.table.item(self.table.currentRow(), 2).text())
         self.hosters_win.downloadLink.connect(self.download_link)
@@ -351,12 +350,14 @@ class TVLinker(QWidget):
                 open_pyload.clicked.connect(self.open_pyload)
             elif self.download_manager in ('kget', 'persepolis'):
                 provider = self.kget_cmd if self.download_manager == 'kget' else self.persepolis_cmd
-                cmd = '%s "%s"' % (provider, link)
+                cmd = '%s "%s"' % (provider.lower(), link)
                 if self.cmdexec(cmd):
                     qApp.restoreOverrideCursor()
                     self.hosters_win.close()
-                    QMessageBox.information(self, self.download_manager, 'Your link has been queued in %s.'
-                                            % self.download_manager, QMessageBox.Ok)
+                    # QMessageBox.information(self, self.download_manager, 'Your link has been queued in %s.'
+                    #                         % self.download_manager, QMessageBox.Ok)
+                    self.notify(icon=':/assets/images/thumbsup.png', title='Download added to %s queue' % provider,
+                               msg='Your link has been unrestricted and added to the %s download queue.' % provider)
             elif self.download_manager == 'IDM':
                 cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
                 if self.cmdexec(cmd):
@@ -384,6 +385,20 @@ class TVLinker(QWidget):
                     self.directdl_win.cancelDownload.connect(self.cancel_download)
                     self.directdl.start()
                     self.hosters_win.close()
+
+    def notify(self, title: str, msg: str, icon: str=None, appname: str=None, urgency: str='normal') -> bool:
+        args = ''
+        if icon is None:
+            icon = ':/assets/images/tvlinker.png'
+        if icon == 'success':
+            icon = ':/assets/images/thumbsup.png'
+        if appname is None:
+            appname = qApp.applicationName()
+        args += '-u %s' % urgency
+        args += '-a %s' % appname
+        args += '-i %s ' % icon
+        args += '%s %s' % (title, msg)
+        return self.cmdexec('%s %s' % ('notify-send', args))
 
     def cmdexec(self, cmd: str) -> bool:
         self.proc = QProcess()
@@ -428,17 +443,6 @@ class TVLinker(QWidget):
         self.table.deleteLater()
         self.deleteLater()
         qApp.quit()
-
-    def init_logging(self) -> None:
-        log_path = QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation).lower()
-        os.makedirs(log_path, exist_ok=True)
-        logging.basicConfig(filename=os.path.join(log_path, '%s.log' % qApp.applicationName().lower()),
-                            level=logging.INFO)
-        logging.captureWarnings(capture=True)
-
-    @staticmethod
-    def error_handler(type, value, traceback):
-        pass
 
     @staticmethod
     def get_path(path: str = None, override: bool = False) -> str:
@@ -495,8 +499,6 @@ def main():
     app.setAttribute(Qt.AA_NativeWindows, True)
     tvlinker = TVLinker(FixedSettings.get_app_settings())
     sys.exit(app.exec_())
-
-sys.excepthook = TVLinker.error_handler
 
 if __name__ == '__main__':
     main()
