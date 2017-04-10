@@ -13,16 +13,17 @@ from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
 
 
-def check_process(name: str) -> bool:
-    c = os.popen('ps -Af').read().count(name)
-    return True if c > 0 else False
+class ShadowSocks:
+    def __init__(self):
+        super(ShadowSocks, self).__init__()
+        
+    @staticmethod
+    def is_running(process='ss-qt5') -> bool:
+        return os.popen('ps -Af').read().count(process) > 0
 
-
-def shadowsocks() -> dict:
-    proxy = dict()
-    if check_process('ss-qt5'):
-        proxy = dict(http='socks5://127.0.0.1:1080', https='socks5://127.0.0.1:1080')
-    return proxy
+    @staticmethod
+    def proxy() -> dict:
+        return dict(http='socks5://127.0.0.1:1080', https='socks5://127.0.0.1:1080') if ShadowSocks.is_running() else dict()
 
 
 class ScrapeThread(QThread):
@@ -33,7 +34,7 @@ class ScrapeThread(QThread):
         self.source_url = settings.value('source_url')
         self.user_agent = settings.value('user_agent')
         self.maxpages = maxpages
-        self.proxy = shadowsocks()
+        self.proxy = ShadowSocks.proxy()
 
     def __del__(self) -> None:
         self.wait()
@@ -73,13 +74,13 @@ class HostersThread(QThread):
         QThread.__init__(self)
         self.user_agent = settings.value('user_agent')
         self.link_url = link_url
-        self.proxy = shadowsocks()
+        self.proxy = ShadowSocks.proxy()
 
     def __del__(self) -> None:
         self.wait()
 
     def get_hoster_links(self) -> None:
-        hosters = []
+        hosters = list()
         try:
             req = requests.get(self.link_url, headers={'User-Agent': self.user_agent}, proxies=self.proxy)
         except HTTPError:
@@ -89,7 +90,9 @@ class HostersThread(QThread):
         bs = BeautifulSoup(req.text, 'lxml')
         dltable = bs.find('table', id='download_table').find_all('tr')
         for hoster_html in dltable:
-            hosters.append(hoster_html.find('td', class_='td_cols').a.get('href'))
+            link = hoster_html.find('td', class_='td_cols').get_text()
+            if len(link.strip()) > 0:
+                hosters.append(link)
         self.setHosters.emit(hosters)
 
     def run(self) -> None:
@@ -115,7 +118,7 @@ class RealDebridThread(QThread):
         self.link_url = link_url
         self.action = action
         self.check_host = check_host
-        self.proxy = shadowsocks()
+        self.proxy = ShadowSocks.proxy()
 
     def __del__(self):
         self.wait()
@@ -142,8 +145,8 @@ class RealDebridThread(QThread):
 
     def unrestrict_link(self) -> None:
         jsonres = self.connect(endpoint='/unrestrict/link', payload={'link': self.link_url})
-        if 'download' in jsonres.keys():
-            self.unrestrictedLink.emit(jsonres['download'])
+        # if 'download' in jsonres.keys():
+        self.unrestrictedLink.emit(jsonres['download'])
 
     def supported_hosts(self) -> None:
         jsonres = self.connect(endpoint='/hosts')
@@ -216,7 +219,7 @@ class DownloadThread(QThread):
         self.download_link = link_url
         self.download_path = dl_path
         self.cancel_download = False
-        self.proxy = shadowsocks()
+        self.proxy = ShadowSocks.proxy()
 
     def __del__(self) -> None:
         self.wait()

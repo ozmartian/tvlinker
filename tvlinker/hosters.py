@@ -8,11 +8,15 @@ from PyQt5.QtWidgets import (QButtonGroup, QDialog, QGroupBox, QHBoxLayout, QLab
                              qApp)
 
 
-class OverrideProxyStyle(QProxyStyle):
+class OverrideStyle(QProxyStyle):
+    def __init__(self, key: str = 'Fusion'):
+        super(OverrideStyle, self).__init__(key)
+        self.setBaseStyle(QStyleFactory.create(key))
+
     def styleHint(self, hint, option, widget, returnData) -> int:
-        if hint == QStyle.SH_UnderlineShortcut:
+        if hint in (QStyle.SH_UnderlineShortcut, QStyle.SH_DialogButtons_DefaultButton):
             return 0
-        return super(OverrideProxyStyle, self).styleHint(hint, option, widget, returnData)
+        return super(OverrideStyle, self).styleHint(hint, option, widget, returnData)
 
 
 class HosterLinks(QDialog):
@@ -62,19 +66,19 @@ class HosterLinks(QDialog):
             hoster_logo.setAlignment(Qt.AlignCenter)
             copy_btn = QPushButton(self, icon=self.copy_icon, text=' COPY', toolTip='Copy to clipboard',
                                    autoDefault=False, default=False, cursor=Qt.PointingHandCursor)
-            copy_btn.setStyle(OverrideProxyStyle())
+            copy_btn.setStyle(OverrideStyle())
             copy_btn.setStyleSheet('padding:2px 10px;')
             copy_btn.setMinimumHeight(35)
             self.copy_group.addButton(copy_btn, index)
             open_btn = QPushButton(self, icon=self.open_icon, text=' OPEN', toolTip='Open in browser',
                                    autoDefault=False, default=False, cursor=Qt.PointingHandCursor)
-            open_btn.setStyle(OverrideProxyStyle())
+            open_btn.setStyle(OverrideStyle())
             open_btn.setStyleSheet('padding:2px 10px;')
             open_btn.setMinimumHeight(35)
             self.open_group.addButton(open_btn, index)
             download_btn = QPushButton(self, icon=self.download_icon, text=' DOWNLOAD', toolTip='Download link',
                                        autoDefault=False, default=False, cursor=Qt.PointingHandCursor)
-            download_btn.setStyle(OverrideProxyStyle())
+            download_btn.setStyle(OverrideStyle())
             download_btn.setStyleSheet('padding:2px 10px;')
             download_btn.setMinimumHeight(35)
             self.download_group.addButton(download_btn, index)

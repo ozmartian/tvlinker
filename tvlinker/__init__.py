@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__version__ = '3.2.5'
+__version__ = '3.5.0'
 
-__packager__ = 'arch'  # [ pypi | arch | deb ]
+__packager__ = 'pypi'  # [ pypi | arch | deb ]

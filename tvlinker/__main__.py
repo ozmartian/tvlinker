@@ -331,7 +331,7 @@ class TVLinker(QWidget):
     def download_link(self, link: str) -> None:
         if len(self.realdebrid_api_token) > 0 and 'real-debrid.com' not in link:
             qApp.setOverrideCursor(Qt.BusyCursor)
-            self.unrestrict_link(link)
+            self.unrestrict_link(link, True)
         else:
             if self.download_manager == 'aria2':
                 self.aria2 = Aria2Thread(settings=self.settings, link_url=link)
@@ -354,10 +354,10 @@ class TVLinker(QWidget):
                 if self.cmdexec(cmd):
                     qApp.restoreOverrideCursor()
                     self.hosters_win.close()
-                    # QMessageBox.information(self, self.download_manager, 'Your link has been queued in %s.'
-                    #                         % self.download_manager, QMessageBox.Ok)
-                    self.notify(icon=':/assets/images/thumbsup.png', title='Download added to %s queue' % provider,
-                               msg='Your link has been unrestricted and added to the %s download queue.' % provider)
+                    QMessageBox.information(self, self.download_manager, 'Your link has been queued in %s.'
+                                            % self.download_manager, QMessageBox.Ok)
+                    # self.notify(icon=':/assets/images/thumbsup.png', title='Download added to %s queue' % provider,
+                    #            msg='Your link has been unrestricted and added to the %s download queue.' % provider)
             elif self.download_manager == 'IDM':
                 cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
                 if self.cmdexec(cmd):
@@ -425,18 +425,21 @@ class TVLinker(QWidget):
     def copy_download_link(self, link: str) -> None:
         if len(self.realdebrid_api_token) > 0 and 'real-debrid.com' not in link:
             qApp.setOverrideCursor(Qt.BusyCursor)
-            self.unrestrict_link(link)
+            self.unrestrict_link(link, False)
         else:
             clip = qApp.clipboard()
             clip.setText(link)
             self.hosters_win.close()
             qApp.restoreOverrideCursor()
 
-    def unrestrict_link(self, link: str) -> None:
+    def unrestrict_link(self, link: str, download: bool = True) -> None:
         caller = inspect.stack()[1].function
         self.realdebrid = RealDebridThread(settings=self.settings, api_url=FixedSettings.realdebrid_api_url,
                                            link_url=link, action=RealDebridAction.UNRESTRICT_LINK)
-        self.realdebrid.unrestrictedLink.connect(getattr(self, caller))
+        if download:
+            self.realdebrid.unrestrictedLink.connect(self.download_link)
+        else:
+            self.realdebrid.unrestrictedLink.connect(self.copy_download_link)
         self.realdebrid.start()
 
     def closeEvent(self, event: QCloseEvent) -> None:
