@@ -90,7 +90,7 @@ class TVLinker(QWidget):
         self.user_agent = self.settings.value('user_agent')
         self.updater_freq = self.settings.value('updater_freq')
         self.updater_lastcheck = self.settings.value('updater_lastcheck')
-        self.dl_pagecount = int(self.settings.value('dl_pagecount'))
+        self.dl_pagecount = int(self.settings.value('dl_pagecount', 20))
         self.dl_pagelinks = FixedSettings.linksPerPage
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
         self.download_manager = self.settings.value('download_manager')
@@ -488,13 +488,12 @@ class FixedSettings:
         settings_ini = os.path.join(config_path, '%s.ini' % FixedSettings.applicationName.lower())
         if not os.path.exists(settings_ini):
             os.makedirs(config_path, exist_ok=True)
-            QFile.copy(fileName=TVLinker.get_path(path='%s.ini' % FixedSettings.applicationName.lower(), override=True),
-                       newName=settings_ini)
+            QFile.copy(TVLinker.get_path(path='%s.ini' % FixedSettings.applicationName.lower(), override=True), settings_ini)
         return QSettings(settings_ini, QSettings.IniFormat)
 
 
 def main():
-    app = QApplication(sys.argv)
+    app = QApplication(sys.argv)    
     app.setApplicationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)
