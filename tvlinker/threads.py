@@ -6,11 +6,12 @@ import sys
 import time
 
 import requests
-from hurry.filesize import size, alternative
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, qApp
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
+
+from tvlinker.filesize import size, alternative
 
 
 class ShadowSocks:
