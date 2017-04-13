@@ -2,20 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import json
-from urllib.parse import urljoin, urlencode
+from urllib.parse import urlencode, urljoin
 from urllib.request import urlopen
 
 
-class PyloadConfig:
-    host = None
-    username = None
-    password = None
-
-
 class PyloadConnection:
-    def __init__(self, config: PyloadConfig):
-        self.url_base = urljoin('%s' % config.host, 'api/')
-        username, password = config.username, config.password
+    def __init__(self, host, username, password):
+        self.url_base = urljoin('%s' % host, 'api/')
         self.session = self._call('login', {'username': username, 'password': password}, False)
 
     def _call(self, name, args={}, encode=True):

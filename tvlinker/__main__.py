@@ -8,10 +8,11 @@ import re
 import sys
 import warnings
 from datetime import datetime
-from signal import SIGINT, SIG_DFL, SIGTERM, signal
+from enum import Enum
+from signal import SIGINT, SIGTERM, SIG_DFL, signal
 
-from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, Qt,
-                          QTextStream, QUrl, pyqtSignal, pyqtSlot)
+from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QProcessEnvironment, QSettings, QSize,
+                          QStandardPaths, QTextStream, QUrl, Qt, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QFileDialog, QGroupBox,
                              QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
@@ -19,12 +20,11 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox
 
 from tvlinker.direct_download import DirectDownload
 from tvlinker.hosters import HosterLinks
-from tvlinker.pyload import PyloadConfig, PyloadConnection
+from tvlinker.pyload import PyloadConnection
 from tvlinker.settings import Settings
 from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread,
                               ScrapeThread)
 import tvlinker.assets
-
 
 signal(SIGINT, SIG_DFL)
 signal(SIGTERM, SIG_DFL)
@@ -39,6 +39,7 @@ class TVLinker(QWidget):
         self.rows, self.cols = 0, 0
         self.parent = parent
         self.settings = settings
+        self.proc = None
         self.init_styles()
         self.init_settings()
         self.init_icons()
@@ -94,17 +95,12 @@ class TVLinker(QWidget):
         self.dl_pagelinks = FixedSettings.linksPerPage
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
         self.download_manager = self.settings.value('download_manager')
-        if self.download_manager == 'persepolis':
-            self.persepolis_cmd = self.settings.value('persepolis_cmd')
-        elif self.download_manager == 'pyLoad':
-            self.pyload_config = PyloadConfig()
-            self.pyload_config.host = self.settings.value('pyload_host')
-            self.pyload_config.username = self.settings.value('pyload_username')
-            self.pyload_config.password = self.settings.value('pyload_password')
-        elif self.download_manager == 'IDM':
-            self.idm_exe_path = self.settings.value('idm_exe_path')
-        elif self.download_manager == 'kget':
-            self.kget_cmd = self.settings.value('kget_cmd')
+        self.persepolis_cmd = self.settings.value('persepolis_cmd')
+        self.pyload_host = self.settings.value('pyload_host')
+        self.pyload_username = self.settings.value('pyload_username')
+        self.pyload_password = self.settings.value('pyload_password')
+        self.idm_exe_path = self.settings.value('idm_exe_path')
+        self.kget_cmd = self.settings.value('kget_cmd')
         self.favorites = self.settings.value('favorites')
 
     def init_form(self) -> QHBoxLayout:
@@ -339,7 +335,7 @@ class TVLinker(QWidget):
                 self.aria2.start()
                 self.hosters_win.close()
             elif self.download_manager == 'pyLoad':
-                self.pyload_conn = PyloadConnection(config=self.pyload_config)
+                self.pyload_conn = PyloadConnection(self.pyload_host, self.pyload_username, self.pyload_password)
                 pid = self.pyload_conn.addPackage(name='TVLinker', links=[link])
                 qApp.restoreOverrideCursor()
                 self.hosters_win.close()
@@ -350,14 +346,16 @@ class TVLinker(QWidget):
                 open_pyload.clicked.connect(self.open_pyload)
             elif self.download_manager in ('kget', 'persepolis'):
                 provider = self.kget_cmd if self.download_manager == 'kget' else self.persepolis_cmd
-                cmd = '%s "%s"' % (provider.lower(), link)
+                cmd = '{0} "{1}"'.format(provider, link)
                 if self.cmdexec(cmd):
                     qApp.restoreOverrideCursor()
                     self.hosters_win.close()
-                    QMessageBox.information(self, self.download_manager, 'Your link has been queued in %s.'
-                                            % self.download_manager, QMessageBox.Ok)
-                    # self.notify(icon=':/assets/images/thumbsup.png', title='Download added to %s queue' % provider,
-                    #            msg='Your link has been unrestricted and added to the %s download queue.' % provider)
+                    if sys.platform.startswith('linux'):
+                        self.notify(title='Download added to %s queue' % provider, icon='success',
+                                    msg='Your unrestricted link has been added to the %s download queue.' % provider)
+                    else:
+                        QMessageBox.information(self, self.download_manager, 'Your link has been queued in %s.'
+                                                % self.download_manager, QMessageBox.Ok)
             elif self.download_manager == 'IDM':
                 cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
                 if self.cmdexec(cmd):
@@ -386,12 +384,12 @@ class TVLinker(QWidget):
                     self.directdl.start()
                     self.hosters_win.close()
 
-    def notify(self, title: str, msg: str, icon: str=None, appname: str=None, urgency: str='normal') -> bool:
+    def notify(self, title: str, msg: str, icon: str = None, appname: str = None, urgency: str = 'normal') -> bool:
         args = ''
         if icon is None:
-            icon = ':/assets/images/tvlinker.png'
+            icon = self.get_path('assets/images/tvlinker.png', override=True)
         if icon == 'success':
-            icon = ':/assets/images/thumbsup.png'
+            icon = self.get_path('assets/images/thumbsup.png', override=True)
         if appname is None:
             appname = qApp.applicationName()
         args += '-u %s' % urgency
@@ -401,8 +399,9 @@ class TVLinker(QWidget):
         return self.cmdexec('%s %s' % ('notify-send', args))
 
     def cmdexec(self, cmd: str) -> bool:
-        self.proc = QProcess()
-        self.proc.setProcessChannelMode(QProcess.MergedChannels)
+        if self.proc is None:
+            self.proc = QProcess()
+            self.proc.setProcessChannelMode(QProcess.MergedChannels)
         if hasattr(self.proc, 'errorOccurred'):
             self.proc.errorOccurred.connect(lambda error: print('Process error = %s' % ProcError(error).name))
         if self.proc.state() == QProcess.NotRunning:
@@ -464,7 +463,7 @@ class TVLinker(QWidget):
                     return m.group(1)
 
 
-class ProcError:
+class ProcError(Enum):
     FAILED_TO_START = 0
     CRASHED = 1
     TIMED_OUT = 2
@@ -488,12 +487,13 @@ class FixedSettings:
         settings_ini = os.path.join(config_path, '%s.ini' % FixedSettings.applicationName.lower())
         if not os.path.exists(settings_ini):
             os.makedirs(config_path, exist_ok=True)
-            QFile.copy(TVLinker.get_path(path='%s.ini' % FixedSettings.applicationName.lower(), override=True), settings_ini)
+            QFile.copy(TVLinker.get_path(path='%s.ini' % FixedSettings.applicationName.lower(), override=True),
+                       settings_ini)
         return QSettings(settings_ini, QSettings.IniFormat)
 
 
 def main():
-    app = QApplication(sys.argv)    
+    app = QApplication(sys.argv)
     app.setApplicationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)
@@ -501,6 +501,7 @@ def main():
     app.setAttribute(Qt.AA_NativeWindows, True)
     tvlinker = TVLinker(FixedSettings.get_app_settings())
     sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()
