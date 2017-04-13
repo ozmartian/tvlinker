@@ -487,8 +487,7 @@ class FixedSettings:
         settings_ini = os.path.join(config_path, '%s.ini' % FixedSettings.applicationName.lower())
         if not os.path.exists(settings_ini):
             os.makedirs(config_path, exist_ok=True)
-            QFile.copy(TVLinker.get_path(path='%s.ini' % FixedSettings.applicationName.lower(), override=True),
-                       settings_ini)
+            QFile.copy(':%s.ini' % FixedSettings.applicationName.lower(), settings_ini)
         return QSettings(settings_ini, QSettings.IniFormat)
 
 

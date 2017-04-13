@@ -28,9 +28,9 @@ def get_description(filename='README.md'):
 
 def get_install_requires():
     if packager == 'pypi':
-        return ['PyQt5', 'beautifulsoup4', 'lxml']
+        return ['PyQt5', 'beautifulsoup4', 'lxml', 'hurry.filesize']
     else:
-        return []
+        return ['hurry.filesize']
 
 
 def get_data_files():
@@ -40,7 +40,6 @@ def get_data_files():
             ('/usr/share/pixmaps', ['data/icons/tvlinker.png']),
             ('/usr/share/applications', ['data/desktop/tvlinker.desktop'])
         ]
-    files.append(('.', ['README.md', 'LICENSE', 'tvlinker.ini']))
     return files
 
 
@@ -67,6 +66,10 @@ setup(
     setup_requires=['setuptools'],
 
     install_requires=get_install_requires(),
+
+    package_data={
+        'tvlinker': ['README.md', 'LICENSE', 'tvlinker/tvlinker.ini']
+    },
 
     data_files=get_data_files(),
 
