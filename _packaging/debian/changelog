@@ -1,3 +1,7 @@
+tvlinker (3.6.5-0) unstable; urgency=low
+
+  * patch update
+
 tvlinker (3.6.0-0) unstable; urgency=low
   
   * kget + persepolis download managers bugfix; should now be working 100%
@@ -8,21 +12,3 @@ tvlinker (3.6.0-0) unstable; urgency=low
   * new hosters added (go4up & multiup)
 
   * improvments to error handling + shell execution
-
-tvlinker (3.2.0-0) unstable; urgency=low
-
-  * Fix for low latency networks
-
-  * qtawesome dependency removed
-
-  * built-in downloaded sped up, multithreading being worked on
-
-  * Persepolis download manager support added
-
- -- Pete Alexandrou <pete@ozmartians.com>  Fri, 06 Jan 2017 01:15:42 +0800
-
-tvlinker (3.0.5-1) unstable; urgency=low
-
-  * source package automatically created by stdeb 0.8.5
-
- -- Pete Alexandrou <pete@ozmartians.com>  Fri, 06 Jan 2017 01:15:42 +0800
