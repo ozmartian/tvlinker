@@ -1,11 +1,25 @@
-tvlinker (3.2.0-1) unstable; urgency=low
+tvlinker (3.6.0-0) unstable; urgency=low
+  
+  * kget + persepolis download managers bugfix; should now be working 100%
 
-  * removed qtawesome dependency so things work on older Ubuntu versions
-  * support for Persepolis download manager added
-  * bug fixes for handling networking issues
-  * improved download speeds for built-in downloader option
+  * fixes / updates due to HTML changes upstram at tv-release.pw that was
+    breaking the scraper code
 
- -- Pete Alexandrou <pete@ozmartians.com>  Mon, 30 Jan 2017 00:19:30 +0800
+  * new hosters added (go4up & multiup)
+
+  * improvments to error handling + shell execution
+
+tvlinker (3.2.0-0) unstable; urgency=low
+
+  * Fix for low latency networks
+
+  * qtawesome dependency removed
+
+  * built-in downloaded sped up, multithreading being worked on
+
+  * Persepolis download manager support added
+
+ -- Pete Alexandrou <pete@ozmartians.com>  Fri, 06 Jan 2017 01:15:42 +0800
 
 tvlinker (3.0.5-1) unstable; urgency=low
 
