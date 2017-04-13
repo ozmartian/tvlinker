@@ -100,7 +100,7 @@ class HosterLinks(QDialog):
         qApp.restoreOverrideCursor()
 
     def get_hoster_name(self, link: str) -> str:
-        return QUrl(link).host().replace('www.', '').replace('.com', '').replace('.net', '')
+        return QUrl(link).host().replace('www.', '').replace('.com', '').replace('.net', '').replace('.org', '')
 
     @pyqtSlot(int)
     def copy_link(self, button_id: int) -> None:
