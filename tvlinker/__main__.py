@@ -488,6 +488,8 @@ class FixedSettings:
         if not os.path.exists(settings_ini):
             os.makedirs(config_path, exist_ok=True)
             QFile.copy(':%s.ini' % FixedSettings.applicationName.lower(), settings_ini)
+            if os.name == 'posix':
+                QFile.setPermissions(settings_ini, QFile.ReadOwner | QFile.WriteOwner)
         return QSettings(settings_ini, QSettings.IniFormat)
 
 
