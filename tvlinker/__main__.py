@@ -25,6 +25,7 @@ from tvlinker.settings import Settings
 from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread,
                               ScrapeThread)
 import tvlinker.assets
+import tvlinker.notify as notify
 
 signal(SIGINT, SIG_DFL)
 signal(SIGTERM, SIG_DFL)
@@ -43,6 +44,7 @@ class TVLinker(QWidget):
         self.init_styles()
         self.init_settings()
         self.init_icons()
+        notify.init(qApp.applicationName())
         layout = QVBoxLayout(spacing=0)
         layout.setContentsMargins(10, 10, 10, 0)
         form_groupbox = QGroupBox(self, objectName='mainForm')
@@ -348,8 +350,7 @@ class TVLinker(QWidget):
                     qApp.restoreOverrideCursor()
                     self.hosters_win.close()
                     if sys.platform.startswith('linux'):
-                        self.notify(title='Download added to %s queue' % provider, icon='success',
-                                    msg='Your unrestricted link has been added to the %s download queue.' % provider)
+                        self.notify(title='Download added to %s' % self.download_manager, icon='success')
                     else:
                         QMessageBox.information(self, self.download_manager, 'Your link has been queued in %s.'
                                                 % self.download_manager, QMessageBox.Ok)
@@ -381,19 +382,14 @@ class TVLinker(QWidget):
                     self.directdl.start()
                     self.hosters_win.close()
 
-    def notify(self, title: str, msg: str, icon: str = None, appname: str = None, urgency: str = 'normal') -> bool:
-        args = ''
+    def notify(self, title: str, msg: str = '', icon: str = None, urgency: int = 1) -> bool:
         if icon is None:
             icon = self.get_path('assets/images/tvlinker.png', override=True)
-        if icon == 'success':
+        elif icon == 'success':
             icon = self.get_path('assets/images/thumbsup.png', override=True)
-        if appname is None:
-            appname = qApp.applicationName()
-        args += '-u %s' % urgency
-        args += '-a %s' % appname
-        args += '-i %s ' % icon
-        args += '%s %s' % (title, msg)
-        return self.cmdexec('%s %s' % ('notify-send', args))
+        notification = notify.Notification(title, msg, icon)
+        notification.set_urgency(urgency)
+        return notification.show()
 
     def cmdexec(self, cmd: str) -> bool:
         if self.proc is None:
