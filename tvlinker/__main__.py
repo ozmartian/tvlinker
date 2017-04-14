@@ -71,11 +71,8 @@ class TVLinker(QWidget):
             qss_stylesheet = self.get_path('%s.qss' % qApp.applicationName().lower())
         self.load_stylesheet(qss_stylesheet)
         QFontDatabase.addApplicationFont(':assets/fonts/opensans.ttf')
-        if sys.platform == 'darwin':
-            qApp.setFont(QFont('Open Sans', 12))
-            QFontDatabase.addApplicationFont(':assets/fonts/opensans-bold.ttf')
-        else:
-            qApp.setFont(QFont('Open Sans', 10))
+        QFontDatabase.addApplicationFont(':assets/fonts/opensans-bold.ttf')
+        qApp.setFont(QFont('Open Sans', 12 if sys.platform == 'darwin' else 10))
 
     def init_icons(self) -> None:
         self.icon_app = QIcon(self.get_path('images/%s.png' % qApp.applicationName().lower()))
