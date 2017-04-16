@@ -3,14 +3,11 @@
 
 import os
 import sys
-
 import PyQt5
-
-
 
 block_cipher = None
 
-a = Analysis(['..\\tvlinker.py'],
+a = Analysis(['..\\tvlinker\\__main__.py'],
              pathex=[
                  os.path.join(sys.modules['PyQt5'].__path__[0], 'Qt', 'bin'),
                  'C:\\Program Files (x86)\\Windows Kits\\10\Redist\\ucrt\\DLLs\\x86',
@@ -18,8 +15,8 @@ a = Analysis(['..\\tvlinker.py'],
              ], 
              binaries=[],
              datas=[
-                 ('..\\tvlinker.ini', '.'),
-                 ('..\\__init__.py', '.')
+                 ('..\\tvlinker\\tvlinker.ini', '.'),
+                 ('..\\tvlinker\\__init__.py', '.')
              ],
              hiddenimports=[],
              hookspath=[],

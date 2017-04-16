@@ -3,6 +3,7 @@
     <file>tvlinker.ini</file>
     <file>assets/fonts/opensans.ttf</file>
     <file>assets/fonts/opensans-bold.ttf</file>
+    <file>assets/fonts/opensans-semibold.ttf</file>
     <file>assets/images/cloud.png</file>
     <file>assets/images/cog.png</file>
     <file>assets/images/copy_icon.png</file>

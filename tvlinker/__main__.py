@@ -25,7 +25,9 @@ from tvlinker.settings import Settings
 from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread,
                               ScrapeThread)
 import tvlinker.assets
-import tvlinker.notify as notify
+
+if sys.platform.startswith('linux'):
+    import tvlinker.notify as notify
 
 signal(SIGINT, SIG_DFL)
 signal(SIGTERM, SIG_DFL)
@@ -44,7 +46,8 @@ class TVLinker(QWidget):
         self.init_styles()
         self.init_settings()
         self.init_icons()
-        notify.init(qApp.applicationName())
+        if sys.platform.startswith('linux'):
+            notify.init(qApp.applicationName())
         layout = QVBoxLayout(spacing=0)
         layout.setContentsMargins(10, 10, 10, 0)
         form_groupbox = QGroupBox(self, objectName='mainForm')
@@ -73,7 +76,7 @@ class TVLinker(QWidget):
             qss_stylesheet = self.get_path('%s.qss' % qApp.applicationName().lower())
         self.load_stylesheet(qss_stylesheet)
         QFontDatabase.addApplicationFont(':assets/fonts/opensans.ttf')
-        QFontDatabase.addApplicationFont(':assets/fonts/opensans-bold.ttf')
+        QFontDatabase.addApplicationFont(':assets/fonts/opensans-semibold.ttf')
         qApp.setFont(QFont('Open Sans', 12 if sys.platform == 'darwin' else 10))
 
     def init_icons(self) -> None:
@@ -254,8 +257,8 @@ class TVLinker(QWidget):
             table_item.setToolTip('%s\n\nDouble-click to view hoster links.' % row[1])
             table_item.setFont(QFont('Open Sans', weight=QFont.Normal))
             if self.cols == 2:
-                if sys.platform == 'darwin':
-                    table_item.setFont(QFont('Open Sans Bold', pointSize=13))
+                if not sys.platform.startswith('linux'):
+                    table_item.setFont(QFont('Open Sans Semibold', pointSize=10))
                 else:
                     table_item.setFont(QFont('Open Sans', weight=QFont.DemiBold, pointSize=10))
                 table_item.setText('  ' + table_item.text())
@@ -333,7 +336,7 @@ class TVLinker(QWidget):
                 self.aria2.aria2Confirmation.connect(self.aria2_confirmation)
                 self.aria2.start()
                 self.hosters_win.close()
-            elif self.download_manager == 'pyLoad':
+            elif self.download_manager == 'pyload':
                 self.pyload_conn = PyloadConnection(self.pyload_host, self.pyload_username, self.pyload_password)
                 pid = self.pyload_conn.addPackage(name='TVLinker', links=[link])
                 qApp.restoreOverrideCursor()
@@ -354,7 +357,7 @@ class TVLinker(QWidget):
                     else:
                         QMessageBox.information(self, self.download_manager, 'Your link has been queued in %s.'
                                                 % self.download_manager, QMessageBox.Ok)
-            elif self.download_manager == 'IDM':
+            elif self.download_manager == 'idm':
                 cmd = '"%s" /n /d "%s"' % (self.idm_exe_path, link)
                 if self.cmdexec(cmd):
                     qApp.restoreOverrideCursor()

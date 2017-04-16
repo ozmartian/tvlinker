@@ -20,7 +20,10 @@ class ShadowSocks:
         
     @staticmethod
     def is_running(process='ss-qt5') -> bool:
-        return os.popen('ps -Af').read().count(process) > 0
+        if sys.platform.startswith('linux'):
+            return os.popen('ps -Af').read().count(process) > 0
+        else:
+            return False
 
     @staticmethod
     def proxy() -> dict:

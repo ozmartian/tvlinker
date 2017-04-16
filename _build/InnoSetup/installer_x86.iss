@@ -7,26 +7,23 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{481211DA-28E0-4AA6-B316-C03482701DD7}
 AppName=TVLinker
-AppVersion=3.2.0
+AppVersion=3.6.5
 AppVerName=TVLinker
 AppPublisher=Pete Alexandrou
 AppPublisherURL=http://tvlinker.ozmartians.com
 DefaultDirName={pf}\TVLinker
 DefaultGroupName=TVLinker
-OutputBaseFilename=TVLinker-3.2.0-windows-x64
+OutputBaseFilename=TVLinker-3.6.5-windows-x86
 SetupIconFile=C:\DEV\tvlinker\data\icons\tvlinker.ico
 UninstallDisplayIcon={app}\tvlinker.exe
 Compression=lzma2
 SolidCompression=yes
 ShowLanguageDialog=no
-VersionInfoVersion=3.2.0
+VersionInfoVersion=3.6.5
 VersionInfoCompany=ozmartians.com
-VersionInfoCopyright=© 2017 Pete Alexandrou
-VersionInfoProductName=TVLinker x64
-VersionInfoProductVersion=3.2.0
-ArchitecturesAllowed=x64
-ArchitecturesInstallIn64BitMode=x64
-
+VersionInfoCopyright=(c) 2017 Pete Alexandrou
+VersionInfoProductName=TVLinker x86
+VersionInfoProductVersion=3.6.5
 
 [InstallDelete]
 Type: filesandordirs; Name: "{app}"
@@ -43,8 +40,8 @@ Source: "C:\DEV\vidcutter\data\icons\uninstall.ico"; DestDir: "{app}"
 
 [Icons]
 Name: "{group}\TVLinker"; Filename: "{app}\tvlinker.exe"
-Name: "{commondesktop}\TVLinker"; Filename: "{app}\tvlinker.exe"; Tasks: desktopicon
+Name: "{userdesktop}\TVLinker"; Filename: "{app}\tvlinker.exe"; Tasks: desktopicon
 Name: "{group}\{cm:UninstallProgram, TVLinker}"; Filename: "{uninstallexe}"; IconFilename: "{app}\uninstall.ico"
 
 [Run]
-Filename: "{app}\tvlinker.exe"; Flags: nowait postinstall skipifsilent 64bit; Description: "{cm:LaunchProgram,TVLinker}"
+Filename: "{app}\tvlinker.exe"; Flags: nowait postinstall skipifsilent 32bit; Description: "{cm:LaunchProgram,TVLinker}"
