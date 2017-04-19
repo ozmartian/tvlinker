@@ -11,8 +11,8 @@ from datetime import datetime
 from enum import Enum
 from signal import SIGINT, SIGTERM, SIG_DFL, signal
 
-from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QProcessEnvironment, QSettings, QSize,
-                          QStandardPaths, QTextStream, QUrl, Qt, pyqtSignal, pyqtSlot)
+from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, QTextStream, QUrl,
+                          Qt, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QFileDialog, QGroupBox,
                              QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
@@ -25,6 +25,10 @@ from tvlinker.settings import Settings
 from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread,
                               ScrapeThread)
 import tvlinker.assets
+
+if sys.platform == 'win32':
+    from PyQt5.QtWinExtras import QWinTaskbarButton
+
 
 if sys.platform.startswith('linux'):
     import tvlinker.notify as notify
@@ -169,6 +173,9 @@ class TVLinker(QWidget):
         self.meta_template = 'Total number of links retrieved: <b>%i</b> / <b>%i</b>'
         self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks),
                                      visible=False)
+        if sys.platform == 'win32':
+            self.win_taskbar_button = QWinTaskbarButton(self)
+
         self.meta_label = QLabel(textFormat=Qt.RichText, alignment=Qt.AlignRight, objectName='totals')
         self.update_metabar()
         layout = QHBoxLayout()
@@ -176,6 +183,13 @@ class TVLinker(QWidget):
         layout.addWidget(self.progress, Qt.AlignLeft)
         layout.addWidget(self.meta_label, Qt.AlignRight)
         return layout
+
+    def init_win_taskbar_progress(self):
+        self.win_taskbar_button.setWindow(self.windowHandle())
+        # self.win_taskbar_button.setOverlayIcon()
+        self.win_taskbar_progress = self.win_taskbar_button.progress()
+        self.win_taskbar_progress.setRange(0, self.dl_pagecount * self.dl_pagelinks)
+        # self.win_taskbar_progress.setVisible(False)
 
     @pyqtSlot()
     def check_update(self) -> None:
@@ -190,6 +204,8 @@ class TVLinker(QWidget):
         rowcount = self.table.rowCount()
         self.meta_label.setText(self.meta_template % (rowcount, self.dl_pagecount * self.dl_pagelinks))
         self.progress.setValue(rowcount)
+        if sys.platform == 'win32':
+            self.win_taskbar_button.progress().setValue(self.progress.value())
         return True
 
     def start_scraping(self) -> None:
@@ -234,15 +250,24 @@ class TVLinker(QWidget):
     def update_pagecount(self, index: int) -> None:
         self.dl_pagecount = int(self.dlpages_field.itemText(index))
         self.progress.setMaximum(self.dl_pagecount * self.dl_pagelinks)
+        if sys.platform == 'win32':
+            self.win_taskbar_button.progress().setMaximum(self.dl_pagecount * self.dl_pagelinks)
         self.start_scraping()
 
     @pyqtSlot()
     def show_progress(self):
         self.progress.show()
+        if sys.platform == 'win32':
+            self.win_taskbar_button.setWindow(self.windowHandle())
+            self.win_taskbar_button.progress().setRange(0, self.dl_pagecount * self.dl_pagelinks)
+            self.win_taskbar_button.progress().setVisible(True)
+            self.win_taskbar_button.progress().setValue(self.progress.value())
 
     @pyqtSlot()
     def scrape_finished(self) -> None:
         self.progress.hide()
+        if sys.platform == 'win32':
+            self.win_taskbar_button.progress().setVisible(False)
         self.table.setSortingEnabled(True)
         self.filter_table(text='')
 
