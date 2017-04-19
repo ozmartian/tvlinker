@@ -3,23 +3,20 @@
 
 import os
 import sys
-
 import PyQt5
-import qtawesome
 
 block_cipher = None
 
 
-a = Analysis(['../tvlinker.py'],
+a = Analysis(['../tvlinker/__main__.py'],
              pathex=[
                  os.path.join(sys.modules['PyQt5'].__path__[0], 'Qt', 'bin'),
                  '..'
              ],
              binaries=[],
              datas=[
-                 ('../tvlinker.ini', '.'),
-                 ('../__init__.py', '.'),
-                 (os.path.join(sys.modules['qtawesome'].__path__[0], 'fonts', '*'), './qtawesome/fonts')
+                 ('../tvlinker/tvlinker.ini', '.'),
+                 ('../tvlinker/__init__.py', '.')
              ],
              hiddenimports=[],
              hookspath=[],
@@ -35,7 +32,7 @@ exe = EXE(pyz,
           exclude_binaries=True,
           name='TVLinker',
           debug=False,
-          strip=True,
+          strip=False,
           upx=True,
           console=False , icon='../data/icons/tvlinker.icns')
 coll = COLLECT(exe,

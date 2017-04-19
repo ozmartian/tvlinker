@@ -1,4 +1,4 @@
 #!/bin/bash
 
 rm -rf build dist
-python3.5 -m PyInstaller --clean tvlinker.osx.spec
+python3 -m PyInstaller --clean tvlinker.osx.spec
