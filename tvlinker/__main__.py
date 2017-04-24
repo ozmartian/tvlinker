@@ -1,3 +1,5 @@
+
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -28,7 +30,6 @@ import tvlinker.assets
 
 if sys.platform == 'win32':
     from PyQt5.QtWinExtras import QWinTaskbarButton
-
 
 if sys.platform.startswith('linux'):
     import tvlinker.notify as notify
@@ -65,6 +66,20 @@ class TVLinker(QWidget):
         self.resize(FixedSettings.windowSize)
         self.show()
         self.start_scraping()
+
+        self.notify(title='Download added to %s' % 'kget', icon=self.NotifyIcon.SUCCESS)
+
+    class ProcError(Enum):
+        FAILED_TO_START = 0
+        CRASHED = 1
+        TIMED_OUT = 2
+        READ_ERROR = 3
+        WRITE_ERROR = 4
+        UNKNOWN_ERROR = 5
+
+    class NotifyIcon(Enum):
+        SUCCESS = 'assets/images/thumbsup.png'
+        DEFAULT = 'assets/images/tvlinker.png'
 
     @staticmethod
     def load_stylesheet(qssfile: str) -> None:
@@ -381,7 +396,7 @@ class TVLinker(QWidget):
                     qApp.restoreOverrideCursor()
                     self.hosters_win.close()
                     if sys.platform.startswith('linux'):
-                        self.notify(title='Download added to %s' % self.download_manager, icon='success')
+                        self.notify(title='Download added to %s' % self.download_manager, icon=self.NotifyIcon.SUCCESS)
                     else:
                         QMessageBox.information(self, self.download_manager, 'Your link has been queued in %s.'
                                                 % self.download_manager, QMessageBox.Ok)
@@ -393,14 +408,14 @@ class TVLinker(QWidget):
                     QMessageBox.information(self, 'Internet Download Manager', 'Your link has been queued in IDM.',
                                             QMessageBox.Ok)
                 else:
-                    print('IDM QProcess error = %s' % ProcError(self.idm.error()).name)
+                    print('IDM QProcess error = %s' % self.ProcError(self.idm.error()).name)
                     qApp.restoreOverrideCursor()
                     self.hosters_win.close()
                     QMessageBox.critical(self, 'Internet Download Manager',
                                          '<p>Could not connect to your local IDM application instance. ' +
                                          'Please check your settings and ensure the IDM executable path is correct ' +
                                          'according to your installation.</p><p>Error Code: %s</p>'
-                                         % ProcError(self.idm.error()).name, QMessageBox.Ok)
+                                         % self.ProcError(self.idm.error()).name, QMessageBox.Ok)
             else:
                 dlpath, _ = QFileDialog.getSaveFileName(self, 'Save File', link.split('/')[-1])
                 if dlpath != '':
@@ -413,12 +428,10 @@ class TVLinker(QWidget):
                     self.directdl.start()
                     self.hosters_win.close()
 
-    def notify(self, title: str, msg: str = '', icon: str = None, urgency: int = 1) -> bool:
+    def notify(self, title: str, msg: str = '', icon: Enum = None, urgency: int = 1) -> bool:
         if icon is None:
-            icon = self.get_path('assets/images/tvlinker.png', override=True)
-        elif icon == 'success':
-            icon = self.get_path('assets/images/thumbsup.png', override=True)
-        notification = notify.Notification(title, msg, icon)
+            icon = self.NotifyIcon.DEFAULT
+        notification = notify.Notification(title, msg, self.get_path(icon.value, override=True))
         notification.set_urgency(urgency)
         return notification.show()
 
@@ -427,7 +440,7 @@ class TVLinker(QWidget):
             self.proc = QProcess()
             self.proc.setProcessChannelMode(QProcess.MergedChannels)
         if hasattr(self.proc, 'errorOccurred'):
-            self.proc.errorOccurred.connect(lambda error: print('Process error = %s' % ProcError(error).name))
+            self.proc.errorOccurred.connect(lambda error: print('Process error = %s' % self.ProcError(error).name))
         if self.proc.state() == QProcess.NotRunning:
             self.proc.start(cmd)
             self.proc.waitForFinished(-1)
@@ -485,15 +498,6 @@ class TVLinker(QWidget):
                 m = re.match('__version__ *= *[\'](.*)[\']', line)
                 if m:
                     return m.group(1)
-
-
-class ProcError(Enum):
-    FAILED_TO_START = 0
-    CRASHED = 1
-    TIMED_OUT = 2
-    READ_ERROR = 3
-    WRITE_ERROR = 4
-    UNKNOWN_ERROR = 5
 
 
 class FixedSettings:
