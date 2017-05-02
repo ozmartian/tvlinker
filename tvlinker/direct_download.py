@@ -38,9 +38,6 @@ class DirectDownload(QDialog):
     @pyqtSlot()
     def download_complete(self) -> None:
         qApp.restoreOverrideCursor()
-        QMessageBox.information(self.parent, 'Confirmation', '<table width="350" border="0">' +
-                                '<tr><td>The download is complete...</td></tr></table>',
-                                buttons=QMessageBox.Ok)
         self.close()
 
     def closeEvent(self, event: QCloseEvent) -> None:

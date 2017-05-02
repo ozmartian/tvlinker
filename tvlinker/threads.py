@@ -244,8 +244,8 @@ class DownloadThread(QThread):
                 downloadedChunk += len(chunk)
                 progress = float(downloadedChunk) / filesize
                 self.dlProgress.emit(progress * 100)
-                dlspeed = downloadedChunk//(time.clock() - start)
-                progressTxt = '<b>Downloading {0}</b>:<br/>{1} of <b>{3}</b> [{2:.2%}] [{4} bps]' \
+                dlspeed = downloadedChunk//(time.clock() - start) / 1000
+                progressTxt = '<b>Downloading {0}</b>:<br/>{1} of <b>{3}</b> [{2:.2%}] [{4} kbps]' \
                     .format(filename, downloadedChunk, progress, size(filesize, system=alternative), dlspeed)
                 self.dlProgressTxt.emit(progressTxt)
         self.dlComplete.emit()

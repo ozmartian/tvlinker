@@ -1,5 +1,3 @@
-
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -47,7 +45,6 @@ class TVLinker(QWidget):
         self.rows, self.cols = 0, 0
         self.parent = parent
         self.settings = settings
-        self.proc = None
         self.init_styles()
         self.init_settings()
         self.init_icons()
@@ -67,8 +64,6 @@ class TVLinker(QWidget):
         self.show()
         self.start_scraping()
 
-        self.notify(title='Download added to %s' % 'kget', icon=self.NotifyIcon.SUCCESS)
-
     class ProcError(Enum):
         FAILED_TO_START = 0
         CRASHED = 1
@@ -78,8 +73,8 @@ class TVLinker(QWidget):
         UNKNOWN_ERROR = 5
 
     class NotifyIcon(Enum):
-        SUCCESS = 'assets/images/thumbsup.png'
-        DEFAULT = 'assets/images/tvlinker.png'
+        SUCCESS = ':assets/images/thumbsup.png'
+        DEFAULT = ':assets/images/tvlinker.png'
 
     @staticmethod
     def load_stylesheet(qssfile: str) -> None:
@@ -362,7 +357,7 @@ class TVLinker(QWidget):
         qApp.restoreOverrideCursor()
         if success:
             QMessageBox.information(self, 'Aria2 RPC Daemon',
-                                    'Download link has been successfully queued in Aria2.', QMessageBox.Ok)
+                                    'Download link has been queued in Aria2.', QMessageBox.Ok)
         else:
             QMessageBox.critical(self, 'Aria2 RPC Daemon',
                                  'Could not connect to Aria2 RPC Daemon. ' +
@@ -385,8 +380,7 @@ class TVLinker(QWidget):
                 qApp.restoreOverrideCursor()
                 self.hosters_win.close()
                 msgbox = QMessageBox.information(self, 'pyLoad Download Manager',
-                                                 'Download link has been successfully queued in pyLoad.',
-                                                 QMessageBox.Ok)
+                                                 'Download link has been queued in pyLoad.', QMessageBox.Ok)
                 open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
                 open_pyload.clicked.connect(self.open_pyload)
             elif self.download_manager in ('kget', 'persepolis'):
@@ -422,21 +416,34 @@ class TVLinker(QWidget):
                     self.directdl_win = DirectDownload(parent=self)
                     self.directdl = DownloadThread(link_url=link, dl_path=dlpath)
                     self.directdl.dlComplete.connect(self.directdl_win.download_complete)
+                    if sys.platform.startswith('linux'):
+                        self.directdl.dlComplete.connect(lambda: self.notify(qApp.applicationName(),
+                                                           'Download complete', self.NotifyIcon.SUCCESS))
+                    else:
+                        self.directdl.dlComplete.connect(lambda: QMessageBox.information(self, qApp.applicationName,
+                                                           'Download complete', QMessageBox.Ok))
                     self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
                     self.directdl.dlProgress.connect(self.directdl_win.update_progress)
                     self.directdl_win.cancelDownload.connect(self.cancel_download)
                     self.directdl.start()
                     self.hosters_win.close()
 
+    def _init_notification_icons(self):
+        for icon in self.NotifyIcon:
+            icon_file = QPixmap(icon.value, 'PNG')
+            icon_file.save(os.path.join(FixedSettings.config_path, os.path.basename(icon.value)), 'PNG', 100)
+
     def notify(self, title: str, msg: str = '', icon: Enum = None, urgency: int = 1) -> bool:
-        if icon is None:
-            icon = self.NotifyIcon.DEFAULT
-        notification = notify.Notification(title, msg, self.get_path(icon.value, override=True))
+        icon_path = icon.value if icon is not None else self.NotifyIcon.DEFAULT.value
+        icon_path = os.path.join(FixedSettings.config_path, os.path.basename(icon_path))
+        if not os.path.exists(icon_path):
+            self._init_notification_icons()
+        notification = notify.Notification(title, msg, icon_path)
         notification.set_urgency(urgency)
         return notification.show()
 
     def cmdexec(self, cmd: str) -> bool:
-        if self.proc is None:
+        if not hasattr(self, 'proc'):
             self.proc = QProcess()
             self.proc.setProcessChannelMode(QProcess.MergedChannels)
         if hasattr(self.proc, 'errorOccurred'):
@@ -444,8 +451,9 @@ class TVLinker(QWidget):
         if self.proc.state() == QProcess.NotRunning:
             self.proc.start(cmd)
             self.proc.waitForFinished(-1)
+            rc = self.proc.exitStatus() == QProcess.NormalExit and self.proc.exitCode() == 0
             self.proc.deleteLater()
-            return self.proc.exitStatus() == QProcess.NormalExit and self.proc.exitCode() == 0
+            return rc
         return False
 
     @pyqtSlot()
@@ -508,13 +516,14 @@ class FixedSettings:
     linksPerPage = 20
     latest_release_url = 'https://github.com/ozmartian/tvlinker/releases/latest'
     realdebrid_api_url = 'https://api.real-debrid.com/rest/1.0'
+    config_path = None
 
     @staticmethod
     def get_app_settings() -> QSettings:
-        config_path = QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation)
-        settings_ini = os.path.join(config_path, '%s.ini' % FixedSettings.applicationName.lower())
+        FixedSettings.config_path = QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation)
+        settings_ini = os.path.join(FixedSettings.config_path, '%s.ini' % FixedSettings.applicationName.lower())
         if not os.path.exists(settings_ini):
-            os.makedirs(config_path, exist_ok=True)
+            os.makedirs(FixedSettings.config_path, exist_ok=True)
             QFile.copy(':%s.ini' % FixedSettings.applicationName.lower(), settings_ini)
             if os.name == 'posix':
                 QFile.setPermissions(settings_ini, QFile.ReadOwner | QFile.WriteOwner)
