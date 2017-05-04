@@ -1,3 +1,13 @@
+tvlinker (3.8.5-0) unstable; urgency=low
+
+  * numerous fixes
+
+  * requests lib now used for most HTTP related code
+
+  * aria2 RPC daemon fix
+
+  * dbus notifications for Linux platform instead of ugly QMessageBox
+
 tvlinker (3.6.5-0) unstable; urgency=low
 
   * patch update

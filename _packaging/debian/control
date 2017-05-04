@@ -8,7 +8,7 @@ Homepage: http://tvlinker.ozmartians.com
 
 Package: tvlinker
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}, python3-pyqt5, python3-bs4, python3-lxml
+Depends: ${misc:Depends}, ${python3:Depends}, python3-pyqt5, python3-bs4, python3-lxml, python3-requests
 Description: TV show link scraper + downloader for tv-release.net with a modern PyQt5 GUI
  PyQt5 based desktop widget for scraping and organising links from various download feeds/sites. 
  .
