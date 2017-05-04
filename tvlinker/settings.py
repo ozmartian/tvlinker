@@ -7,7 +7,7 @@ from PyQt5.QtCore import pyqtSlot, QSettings, QSize, Qt
 from PyQt5.QtGui import QCloseEvent, QIcon, QKeyEvent, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
                              QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton,
-                             QSizePolicy, QStackedLayout, QTabWidget, QVBoxLayout, QWidget, qApp, QSpacerItem)
+                             QSizePolicy, QStackedWidget, QTabWidget, QVBoxLayout, QWidget, qApp)
 
 
 class Settings(QDialog):
@@ -133,7 +133,7 @@ class GeneralTab(QWidget):
         aria2_formLayout_hbox.addLayout(aria2_formLayout_right)
         aria2_formLayout_hbox.addStretch(1)
         aria2_formLayout.addRow(aria2_formLayout_hbox)
-        aria2_settings = QWidget()
+        aria2_settings = QWidget(self)
         aria2_settings.setLayout(aria2_formLayout)
 
         self.pyloadhost_lineEdit = QLineEdit(self, text=self.settings.value('pyload_host'))
@@ -147,21 +147,21 @@ class GeneralTab(QWidget):
         pyload_formLayout.addRow('pyLoad Host:', self.pyloadhost_lineEdit)
         pyload_formLayout.addRow('pyLoad Username:', self.pyloaduser_lineEdit)
         pyload_formLayout.addRow('pyLoad Password:', self.pyloadpass_lineEdit)
-        pyload_settings = QWidget()
+        pyload_settings = QWidget(self)
         pyload_settings.setLayout(pyload_formLayout)
 
         self.persepoliscmd_lineEdit = QLineEdit(self, text=self.settings.value('persepolis_cmd'))
         self.persepoliscmd_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         persepolis_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
         persepolis_formLayout.addRow('persepolis command:', self.persepoliscmd_lineEdit)
-        persepolis_settings = QWidget()
+        persepolis_settings = QWidget(self)
         persepolis_settings.setLayout(persepolis_formLayout)
 
-        self.dlmanagersettings_layout = QStackedLayout()
-        self.dlmanagersettings_layout.addWidget(directdl_label)
-        self.dlmanagersettings_layout.addWidget(aria2_settings)
-        self.dlmanagersettings_layout.addWidget(pyload_settings)
-        self.dlmanagersettings_layout.addWidget(persepolis_settings)
+        self.dlmanagersettings_stack = QStackedWidget()
+        self.dlmanagersettings_stack.addWidget(directdl_label)
+        self.dlmanagersettings_stack.addWidget(aria2_settings)
+        self.dlmanagersettings_stack.addWidget(pyload_settings)
+        self.dlmanagersettings_stack.addWidget(persepolis_settings)
 
         if sys.platform == 'win32':
             self.idmexepath_lineEdit = QLineEdit(self, text=self.settings.value('idm_exe_path'))
@@ -169,33 +169,30 @@ class GeneralTab(QWidget):
             self.idmexepath_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             idm_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
             idm_formLayout.addRow('IDM EXE Path:', self.idmexepath_lineEdit)
-            idm_settings = QWidget()
+            idm_settings = QWidget(self)
             idm_settings.setLayout(idm_formLayout)
-            self.dlmanagersettings_layout.addWidget(idm_settings)
+            self.dlmanagersettings_stack.addWidget(idm_settings)
 
         if sys.platform.startswith('linux'):
             self.kgetcmd_lineEdit = QLineEdit(self, text=self.settings.value('kget_cmd'))
             self.kgetcmd_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             kget_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
             kget_formLayout.addRow('kget command:', self.kgetcmd_lineEdit)
-            kget_settings = QWidget()
+            kget_settings = QWidget(self)
             kget_settings.setLayout(kget_formLayout)
-            self.dlmanagersettings_layout.addWidget(kget_settings)
+            self.dlmanagersettings_stack.addWidget(kget_settings)
 
-        self.dlmanagersettings_layout.setCurrentIndex(self.dlmanager_comboBox.currentIndex())
-        self.dlmanager_comboBox.currentIndexChanged.connect(self.dlmanagersettings_layout.setCurrentIndex)
-        # dlmanagersettings_group = QGroupBox()
-        # dlmanagersettings_group.setLayout(self.dlmanagersettings_layout)
+        self.dlmanagersettings_stack.setCurrentIndex(self.dlmanager_comboBox.currentIndex())
+        self.dlmanager_comboBox.currentIndexChanged.connect(self.dlmanagersettings_stack.setCurrentIndex)
 
         general_formlayout.addRow(QLabel(styleSheet='height:5px;'))
-        general_formlayout.addRow(self.dlmanagersettings_layout)
+        general_formlayout.addRow(self.dlmanagersettings_stack)
         general_group = QGroupBox()
         general_group.setLayout(general_layout)
 
         tab_layout = QVBoxLayout()
         tab_layout.addWidget(realdebrid_group)
         tab_layout.addWidget(general_group)
-        # tab_layout.addWidget(dlmanagersettings_group)
 
         self.setLayout(tab_layout)
 

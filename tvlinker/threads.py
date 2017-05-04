@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 import os
 import sys
 import time
@@ -10,6 +11,8 @@ from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, qApp
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 from tvlinker.filesize import size, alternative
 
@@ -194,15 +197,16 @@ class Aria2Thread(QThread):
             passwd = self.rpc_secret
         aria2_endpoint = '%s:%s/jsonrpc' % (self.rpc_host, self.rpc_port)
         headers = {'Content-Type': 'application/json'}
-        payload = {'jsonrpc': '2.0', 'id': 1, 'method': 'aria2.addUri',
-                   'params': ['%s:%s' % (user, passwd), [self.link_url]]}
+        payload = json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'aria2.addUri',
+                              'params': ['%s:%s' % (user, passwd), [self.link_url]]},
+                             sort_keys=False).encode('utf-8')
         try:
-            res = requests.post(aria2_endpoint, headers=headers, data=payload)
-            jsonres = res.json()
-            if 'result' in jsonres.keys():
-                self.aria2Confirmation.emit(True)
-            else:
-                self.aria2Confirmation.emit(False)
+            req = Request(aria2_endpoint, headers=headers, data=payload)
+            res = urlopen(req).read().decode('utf-8')
+            jsonres = json.loads(res)
+            # res = requests.post(aria2_endpoint, headers=headers, data=payload)
+            # jsonres = res.json()
+            self.aria2Confirmation.emit('result' in jsonres.keys())
         except HTTPError:
             print(sys.exc_info())
             QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
@@ -232,7 +236,7 @@ class DownloadThread(QThread):
         req = requests.get(self.download_link, stream=True, proxies=self.proxy)
         filesize = int(req.headers['Content-Length'])
         filename = os.path.basename(self.download_path)
-        downloadedChunk = 0
+        downloadedChunk = 0,
         blockSize = 8192
         start = time.clock()
         with open(self.download_path, 'wb') as f:

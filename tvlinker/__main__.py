@@ -356,8 +356,12 @@ class TVLinker(QWidget):
     def aria2_confirmation(self, success: bool) -> None:
         qApp.restoreOverrideCursor()
         if success:
-            QMessageBox.information(self, 'Aria2 RPC Daemon',
-                                    'Download link has been queued in Aria2.', QMessageBox.Ok)
+            if sys.platform.startswith('linux'):
+                self.notify(title=qApp.applicationName(), msg='Your download link has been unrestricted and now ' +
+                                                          'queued in Aria2 RPC Daemon', icon=self.NotifyIcon.SUCCESS)
+            else:
+                QMessageBox.information(self, qApp.applicationName(),
+                                        'Download link has been queued in Aria2.', QMessageBox.Ok)
         else:
             QMessageBox.critical(self, 'Aria2 RPC Daemon',
                                  'Could not connect to Aria2 RPC Daemon. ' +
