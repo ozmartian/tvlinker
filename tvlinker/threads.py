@@ -11,7 +11,6 @@ from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, qApp
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
-from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from tvlinker.filesize import size, alternative
@@ -30,7 +29,8 @@ class ShadowSocks:
 
     @staticmethod
     def proxy() -> dict:
-        return dict(http='socks5://127.0.0.1:1080', https='socks5://127.0.0.1:1080') if ShadowSocks.is_running() else dict()
+        return dict(http='socks5://127.0.0.1:1080', https='socks5://127.0.0.1:1080')\
+            if ShadowSocks.is_running() else dict()
 
 
 class ScrapeThread(QThread):
