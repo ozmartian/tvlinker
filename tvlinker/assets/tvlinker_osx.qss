@@ -47,8 +47,8 @@ QGroupBox#mainForm {
 }
 
 QGroupBox#hosters {
-    border: 1px inset #BABABA;
-    background-color: rgba(0, 0, 0, 0.05);
+    border: 1px groove #BABABA;
+    background: rgba(0, 0, 0, 0.1);
 }
 
 QLabel#heading {
@@ -57,9 +57,15 @@ QLabel#heading {
     font-weight: 500;
     text-align: center;
     padding: 10px;
-    border: 1px solid #BABABA;
-    background-color: #FAFAFA;
+    /*border: 1px solid #BABABA;
+    background-color: #FAFAFA;*/
     margin-bottom: 0
+}
+
+QLabel#pages {
+    color: #555;
+    font-size: 9pt;
+    font-weight: 500;
 }
 
 QLabel#totals {
@@ -82,8 +88,8 @@ QDialogButtonBox {
 
 #mainForm QPushButton#favesButton {
     border-image: url(:assets/images/star_off.png);
-    width: 23px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
 }
 
 #mainForm QPushButton:hover#favesButton {
