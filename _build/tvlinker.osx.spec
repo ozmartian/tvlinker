@@ -40,7 +40,7 @@ coll = COLLECT(exe,
                a.zipfiles,
                a.datas,
                strip=True,
-               upx=True,
+               upx=False,
                name='TVLinker')
 app = BUNDLE(coll,
              name='TVLinker.app',
