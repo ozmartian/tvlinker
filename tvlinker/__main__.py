@@ -52,6 +52,12 @@ class TVLinker(QWidget):
             notify.init(qApp.applicationName())
         layout = QVBoxLayout(spacing=0)
         layout.setContentsMargins(10, 10, 10, 0)
+
+        self.scrape = ScrapeThread(settings=self.settings, maxpages=self.dl_pagecount)
+        self.scrape.addRow.connect(self.add_row)
+        self.scrape.started.connect(self.show_progress)
+        self.scrape.finished.connect(self.scrape_finished)
+
         form_groupbox = QGroupBox(self, objectName='mainForm')
         form_groupbox.setLayout(self.init_form())
         layout.addWidget(form_groupbox)
@@ -129,7 +135,8 @@ class TVLinker(QWidget):
         self.search_field.returnPressed.connect(lambda: self.filter_table(self.search_field.text()))
         self.favorites_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
                                             objectName='favesButton', toolTip='Favorites', checkable=True,
-                                            toggled=self.filter_faves)
+                                            toggled=self.filter_faves,
+                                            checked=self.settings.value('faves_filter', False, bool))
         self.refresh_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
                                           objectName='refreshButton', toolTip='Refresh', clicked=self.start_scraping)
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
@@ -225,10 +232,6 @@ class TVLinker(QWidget):
             self.table.clearContents()
             self.table.setRowCount(0)
         self.table.setSortingEnabled(False)
-        self.scrape = ScrapeThread(settings=self.settings, maxpages=self.dl_pagecount)
-        self.scrape.addRow.connect(self.add_row)
-        self.scrape.started.connect(self.show_progress)
-        self.scrape.finished.connect(self.scrape_finished)
         self.progress.setValue(0)
         self.scrape.start()
 
@@ -323,6 +326,7 @@ class TVLinker(QWidget):
 
     @pyqtSlot(bool)
     def filter_faves(self, checked: bool) -> None:
+        self.settings.setValue('faves_filter', checked)
         if self.scrape.isFinished():
             self.filter_table(text='')
 

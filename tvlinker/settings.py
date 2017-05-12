@@ -74,11 +74,12 @@ class GeneralTab(QWidget):
 
         self.dlmanager_comboBox = QComboBox(self, editable=False, cursor=Qt.PointingHandCursor)
         self.dlmanager_comboBox.setAutoFillBackground(True)
-        self.dlmanager_comboBox.addItems(('built-in', 'aria2', 'pyLoad', 'Persepolis'))
+        self.dlmanager_comboBox.addItems(('built-in', 'aria2'))
         if sys.platform == 'win32':
             self.dlmanager_comboBox.addItem('IDM')
         if sys.platform.startswith('linux'):
             self.dlmanager_comboBox.addItem('KGet')
+        self.dlmanager_comboBox.addItems(('pyLoad', 'Persepolis'))            
         self.dlmanager_comboBox.setCurrentIndex(self.dlmanager_comboBox.findText(
             str(self.settings.value('download_manager')), Qt.MatchFixedString))
 
@@ -136,6 +137,17 @@ class GeneralTab(QWidget):
         aria2_settings = QWidget(self)
         aria2_settings.setLayout(aria2_formLayout)
 
+        self.dlmanagersettings_stack = QStackedWidget()
+        self.dlmanagersettings_stack.addWidget(directdl_label)
+        self.dlmanagersettings_stack.addWidget(aria2_settings)
+
+        self.persepoliscmd_lineEdit = QLineEdit(self, text=self.settings.value('persepolis_cmd'))
+        self.persepoliscmd_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        persepolis_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
+        persepolis_formLayout.addRow('persepolis command:', self.persepoliscmd_lineEdit)
+        persepolis_settings = QWidget(self)
+        persepolis_settings.setLayout(persepolis_formLayout)
+
         self.pyloadhost_lineEdit = QLineEdit(self, text=self.settings.value('pyload_host'))
         self.pyloadhost_lineEdit.setPlaceholderText('http://localhost:8000')
         self.pyloadhost_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -149,19 +161,6 @@ class GeneralTab(QWidget):
         pyload_formLayout.addRow('pyLoad Password:', self.pyloadpass_lineEdit)
         pyload_settings = QWidget(self)
         pyload_settings.setLayout(pyload_formLayout)
-
-        self.persepoliscmd_lineEdit = QLineEdit(self, text=self.settings.value('persepolis_cmd'))
-        self.persepoliscmd_lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        persepolis_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
-        persepolis_formLayout.addRow('persepolis command:', self.persepoliscmd_lineEdit)
-        persepolis_settings = QWidget(self)
-        persepolis_settings.setLayout(persepolis_formLayout)
-
-        self.dlmanagersettings_stack = QStackedWidget()
-        self.dlmanagersettings_stack.addWidget(directdl_label)
-        self.dlmanagersettings_stack.addWidget(aria2_settings)
-        self.dlmanagersettings_stack.addWidget(pyload_settings)
-        self.dlmanagersettings_stack.addWidget(persepolis_settings)
 
         if sys.platform == 'win32':
             self.idmexepath_lineEdit = QLineEdit(self, text=self.settings.value('idm_exe_path'))
@@ -181,6 +180,9 @@ class GeneralTab(QWidget):
             kget_settings = QWidget(self)
             kget_settings.setLayout(kget_formLayout)
             self.dlmanagersettings_stack.addWidget(kget_settings)
+
+        self.dlmanagersettings_stack.addWidget(persepolis_settings)
+        self.dlmanagersettings_stack.addWidget(pyload_settings)
 
         self.dlmanagersettings_stack.setCurrentIndex(self.dlmanager_comboBox.currentIndex())
         self.dlmanager_comboBox.currentIndexChanged.connect(self.dlmanagersettings_stack.setCurrentIndex)
