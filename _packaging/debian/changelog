@@ -1,3 +1,13 @@
+tvlinker (3.9.0-0) stable; urgency=low
+
+  * added support for new hoster uploadgig
+
+  * fixed download pages being changed after app launch
+
+  * fixed crash when dowloading after starting first download already
+
+  * download speed count added to built-in downloader stats
+
 tvlinker (3.8.5-0) unstable; urgency=low
 
   * numerous fixes

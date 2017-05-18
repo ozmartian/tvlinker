@@ -334,6 +334,9 @@ class TVLinker(QWidget):
         filters = []
         if self.favorites_button.isChecked():
             filters = self.favorites
+            self.table.sortItems(2, Qt.AscendingOrder)
+        else:
+            self.table.sortItems(0,Qt.DescendingOrder)
         if len(text):
             filters.append(text)
         if not len(filters) or not hasattr(self, 'valid_rows'):
