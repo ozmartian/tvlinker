@@ -112,9 +112,7 @@ class TVLinker(QWidget):
     def init_settings(self) -> None:
         self.source_url = self.settings.value('source_url')
         self.user_agent = self.settings.value('user_agent')
-        self.updater_freq = self.settings.value('updater_freq')
-        self.updater_lastcheck = self.settings.value('updater_lastcheck')
-        self.dl_pagecount = int(self.settings.value('dl_pagecount', 20))
+        self.dl_pagecount = self.settings.value('dl_pagecount', 20, int)
         self.dl_pagelinks = FixedSettings.linksPerPage
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
         self.download_manager = self.settings.value('download_manager')
@@ -263,6 +261,7 @@ class TVLinker(QWidget):
     @pyqtSlot(int)
     def update_pagecount(self, index: int) -> None:
         self.dl_pagecount = int(self.dlpages_field.itemText(index))
+        self.scrape.maxpages = self.dl_pagecount
         self.progress.setMaximum(self.dl_pagecount * self.dl_pagelinks)
         if sys.platform == 'win32':
             self.win_taskbar_button.progress().setMaximum(self.dl_pagecount * self.dl_pagelinks)
@@ -451,9 +450,8 @@ class TVLinker(QWidget):
         return notification.show()
 
     def cmdexec(self, cmd: str) -> bool:
-        if not hasattr(self, 'proc'):
-            self.proc = QProcess()
-            self.proc.setProcessChannelMode(QProcess.MergedChannels)
+        self.proc = QProcess()
+        self.proc.setProcessChannelMode(QProcess.MergedChannels)
         if hasattr(self.proc, 'errorOccurred'):
             self.proc.errorOccurred.connect(lambda error: print('Process error = %s' % self.ProcError(error).name))
         if self.proc.state() == QProcess.NotRunning:
