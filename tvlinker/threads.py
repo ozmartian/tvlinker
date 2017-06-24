@@ -7,7 +7,7 @@ import sys
 import time
 
 import requests
-from PyQt5.QtCore import QSettings, QThread, pyqtSignal
+from PyQt5.QtCore import QObject, QSettings, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox, qApp
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
@@ -17,9 +17,6 @@ from tvlinker.filesize import size, alternative
 
 
 class ShadowSocks:
-    def __init__(self):
-        super(ShadowSocks, self).__init__()
-        
     @staticmethod
     def is_running(process='ss-qt5') -> bool:
         if sys.platform.startswith('linux'):
@@ -33,45 +30,44 @@ class ShadowSocks:
             if ShadowSocks.is_running() else dict()
 
 
-class ScrapeThread(QThread):
+class ScrapeWorker(QObject):
     addRow = pyqtSignal(list)
+    workFinished = pyqtSignal()
 
-    def __init__(self, settings: QSettings, maxpages: int = 10):
-        QThread.__init__(self)
-        self.source_url = settings.value('source_url')
-        self.user_agent = settings.value('user_agent')
+    def __init__(self, source_url: str, useragent: str, maxpages: int):
+        super(ScrapeWorker, self).__init__()
         self.maxpages = maxpages
+        self.source_url = source_url
+        self.user_agent = useragent
         self.proxy = ShadowSocks.proxy()
-
-    def __del__(self) -> None:
-        self.wait()
 
     def scrape(self, pagenum: int) -> None:
         try:
-            url = self.source_url % pagenum
+            url = self.source_url.format(pagenum + 1)
             req = requests.get(url, headers={'User-Agent': self.user_agent}, proxies=self.proxy)
+            bs = BeautifulSoup(req.text, 'lxml')
+            posts = bs('div', class_='post')
+            for post in posts:
+                size = post.find('h2').get_text().strip()
+                table_row = [
+                    post.find('div', class_='p-c p-c-time').get_text().strip(),
+                    post.find('a', class_='p-title').get('href').strip(),
+                    post.find('a', class_='p-title').get_text().strip(),
+                    size[size.rfind('(') + 1:len(size) - 1]
+                ]
+                self.addRow.emit(table_row)
         except HTTPError:
-            print(sys.exc_info())
-            QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
-            self.exit()
-        bs = BeautifulSoup(req.text, 'lxml')
-        links = bs.find_all('table', class_='posts_table')
-        for link_table in links:
-            cols = link_table.tr.find_all('td')
-            table_row = [
-                cols[2].get_text().replace('\n', '').strip(),
-                cols[1].find('a').get('href').replace('\n', '').strip(),
-                cols[1].find('a').get_text().replace('\n', '').strip(),
-                cols[0].find('a').get_text().replace('TV-', '').replace('\n', '').strip()
-            ]
-            self.addRow.emit(table_row)
+            sys.stderr.write(sys.exc_info()[0])
+            QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info()[0])
+            # self.exit()
 
-    def scrape_links(self) -> None:
-        for page in range(1, self.maxpages + 1):
+    @pyqtSlot()
+    def begin(self):
+        for page in range(self.maxpages):
+            if QThread.currentThread().isInterruptionRequested():
+                return
             self.scrape(page)
-
-    def run(self) -> None:
-        self.scrape_links()
+        self.workFinished.emit()
 
 
 class HostersThread(QThread):
@@ -106,16 +102,15 @@ class HostersThread(QThread):
         self.get_hoster_links()
 
 
-class RealDebridAction:
-    UNRESTRICT_LINK = 0,
-    SUPPORTED_HOSTS = 1,
-    HOST_STATUS = 2
-
-
 class RealDebridThread(QThread):
     unrestrictedLink = pyqtSignal(str)
     supportedHosts = pyqtSignal(dict)
     hostStatus = pyqtSignal(dict)
+
+    class RealDebridAction:
+        UNRESTRICT_LINK = 0,
+        SUPPORTED_HOSTS = 1,
+        HOST_STATUS = 2
 
     def __init__(self, settings: QSettings, api_url: str, link_url: str,
                  action: RealDebridAction = RealDebridAction.UNRESTRICT_LINK, check_host: str = None):
@@ -148,7 +143,7 @@ class RealDebridThread(QThread):
                                  'Internet connection.<br/><br/>' +
                                  '<b>ERROR LOG:</b><br/>(Error Code %s) %s<br/>%s'
                                  % (qApp.applicationName(), HTTPError.code, HTTPError.reason), QMessageBox.Ok)
-            self.exit()
+            # self.exit()
 
     def unrestrict_link(self) -> None:
         jsonres = self.connect(endpoint='/unrestrict/link', payload={'link': self.link_url})
@@ -164,11 +159,11 @@ class RealDebridThread(QThread):
         self.hostStatus.emit(jsonres)
 
     def run(self) -> None:
-        if self.action == RealDebridAction.UNRESTRICT_LINK:
+        if self.action == RealDebridThread.RealDebridAction.UNRESTRICT_LINK:
             self.unrestrict_link()
-        elif self.action == RealDebridAction.SUPPORTED_HOSTS:
+        elif self.action == RealDebridThread.RealDebridAction.SUPPORTED_HOSTS:
             self.supported_hosts()
-        elif self.action == RealDebridAction.HOST_STATUS:
+        elif self.action == RealDebridThread.HOST_STATUS:
             self.host_status(self.check_host)
 
 

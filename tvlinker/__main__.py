@@ -11,8 +11,8 @@ from datetime import datetime
 from enum import Enum
 from signal import SIGINT, SIGTERM, SIG_DFL, signal
 
-from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, QTextStream, QUrl,
-                          Qt, pyqtSignal, pyqtSlot)
+from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, QTextStream,
+                          QThread, QUrl, Qt, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QFileDialog, QGroupBox,
                              QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
@@ -22,9 +22,10 @@ from tvlinker.direct_download import DirectDownload
 from tvlinker.hosters import HosterLinks
 from tvlinker.pyload import PyloadConnection
 from tvlinker.settings import Settings
-from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread, RealDebridAction, RealDebridThread,
-                              ScrapeThread)
+from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread, RealDebridThread, ScrapeWorker)
 import tvlinker.assets
+import sip
+
 
 if sys.platform == 'win32':
     from PyQt5.QtWinExtras import QWinTaskbarButton
@@ -50,13 +51,9 @@ class TVLinker(QWidget):
         self.init_icons()
         if sys.platform.startswith('linux'):
             notify.init(qApp.applicationName())
-        layout = QVBoxLayout(spacing=0)
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
         layout.setContentsMargins(10, 10, 10, 0)
-
-        self.scrape = ScrapeThread(settings=self.settings, maxpages=self.dl_pagecount)
-        self.scrape.addRow.connect(self.add_row)
-        self.scrape.started.connect(self.show_progress)
-        self.scrape.finished.connect(self.scrape_finished)
 
         form_groupbox = QGroupBox(self, objectName='mainForm')
         form_groupbox.setLayout(self.init_form())
@@ -81,6 +78,26 @@ class TVLinker(QWidget):
     class NotifyIcon(Enum):
         SUCCESS = ':assets/images/thumbsup.png'
         DEFAULT = ':assets/images/tvlinker.png'
+
+    def init_threads(self, threadtype: str = 'scrape'):
+        if threadtype == 'scrape':
+            if hasattr(self, 'scrapeThread'):
+                if not sip.isdeleted(self.scrapeThread) and self.scrapeThread.isRunning():
+                    self.scrapeThread.requestInterruption()
+            self.scrapeThread = QThread(self)
+            self.scrapeWorker = ScrapeWorker(self.source_url, self.user_agent, self.dl_pagecount)
+            self.scrapeThread.started.connect(self.show_progress)
+            self.scrapeThread.started.connect(self.scrapeWorker.begin)
+            self.scrapeWorker.moveToThread(self.scrapeThread)
+            self.scrapeWorker.addRow.connect(self.add_row)
+            self.scrapeWorker.workFinished.connect(self.scrape_finished)
+            self.scrapeWorker.workFinished.connect(self.scrapeWorker.deleteLater, Qt.DirectConnection)
+            self.scrapeWorker.workFinished.connect(self.scrapeThread.quit, Qt.DirectConnection)
+            self.scrapeThread.finished.connect(self.scrapeThread.deleteLater, Qt.DirectConnection)
+            self.scrapeThread.destroyed.connect(lambda: print('scrapeThread deleted'))
+            self.scrapeWorker.destroyed.connect(lambda: print('scrapeWorker deleted'))
+        elif threadtype == 'unrestrict':
+            pass
 
     @staticmethod
     def load_stylesheet(qssfile: str) -> None:
@@ -110,7 +127,7 @@ class TVLinker(QWidget):
         self.icon_updates = QIcon(':assets/images/cloud.png')
 
     def init_settings(self) -> None:
-        self.source_url = self.settings.value('source_url')
+        self.source_url = 'http://scene-rls.com/releases/index.php?p={0}&cat=TV%20Shows'
         self.user_agent = self.settings.value('user_agent')
         self.dl_pagecount = self.settings.value('dl_pagecount', 20, int)
         self.dl_pagelinks = FixedSettings.linksPerPage
@@ -145,7 +162,7 @@ class TVLinker(QWidget):
                                            objectName='menuButton', cursor=Qt.PointingHandCursor)
         self.settings_button.setMenu(self.settings_menu())
         layout = QHBoxLayout(spacing=10)
-        logo = QPixmap(self.get_path('images/tvrelease.png'))
+        logo = QPixmap(self.get_path('images/logo.png'))
         layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
         layout.addWidget(self.search_field)
         layout.addWidget(self.favorites_button)
@@ -176,7 +193,7 @@ class TVLinker(QWidget):
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'FORMAT'))
+        self.table.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'SIZE'))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.horizontalHeader().setMinimumSectionSize(100)
@@ -225,13 +242,13 @@ class TVLinker(QWidget):
         return True
 
     def start_scraping(self) -> None:
+        self.init_threads('scrape')
         self.rows = 0
-        if self.table.rowCount() > 0:
-            self.table.clearContents()
-            self.table.setRowCount(0)
+        self.table.clearContents()
+        self.table.setRowCount(0)
         self.table.setSortingEnabled(False)
-        self.progress.setValue(0)
-        self.scrape.start()
+        self.update_metabar()
+        self.scrapeThread.start()
 
     @pyqtSlot()
     def about_app(self) -> None:
@@ -261,8 +278,9 @@ class TVLinker(QWidget):
     @pyqtSlot(int)
     def update_pagecount(self, index: int) -> None:
         self.dl_pagecount = int(self.dlpages_field.itemText(index))
-        self.scrape.maxpages = self.dl_pagecount
+        self.scrapeWorker.maxpages = self.dl_pagecount
         self.progress.setMaximum(self.dl_pagecount * self.dl_pagelinks)
+        self.settings.setValue('dl_pagecount', self.dl_pagecount)
         if sys.platform == 'win32':
             self.win_taskbar_button.progress().setMaximum(self.dl_pagecount * self.dl_pagelinks)
         self.start_scraping()
@@ -286,28 +304,29 @@ class TVLinker(QWidget):
 
     @pyqtSlot(list)
     def add_row(self, row: list) -> None:
-        self.cols = 0
-        self.table.setRowCount(self.rows + 1)
-        if self.table.cursor() != Qt.PointingHandCursor:
-            self.table.setCursor(Qt.PointingHandCursor)
-        for item in row:
-            table_item = QTableWidgetItem(item)
-            table_item.setToolTip('%s\n\nDouble-click to view hoster links.' % row[1])
-            table_item.setFont(QFont('Open Sans', weight=QFont.Normal))
-            if self.cols == 2:
-                if sys.platform == 'win32':
-                    table_item.setFont(QFont('Open Sans Semibold', pointSize=10))
-                elif sys.platform == 'darwin':
-                    table_item.setFont(QFont('Open Sans Bold', weight=QFont.Bold))
-                else:
-                    table_item.setFont(QFont('Open Sans', weight=QFont.DemiBold, pointSize=10))
-                table_item.setText('  ' + table_item.text())
-            elif self.cols in (0, 3):
-                table_item.setTextAlignment(Qt.AlignCenter)
-            self.table.setItem(self.rows, self.cols, table_item)
-            self.update_metabar()
-            self.cols += 1
-        self.rows += 1
+        if not self.scrapeThread.isInterruptionRequested():
+            self.cols = 0
+            self.table.setRowCount(self.rows + 1)
+            if self.table.cursor() != Qt.PointingHandCursor:
+                self.table.setCursor(Qt.PointingHandCursor)
+            for item in row:
+                table_item = QTableWidgetItem(item)
+                table_item.setToolTip('%s\n\nDouble-click to view hoster links.' % row[1])
+                table_item.setFont(QFont('Open Sans', weight=QFont.Normal))
+                if self.cols == 2:
+                    if sys.platform == 'win32':
+                        table_item.setFont(QFont('Open Sans Semibold', pointSize=10))
+                    elif sys.platform == 'darwin':
+                        table_item.setFont(QFont('Open Sans Bold', weight=QFont.Bold))
+                    else:
+                        table_item.setFont(QFont('Open Sans', weight=QFont.DemiBold, pointSize=10))
+                    table_item.setText('  ' + table_item.text())
+                elif self.cols in (0, 3):
+                    table_item.setTextAlignment(Qt.AlignCenter)
+                self.table.setItem(self.rows, self.cols, table_item)
+                self.update_metabar()
+                self.cols += 1
+            self.rows += 1
 
     @pyqtSlot(list)
     def add_hosters(self, hosters: list) -> None:
@@ -326,7 +345,7 @@ class TVLinker(QWidget):
     @pyqtSlot(bool)
     def filter_faves(self, checked: bool) -> None:
         self.settings.setValue('faves_filter', checked)
-        if self.scrape.isFinished():
+        if self.scrapeThread.isFinished():
             self.filter_table(text='')
 
     @pyqtSlot(str)
@@ -389,10 +408,13 @@ class TVLinker(QWidget):
                 pid = self.pyload_conn.addPackage(name='TVLinker', links=[link])
                 qApp.restoreOverrideCursor()
                 self.hosters_win.close()
-                msgbox = QMessageBox.information(self, 'pyLoad Download Manager',
-                                                 'Download link has been queued in pyLoad.', QMessageBox.Ok)
-                open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
-                open_pyload.clicked.connect(self.open_pyload)
+                if sys.platform.startswith('linux'):
+                    self.notify(title='Download added to %s' % self.download_manager, icon=self.NotifyIcon.SUCCESS)
+                else:
+                    QMessageBox.information(self, self.download_manager, 'Your link has been queued in %s.'
+                                            % self.download_manager, QMessageBox.Ok)
+                # open_pyload = msgbox.addButton('Open pyLoad', QMessageBox.AcceptRole)
+                # open_pyload.clicked.connect(self.open_pyload)
             elif self.download_manager in ('kget', 'persepolis'):
                 provider = self.kget_cmd if self.download_manager == 'kget' else self.persepolis_cmd
                 cmd = '{0} "{1}"'.format(provider, link)
@@ -409,8 +431,7 @@ class TVLinker(QWidget):
                 if self.cmdexec(cmd):
                     qApp.restoreOverrideCursor()
                     self.hosters_win.close()
-                    QMessageBox.information(self, 'Internet Download Manager', 'Your link has been queued in IDM.',
-                                            QMessageBox.Ok)
+                    QMessageBox.information(self, 'Internet Download Manager', 'Your link has been queued in IDM.')
                 else:
                     print('IDM QProcess error = %s' % self.ProcError(self.idm.error()).name)
                     qApp.restoreOverrideCursor()
@@ -428,10 +449,12 @@ class TVLinker(QWidget):
                     self.directdl.dlComplete.connect(self.directdl_win.download_complete)
                     if sys.platform.startswith('linux'):
                         self.directdl.dlComplete.connect(lambda: self.notify(qApp.applicationName(),
-                                                           'Download complete', self.NotifyIcon.SUCCESS))
+                                                                             'Download complete',
+                                                                             self.NotifyIcon.SUCCESS))
                     else:
-                        self.directdl.dlComplete.connect(lambda: QMessageBox.information(self, qApp.applicationName,
-                                                           'Download complete', QMessageBox.Ok))
+                        self.directdl.dlComplete.connect(lambda: QMessageBox.information(self, qApp.applicationName(),
+                                                                                         'Download complete',
+                                                                                         QMessageBox.Ok))
                     self.directdl.dlProgressTxt.connect(self.directdl_win.update_progress_label)
                     self.directdl.dlProgress.connect(self.directdl_win.update_progress)
                     self.directdl_win.cancelDownload.connect(self.cancel_download)
@@ -468,7 +491,7 @@ class TVLinker(QWidget):
     @pyqtSlot()
     def cancel_download(self) -> None:
         self.directdl.cancel_download = True
-        self.directdl.terminate()
+        self.directdl.quit()
         self.directdl.deleteLater()
 
     def open_pyload(self) -> None:
@@ -488,7 +511,7 @@ class TVLinker(QWidget):
     def unrestrict_link(self, link: str, download: bool = True) -> None:
         caller = inspect.stack()[1].function
         self.realdebrid = RealDebridThread(settings=self.settings, api_url=FixedSettings.realdebrid_api_url,
-                                           link_url=link, action=RealDebridAction.UNRESTRICT_LINK)
+                                           link_url=link, action=RealDebridThread.RealDebridAction.UNRESTRICT_LINK)
         if download:
             self.realdebrid.unrestrictedLink.connect(self.download_link)
         else:

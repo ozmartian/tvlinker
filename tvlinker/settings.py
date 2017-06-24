@@ -83,25 +83,25 @@ class GeneralTab(QWidget):
         self.dlmanager_comboBox.setCurrentIndex(self.dlmanager_comboBox.findText(
             str(self.settings.value('download_manager')), Qt.MatchFixedString))
 
-        self.dlpagecount_comboBox = QComboBox(self, toolTip='Default Page Count', editable=False,
-                                              cursor=Qt.PointingHandCursor)
-        self.dlpagecount_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.dlpagecount_comboBox.addItems(('10', '20', '30', '40', '50'))
-        self.dlpagecount_comboBox.setCurrentIndex(self.dlpagecount_comboBox.findText(
-            str(self.settings.value('dl_pagecount')), Qt.MatchFixedString))
+        # self.dlpagecount_comboBox = QComboBox(self, toolTip='Default Page Count', editable=False,
+        #                                       cursor=Qt.PointingHandCursor)
+        # self.dlpagecount_comboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        # self.dlpagecount_comboBox.addItems(('10', '20', '30', '40', '50'))
+        # self.dlpagecount_comboBox.setCurrentIndex(self.dlpagecount_comboBox.findText(
+        #     str(self.settings.value('dl_pagecount')), Qt.MatchFixedString))
 
         minchars = 20
 
         self.dlmanager_comboBox.setMinimumContentsLength(minchars)
-        self.dlpagecount_comboBox.setMinimumContentsLength(minchars)
+        # self.dlpagecount_comboBox.setMinimumContentsLength(minchars)
 
         general_formlayout = QFormLayout(labelAlignment=Qt.AlignRight)
-        general_formlayout.addRow('Default Page Count:', self.dlpagecount_comboBox)
+        # general_formlayout.addRow('Default Page Count:', self.dlpagecount_comboBox)
         general_formlayout.addRow('Download Manager:', self.dlmanager_comboBox)
-        general_layout = QHBoxLayout()
-        general_layout.addStretch(1)
-        general_layout.addLayout(general_formlayout)
-        general_layout.addStretch(1)
+        # general_layout = QHBoxLayout()
+        # general_layout.addStretch(1)
+        # general_layout.addLayout(general_formlayout)
+        # general_layout.addStretch(1)
 
         directdl_label = QLabel('No settings for built-in downloader')
         directdl_label.setStyleSheet('font-weight:300; text-align:center;')
@@ -187,19 +187,20 @@ class GeneralTab(QWidget):
         self.dlmanagersettings_stack.setCurrentIndex(self.dlmanager_comboBox.currentIndex())
         self.dlmanager_comboBox.currentIndexChanged.connect(self.dlmanagersettings_stack.setCurrentIndex)
 
-        general_formlayout.addRow(QLabel(styleSheet='height:5px;'))
         general_formlayout.addRow(self.dlmanagersettings_stack)
         general_group = QGroupBox()
-        general_group.setLayout(general_layout)
+        general_group.setLayout(general_formlayout)
 
         tab_layout = QVBoxLayout()
+        tab_layout.addStretch(1)
         tab_layout.addWidget(realdebrid_group)
         tab_layout.addWidget(general_group)
+        tab_layout.addStretch(1)
 
         self.setLayout(tab_layout)
 
     def save(self) -> None:
-        self.settings.setValue('dl_pagecount', self.dlpagecount_comboBox.currentText())
+        # self.settings.setValue('dl_pagecount', self.dlpagecount_comboBox.currentText())
         self.settings.setValue('realdebrid_apitoken', self.realdebridtoken_lineEdit.text())
         self.settings.setValue('download_manager', self.dlmanager_comboBox.currentText().lower())
         if self.dlmanager_comboBox.currentText() == 'aria2':

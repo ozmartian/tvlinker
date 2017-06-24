@@ -11,11 +11,13 @@
     <file>assets/images/down_arrow.png</file>
     <file>assets/images/download_icon.png</file>
     <file>assets/images/hoster_filefactory.png</file>
+    <file>assets/images/hoster_go4up.png</file>
     <file>assets/images/hoster_multiup.png</file>
     <file>assets/images/hoster_rapidgator.png</file>
     <file>assets/images/hoster_ul.to.png</file>
     <file>assets/images/hoster_uploadgig.png</file>
     <file>assets/images/hoster_uploading.site.png</file>
+    <file>assets/images/logo.png</file>
     <file>assets/images/menu.png</file>
     <file>assets/images/menu_hover.png</file>
     <file>assets/images/minus.png</file>
@@ -29,7 +31,6 @@
     <file>assets/images/star_on.png</file>
     <file>assets/images/thumbsup.png</file>
     <file>assets/images/tvlinker.png</file>
-    <file>assets/images/tvrelease.png</file>
     <file>assets/images/up_arrow.png</file>
     <file>assets/images/watermark.png</file>
     <file>assets/tvlinker.qss</file>

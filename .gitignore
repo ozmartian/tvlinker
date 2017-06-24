@@ -120,3 +120,4 @@ _packaging/archlinux/*.tar.gz
 _packaging/archlinux/*.pkg.*
 
 _build/InnoSetup/Output/*
+/tvlinker/assets/fonts/

@@ -59,7 +59,7 @@ class HosterLinks(QDialog):
             self.layout.addWidget(title_label)
         for hoster in hosters:
             index = hosters.index(hoster)
-            hoster_name = self.get_hoster_name(self.hosters[index])
+            hoster_name = HosterLinks.get_hoster_name(self.hosters[index])
             hoster_logo = QLabel(pixmap=QPixmap(self.parent.get_path('images/hoster_%s.png' % hoster_name)),
                                  toolTip=hoster_name)
             hoster_logo.setMinimumWidth(285)
@@ -99,7 +99,8 @@ class HosterLinks(QDialog):
         self.show()
         qApp.restoreOverrideCursor()
 
-    def get_hoster_name(self, link: str) -> str:
+    @staticmethod
+    def get_hoster_name(link: str) -> str:
         return QUrl(link).host().replace('www.', '').replace('.com', '').replace('.net', '').replace('.org', '')
 
     @pyqtSlot(int)
