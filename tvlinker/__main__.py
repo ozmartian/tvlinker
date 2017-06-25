@@ -22,7 +22,7 @@ from tvlinker.direct_download import DirectDownload
 from tvlinker.hosters import HosterLinks
 from tvlinker.pyload import PyloadConnection
 from tvlinker.settings import Settings
-from tvlinker.threads import (Aria2Thread, DownloadThread, HostersThread, RealDebridThread, ScrapeWorker)
+from tvlinker.threads import Aria2Thread, DownloadThread, HostersThread, RealDebridThread, ScrapeWorker
 import tvlinker.assets
 import sip
 
@@ -61,7 +61,7 @@ class TVLinker(QWidget):
         layout.addWidget(self.init_table())
         layout.addLayout(self.init_metabar())
         self.setLayout(layout)
-        self.setWindowTitle(qApp.applicationName())
+        self.setWindowTitle('%s :: Scene-RLS' % qApp.applicationName())
         qApp.setWindowIcon(self.icon_app)
         self.resize(FixedSettings.windowSize)
         self.show()
@@ -94,8 +94,6 @@ class TVLinker(QWidget):
             self.scrapeWorker.workFinished.connect(self.scrapeWorker.deleteLater, Qt.DirectConnection)
             self.scrapeWorker.workFinished.connect(self.scrapeThread.quit, Qt.DirectConnection)
             self.scrapeThread.finished.connect(self.scrapeThread.deleteLater, Qt.DirectConnection)
-            self.scrapeThread.destroyed.connect(lambda: print('scrapeThread deleted'))
-            self.scrapeWorker.destroyed.connect(lambda: print('scrapeWorker deleted'))
         elif threadtype == 'unrestrict':
             pass
 
@@ -162,8 +160,9 @@ class TVLinker(QWidget):
                                            objectName='menuButton', cursor=Qt.PointingHandCursor)
         self.settings_button.setMenu(self.settings_menu())
         layout = QHBoxLayout(spacing=10)
-        logo = QPixmap(self.get_path('images/logo.png'))
-        layout.addWidget(QLabel(pixmap=logo.scaledToHeight(36, Qt.SmoothTransformation)))
+        logo = QLabel(self)
+        logo.setPixmap(QPixmap(':assets/images/logo.png'))
+        layout.addWidget(logo)
         layout.addWidget(self.search_field)
         layout.addWidget(self.favorites_button)
         layout.addWidget(self.refresh_button)
@@ -328,24 +327,24 @@ class TVLinker(QWidget):
                 self.cols += 1
             self.rows += 1
 
-    @pyqtSlot(list)
-    def add_hosters(self, hosters: list) -> None:
-        self.hosters_win.show_hosters(hosters)
+    @pyqtSlot(list, list)
+    def add_hosters(self, titles: list, links: list) -> None:
+        self.hosters_win.show_hosters(titles, links)
 
     @pyqtSlot(QModelIndex)
     def show_hosters(self, index: QModelIndex) -> None:
         qApp.setOverrideCursor(Qt.BusyCursor)
-        self.hosters_win = HosterLinks(parent=self, title=self.table.item(self.table.currentRow(), 2).text())
+        self.hosters_win = HosterLinks(self)
         self.hosters_win.downloadLink.connect(self.download_link)
         self.hosters_win.copyLink.connect(self.copy_download_link)
-        self.links = HostersThread(settings=self.settings, link_url=self.table.item(self.table.currentRow(), 1).text())
+        self.links = HostersThread(self.table.item(self.table.currentRow(), 1).text(), self.user_agent)
         self.links.setHosters.connect(self.add_hosters)
         self.links.start()
 
     @pyqtSlot(bool)
     def filter_faves(self, checked: bool) -> None:
         self.settings.setValue('faves_filter', checked)
-        if self.scrapeThread.isFinished():
+        if hasattr(self, 'scrapeWorker') and (sip.isdeleted(self.scrapeWorker) or self.scrapeWorker.complete):
             self.filter_table(text='')
 
     @pyqtSlot(str)

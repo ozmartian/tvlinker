@@ -6,7 +6,9 @@ import os
 import sys
 import time
 
+import cfscrape
 import requests
+
 from PyQt5.QtCore import QObject, QSettings, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox, qApp
 from bs4 import BeautifulSoup
@@ -40,6 +42,7 @@ class ScrapeWorker(QObject):
         self.source_url = source_url
         self.user_agent = useragent
         self.proxy = ShadowSocks.proxy()
+        self.complete = False
 
     def scrape(self, pagenum: int) -> None:
         try:
@@ -48,12 +51,12 @@ class ScrapeWorker(QObject):
             bs = BeautifulSoup(req.text, 'lxml')
             posts = bs('div', class_='post')
             for post in posts:
-                size = post.find('h2').get_text().strip()
+                dlsize = post.find('h2').get_text().strip()
                 table_row = [
                     post.find('div', class_='p-c p-c-time').get_text().strip(),
                     post.find('a', class_='p-title').get('href').strip(),
                     post.find('a', class_='p-title').get_text().strip(),
-                    size[size.rfind('(') + 1:len(size) - 1]
+                    dlsize[dlsize.rfind('(') + 1:len(dlsize) - 1]
                 ]
                 self.addRow.emit(table_row)
         except HTTPError:
@@ -67,17 +70,19 @@ class ScrapeWorker(QObject):
             if QThread.currentThread().isInterruptionRequested():
                 return
             self.scrape(page)
+        self.complete = True
         self.workFinished.emit()
 
 
 class HostersThread(QThread):
-    setHosters = pyqtSignal(list)
+    setHosters = pyqtSignal(list, list)
 
-    def __init__(self, settings: QSettings, link_url: str):
+    def __init__(self, link_url: str, useragent: str):
         QThread.__init__(self)
-        self.user_agent = settings.value('user_agent')
         self.link_url = link_url
+        self.user_agent = useragent
         self.proxy = ShadowSocks.proxy()
+        self.scraper = cfscrape.create_scraper()
 
     def __del__(self) -> None:
         self.wait()
@@ -85,18 +90,18 @@ class HostersThread(QThread):
     def get_hoster_links(self) -> None:
         hosters = list()
         try:
-            req = requests.get(self.link_url, headers={'User-Agent': self.user_agent}, proxies=self.proxy)
+            req = self.scraper.get(self.link_url, proxies=self.proxy)
+            bs = BeautifulSoup(req.text, 'lxml')
+            titles = bs.select('div.post p[style="text-align: center;"]')
+            del titles[0]
+            links = bs.select('div.post h2[style="text-align: center;"]')
+            for title in titles:
+                link = links[titles.index(title)]
+            self.setHosters.emit(titles, links)
         except HTTPError:
-            print(sys.exc_info())
-            QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
-            self.exit()
-        bs = BeautifulSoup(req.text, 'lxml')
-        dltable = bs.find('table', id='download_table').find_all('tr')
-        for hoster_html in dltable:
-            link = hoster_html.find('td', class_='td_cols').get_text()
-            if len(link.strip()) > 0:
-                hosters.append(link)
-        self.setHosters.emit(hosters)
+            print(sys.exc_info()[0])
+            QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info()[0])
+            # self.exit()
 
     def run(self) -> None:
         self.get_hoster_links()

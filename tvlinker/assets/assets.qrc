@@ -10,13 +10,16 @@
     <file>assets/images/direct.png</file>
     <file>assets/images/down_arrow.png</file>
     <file>assets/images/download_icon.png</file>
-    <file>assets/images/hoster_filefactory.png</file>
-    <file>assets/images/hoster_go4up.png</file>
-    <file>assets/images/hoster_multiup.png</file>
-    <file>assets/images/hoster_rapidgator.png</file>
-    <file>assets/images/hoster_ul.to.png</file>
-    <file>assets/images/hoster_uploadgig.png</file>
-    <file>assets/images/hoster_uploading.site.png</file>
+    <file>assets/images/hosters/filefactory.png</file>
+    <file>assets/images/hosters/go4up.png</file>
+    <file>assets/images/hosters/multiup.png</file>
+    <file>assets/images/hosters/nitroflare.png</file>
+    <file>assets/images/hosters/openload.png</file>
+    <file>assets/images/hosters/rapidgator.png</file>
+    <file>assets/images/hosters/uploaded.png</file>
+    <file>assets/images/hosters/uploadgig.png</file>
+    <file>assets/images/hosters/uploadrocket.png</file>
+    <file>assets/images/hosters/uploading.site.png</file>
     <file>assets/images/logo.png</file>
     <file>assets/images/menu.png</file>
     <file>assets/images/menu_hover.png</file>

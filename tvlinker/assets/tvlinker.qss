@@ -86,6 +86,18 @@ QDialogButtonBox {
     margin: 10px;
 }
 
+#hosters QPushButton {
+    border: none;
+    outline: none;
+    background-color: transparent;
+    margin: 0;
+    padding: 0;
+}
+
+#hosters QPushButton::menu-indicator {
+    left: -2000px;
+}
+
 #mainForm QPushButton#favesButton {
     border-image: url(:assets/images/star_off.png);
     width: 30px;
@@ -123,4 +135,3 @@ QDialogButtonBox {
 #mainForm QPushButton::menu-indicator#menuButton {
     left: -1000px;
 }
-
