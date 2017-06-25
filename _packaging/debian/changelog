@@ -1,34 +1,28 @@
+tvlinker (4.0.0-0) stable; urgnecy=medium
+  * massive overhaul of scraping code to use Scene-RLS.com as the TV
+    show source website due to tv-release.net closing down.
+  * supports cracking through CloudFlare.net bot-checker
+  * multithreading rewrite for faster scraping/downloading + most
+    stability, less crashes
+
 tvlinker (3.9.0-0) stable; urgency=low
-
   * added support for new hoster uploadgig
-
   * fixed download pages being changed after app launch
-
   * fixed crash when dowloading after starting first download already
-
   * download speed count added to built-in downloader stats
 
 tvlinker (3.8.5-0) unstable; urgency=low
-
   * numerous fixes
-
   * requests lib now used for most HTTP related code
-
   * aria2 RPC daemon fix
-
   * dbus notifications for Linux platform instead of ugly QMessageBox
 
 tvlinker (3.6.5-0) unstable; urgency=low
-
   * patch update
 
 tvlinker (3.6.0-0) unstable; urgency=low
-  
   * kget + persepolis download managers bugfix; should now be working 100%
-
   * fixes / updates due to HTML changes upstram at tv-release.pw that was
     breaking the scraper code
-
   * new hosters added (go4up & multiup)
-
   * improvments to error handling + shell execution

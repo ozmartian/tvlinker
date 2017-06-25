@@ -79,7 +79,7 @@ class GeneralTab(QWidget):
             self.dlmanager_comboBox.addItem('IDM')
         if sys.platform.startswith('linux'):
             self.dlmanager_comboBox.addItem('KGet')
-        self.dlmanager_comboBox.addItems(('pyLoad', 'Persepolis'))            
+        self.dlmanager_comboBox.addItems(('Persepolis', 'pyLoad'))
         self.dlmanager_comboBox.setCurrentIndex(self.dlmanager_comboBox.findText(
             str(self.settings.value('download_manager')), Qt.MatchFixedString))
 
@@ -96,12 +96,11 @@ class GeneralTab(QWidget):
         # self.dlpagecount_comboBox.setMinimumContentsLength(minchars)
 
         general_formlayout = QFormLayout(labelAlignment=Qt.AlignRight)
-        # general_formlayout.addRow('Default Page Count:', self.dlpagecount_comboBox)
         general_formlayout.addRow('Download Manager:', self.dlmanager_comboBox)
-        # general_layout = QHBoxLayout()
-        # general_layout.addStretch(1)
-        # general_layout.addLayout(general_formlayout)
-        # general_layout.addStretch(1)
+        general_layout = QHBoxLayout()
+        general_layout.addStretch(1)
+        general_layout.addLayout(general_formlayout)
+        general_layout.addStretch(1)
 
         directdl_label = QLabel('No settings for built-in downloader')
         directdl_label.setStyleSheet('font-weight:300; text-align:center;')
@@ -189,7 +188,7 @@ class GeneralTab(QWidget):
 
         general_formlayout.addRow(self.dlmanagersettings_stack)
         general_group = QGroupBox()
-        general_group.setLayout(general_formlayout)
+        general_group.setLayout(general_layout)
 
         tab_layout = QVBoxLayout()
         tab_layout.addStretch(1)
