@@ -14,16 +14,16 @@ Description: TV show link scraper + downloader for Scene-RLS.com with a modern P
  .
  *** Recently updated for Scene-RLS.com due to tv-release.net closing down ***
  .
- You get link scraping together with integration to the real-debrid link
- unrestrictor service via their API (NOTE: a valid real-debrid account is required for link
- unrestricting to work).
+ You get link scraping together with integration to the real-debrid link unrestrictor
+ service via their API (NOTE: a valid real-debrid account is required for link unrestricting
+ to work).
  .
  Supports a number of download managers across platforms:
  .
     Built-in (window/linux)
     Aria2 RPC Daemon (windows/linux)
+    Internet Download Manager (windows)
     KGet (linux)
-    Internet Download Manager (windows only)
     Persepolis (windows/linux)
     pyload (windows/linux)
  .
