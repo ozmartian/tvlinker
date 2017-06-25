@@ -236,7 +236,7 @@ class DownloadThread(QThread):
         req = requests.get(self.download_link, stream=True, proxies=self.proxy)
         filesize = int(req.headers['Content-Length'])
         filename = os.path.basename(self.download_path)
-        downloadedChunk = 0,
+        downloadedChunk = 0
         blockSize = 8192
         start = time.clock()
         with open(self.download_path, 'wb') as f:
