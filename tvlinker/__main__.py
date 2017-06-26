@@ -16,8 +16,8 @@ from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QSettings, QS
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QFileDialog, QGroupBox,
                              QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar,
-                             QProxyStyle, QPushButton, QSizePolicy, QStyle, QStyleHintReturn, QStyleOption,
-                             QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, qApp)
+                             QProxyStyle, QPushButton, QSizePolicy, QStyle, QStyleFactory, QStyleHintReturn,
+                             QStyleOption, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, qApp)
 
 from tvlinker.direct_download import DirectDownload
 from tvlinker.hosters import HosterLinks
@@ -204,6 +204,8 @@ class TVLinker(QWidget):
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.horizontalHeader().setMinimumSectionSize(100)
+        if sys.platform == 'win32':
+            self.table.setStyle(QStyleFactory.create('Fusion'))
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.sortByColumn(0, Qt.DescendingOrder)
         self.table.doubleClicked.connect(self.show_hosters)
