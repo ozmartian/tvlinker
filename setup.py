@@ -28,7 +28,7 @@ def get_description(filename='README.md'):
 
 def get_install_requires():
     if packager == 'pypi':
-        return ['PyQt5', 'beautifulsoup4', 'lxml', 'requests', 'requests[socks]', 'cfscrape']
+        return ['PyQt5', 'beautifulsoup4', 'lxml', 'requests', 'cfscrape']
     else:
         return ['cfscrape', 'requests[socks]']
 
@@ -66,6 +66,8 @@ setup(
     setup_requires=['setuptools'],
 
     install_requires=get_install_requires(),
+
+    extras_require={ 'SOCKS4, SOCKS5 Proxy': ['requests[socks]'] },
 
     package_data={ 'tvlinker': ['README.md', 'LICENSE', 'tvlinker/tvlinker.ini'] },
 
