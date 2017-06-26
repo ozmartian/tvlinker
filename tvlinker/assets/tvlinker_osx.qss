@@ -47,7 +47,8 @@ QGroupBox#mainForm {
 }
 
 QGroupBox#hosters {
-    border: 1px inset #BABABA;
+    border: 1px inset #CACACA;
+    background-color: rgba(152, 150, 171, 0.4);
 }
 
 QLabel#pages {

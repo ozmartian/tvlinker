@@ -4,9 +4,9 @@
 from bs4 import BeautifulSoup, SoupStrainer, Tag
 
 from PyQt5.QtCore import QSize, QUrl, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon
+from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon, QMouseEvent
 from PyQt5.QtWidgets import (QDialog, QGroupBox, QHBoxLayout, QLabel, QMenu, QProgressDialog, QPushButton, QScrollArea,
-                             QSizePolicy, QStyleFactory, QVBoxLayout, QWidget, qApp)
+                             QStyleFactory, QVBoxLayout, QWidget, qApp)
 
 
 class HosterLinks(QDialog):
@@ -23,57 +23,77 @@ class HosterLinks(QDialog):
         self.loading_progress.setMinimumWidth(485)
         self.loading_progress.setWindowModality(Qt.ApplicationModal)
         self.loading_progress.show()
-        self.setMaximumHeight(700)
-        self.setMinimumHeight(600)
         self.layout = QVBoxLayout()
         self.layout.setSpacing(15)
         self.setLayout(self.layout)
         self.setWindowTitle('Hoster Links')
         self.setWindowModality(Qt.ApplicationModal)
-        self.copy_icon = QIcon(self.parent.get_path('images/copy_icon.png'))
-        self.open_icon = QIcon(self.parent.get_path('images/open_icon.png'))
-        self.download_icon = QIcon(self.parent.get_path('images/download_icon.png'))
 
-    def show_hosters(self, titles: list, links: list) -> None:
-        self.titles = titles
+    def show_hosters(self, links: list) -> None:
         self.links = links
         self.loading_progress.cancel()
-        self.setMinimumWidth(850)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setMinimumSize(810, 600)
         hosterswidget_layout = QVBoxLayout()
-        for title in titles:
-            title_label = QLabel(HosterLinks.bs_tag_to_string(title), self)
+        for tag in self.links:
+            title_label = QLabel(HosterLinks.bs_tag_to_string(tag.find_previous('p')), self)
             title_label.setOpenExternalLinks(True)
             title_label.setAlignment(Qt.AlignCenter)
-            title_label.setStyleSheet('QLabel { font-size:15px; }')
+            title_label.setStyleSheet('QLabel { font-size:15px; padding:8px; border:1px solid #A0A0A0; background-color:rgba(255, 255, 255, 0.9); }')
             title_layout = QHBoxLayout()
             title_layout.setContentsMargins(0, 0, 0, 0)
-            title_layout.setSpacing(10)
+            title_layout.setSpacing(5)
             title_layout.addStretch(1)
-            hoster_index = titles.index(title)
-            link_bs = self.links[hoster_index]
-            bs = BeautifulSoup(HosterLinks.bs_tag_to_string(link_bs), 'lxml', parse_only=SoupStrainer('a'))
+            bs = BeautifulSoup(HosterLinks.bs_tag_to_string(tag), 'lxml', parse_only=SoupStrainer('a'))
             for anchor in bs:
                 link = anchor['href']
                 hoster_name = HosterLinks.get_hoster_name(link)
                 menu = QMenu(self)
                 menu.setCursor(Qt.PointingHandCursor)
-                menu.addAction(self.copy_icon, ' COPY LINK', lambda: self.copy_link(link))
-                menu.addAction(self.open_icon, ' OPEN LINK', lambda: self.open_link(link))
-                menu.addAction(self.download_icon, ' DOWNLOAD', lambda: self.download_link(link))
+                menu.addAction('  COPY LINK', lambda: self.copy_link(link), 0)
+                menu.addAction('  OPEN LINK', lambda: self.open_link(link), 0)
+                menu.addAction(' DOWNLOAD', lambda: self.download_link(link), 0)
                 hoster_btn = QPushButton(self)
-                hoster_btn.setFlat(True)
+                hoster_btn.setStyle(QStyleFactory.create('Fusion'))
+                hoster_btn.setDefault(False)
+                hoster_btn.setAutoDefault(False)
                 hoster_btn.setToolTip(hoster_name)
                 hoster_btn.setCursor(Qt.PointingHandCursor)
                 hoster_btn.setIcon(QIcon(self.parent.get_path('images/hosters/%s.png' % hoster_name)))
-                hoster_btn.setIconSize(QSize(120, 26))
-                hoster_btn.setFixedSize(120, 26)
+                hoster_btn.setIconSize(QSize(100, 21))
+                hoster_btn.setStyleSheet('''
+                    QPushButton {
+                        /* background-color: #FCFCFC; */
+                        background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                          stop: 0 #dadbde, stop: 1 #f6f7fa);
+                        padding: 6px 0;
+                        border-radius: 3px;
+                        border: 1px solid #A0A0A0;
+                    }
+                    QPushButton:pressed, QPushButton:hover {
+                        background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                          stop: 0 #f6f7fa, stop: 1 #dadbde);
+                    }''')
+                menu.setFixedWidth(118)
+                menu.setStyleSheet('''
+                    QMenu {
+                        border-radius: 0;
+                        border: 1px solid #C0C2C3;
+                        background-color: #FAFAFA;
+                        color: #4C4C4C;
+                    }
+                    QMenu::item {
+                        text-align: center;
+                    }
+                    QMenu::item:selected, QMenu::item:hover {
+                        background-color: #6A687D;
+                        color: #FFF;
+                    }''')
                 hoster_btn.setMenu(menu)
                 title_layout.addWidget(hoster_btn)
             title_layout.addStretch(1)
             hoster_layout = QVBoxLayout()
             hoster_layout.addWidget(title_label)
-            hoster_layout.addSpacing(15)
+            hoster_layout.addSpacing(5)
             hoster_layout.addLayout(title_layout)
             groupbox = QGroupBox(self)
             groupbox.setObjectName('hosters')
@@ -83,6 +103,7 @@ class HosterLinks(QDialog):
         hosters_widget = QWidget(self)
         hosters_widget.setLayout(hosterswidget_layout)
         scrollarea = QScrollArea(self)
+        scrollarea.setStyleSheet('QScrollArea { border:none; }')
         scrollarea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scrollarea.setWidget(hosters_widget)
         self.layout.addWidget(scrollarea)
@@ -99,20 +120,21 @@ class HosterLinks(QDialog):
             .replace('.org', '').replace('.co', '')
         return 'uploaded' if name == 'ul.to' else name
 
-    @pyqtSlot(int)
+    @pyqtSlot(str)
     def copy_link(self, link: str) -> None:
         self.copyLink.emit(link)
 
-    @pyqtSlot(int)
+    @pyqtSlot(str)
     def open_link(self, link: str) -> None:
         QDesktopServices.openUrl(QUrl(link))
         self.close()
 
-    @pyqtSlot(int)
+    @pyqtSlot(str)
     def download_link(self, link: str) -> None:
         self.downloadLink.emit(link)
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        self.loading_progress.cancel()
         self.deleteLater()
         qApp.restoreOverrideCursor()
         super(QDialog, self).closeEvent(event)

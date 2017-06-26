@@ -15,8 +15,9 @@ from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QSettings, QS
                           QThread, QUrl, Qt, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QFileDialog, QGroupBox,
-                             QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton,
-                             QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, qApp)
+                             QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar,
+                             QProxyStyle, QPushButton, QSizePolicy, QStyle, QStyleHintReturn, QStyleOption,
+                             QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, qApp)
 
 from tvlinker.direct_download import DirectDownload
 from tvlinker.hosters import HosterLinks
@@ -36,6 +37,13 @@ if sys.platform.startswith('linux'):
 signal(SIGINT, SIG_DFL)
 signal(SIGTERM, SIG_DFL)
 warnings.filterwarnings('ignore')
+
+
+class OverrideStyle(QProxyStyle):
+    def styleHint(self, hint, option: QStyleOption=0, widget: QWidget=0, returnData: QStyleHintReturn=0) -> int:
+        if hint in {QStyle.SH_UnderlineShortcut, QStyle.SH_DialogButtons_DefaultButton}:
+            return 0
+        return QProxyStyle.styleHint(self, hint, option, widget, returnData)
 
 
 class TVLinker(QWidget):
@@ -327,9 +335,9 @@ class TVLinker(QWidget):
                 self.cols += 1
             self.rows += 1
 
-    @pyqtSlot(list, list)
-    def add_hosters(self, titles: list, links: list) -> None:
-        self.hosters_win.show_hosters(titles, links)
+    @pyqtSlot(list)
+    def add_hosters(self, links: list) -> None:
+        self.hosters_win.show_hosters(links)
 
     @pyqtSlot(QModelIndex)
     def show_hosters(self, index: QModelIndex) -> None:
@@ -339,7 +347,16 @@ class TVLinker(QWidget):
         self.hosters_win.copyLink.connect(self.copy_download_link)
         self.links = HostersThread(self.table.item(self.table.currentRow(), 1).text(), self.user_agent)
         self.links.setHosters.connect(self.add_hosters)
+        self.links.noLinks.connect(self.no_links)
         self.links.start()
+
+    @pyqtSlot()
+    def no_links(self) -> None:
+        self.hosters_win.loading_progress.cancel()
+        self.hosters_win.close()
+        QMessageBox.warning(self, 'No Links Available', 'No links are available yet for the chosen TV show. ' +
+                            'This is most likely due to the files still being uploaded. This is normal if the ' +
+                            'link was published 30-45 mins ago.\n\nPlease check back again in 10-15 minutes.')
 
     @pyqtSlot(bool)
     def filter_faves(self, checked: bool) -> None:
@@ -518,8 +535,10 @@ class TVLinker(QWidget):
         self.realdebrid.start()
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        self.table.deleteLater()
-        self.deleteLater()
+        if hasattr(self, 'scrapeThread'):
+            if not sip.isdeleted(self.scrapeThread) and self.scrapeThread.isRunning():
+                self.scrapeThread.requestInterruption()
+                self.scrapeThread.quit()
         qApp.quit()
 
     @staticmethod
@@ -556,13 +575,13 @@ class FixedSettings:
         if not os.path.exists(settings_ini):
             os.makedirs(FixedSettings.config_path, exist_ok=True)
             QFile.copy(':%s.ini' % FixedSettings.applicationName.lower(), settings_ini)
-            if os.name == 'posix':
-                QFile.setPermissions(settings_ini, QFile.ReadOwner | QFile.WriteOwner)
+            QFile.setPermissions(settings_ini, QFile.ReadOwner | QFile.WriteOwner)
         return QSettings(settings_ini, QSettings.IniFormat)
 
 
 def main():
     app = QApplication(sys.argv)
+    app.setStyle(OverrideStyle())
     app.setApplicationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)

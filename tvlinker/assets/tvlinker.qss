@@ -47,7 +47,8 @@ QGroupBox#mainForm {
 }
 
 QGroupBox#hosters {
-    border: 1px inset #BABABA;
+    border: 1px inset #CACACA;
+    background-color: rgba(152, 150, 171, 0.4);
 }
 
 QLabel#pages {
@@ -72,14 +73,6 @@ QDialogButtonBox {
     border: none;
     outline: none;
     margin: 10px;
-}
-
-#hosters QPushButton {
-    border: none;
-    outline: none;
-    background-color: transparent;
-    margin: 0;
-    padding: 0;
 }
 
 #hosters QPushButton::menu-indicator {
