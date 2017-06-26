@@ -12,6 +12,14 @@ Due to technical reasons, TVLinker now requires a local installation of NodeJS o
 
 You can install NodeJS without needing to think about it, just [download from the official site here](https://nodejs.org/en/download/current).
 
+## Arch Linux AUR
+
+Just use your favourite AUR helper script/app and look for AUR package named 'tvlinker'. Example:
+
+    pacaur -S tvlinker
+          or
+    yaourt -S tvlinker
+
 ## Ubuntu/Mint/Debian and all other Ubuntu derivatives
 
 Users can install the latest release via:
