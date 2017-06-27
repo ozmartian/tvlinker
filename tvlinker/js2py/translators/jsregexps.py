@@ -1,4 +1,4 @@
-from pyjsparser.pyjsparserdata import *
+from tvlinker.pyjsparser.pyjsparserdata import *
 
 REGEXP_SPECIAL_SINGLE = {'\\', '^', '$', '*', '+', '?', '.'}
 

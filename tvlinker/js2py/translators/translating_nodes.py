@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from pyjsparser.pyjsparserdata import *
+from tvlinker.pyjsparser.pyjsparserdata import *
 from .friendly_nodes import *
 import random
 import six
@@ -623,7 +623,7 @@ clean_stacks()
 if __name__=='__main__':
     import codecs
     import time
-    import pyjsparser
+    import tvlinker.pyjsparser as pyjsparser
 
     c = None#'''`ijfdij`'''
     if not c:

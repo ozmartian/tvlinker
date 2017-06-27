@@ -1,5 +1,5 @@
-import pyjsparser
-import pyjsparser.parser
+import tvlinker.pyjsparser as pyjsparser
+from tvlinker.pyjsparser import parser
 from . import translating_nodes
 
 import hashlib
@@ -7,8 +7,8 @@ import re
 
 
 # Enable Js2Py exceptions and pyimport in parser
-pyjsparser.parser.ENABLE_JS2PY_ERRORS = True
-pyjsparser.parser.ENABLE_PYIMPORT = True
+parser.ENABLE_JS2PY_ERRORS = True
+parser.ENABLE_PYIMPORT = True
 
 # the re below is how we'll recognise numeric constants.
 # it finds any 'simple numeric that is not preceded with an alphanumeric character

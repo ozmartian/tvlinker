@@ -9,6 +9,7 @@ Homepage: http://tvlinker.ozmartians.com
 Package: tvlinker
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}, python3-pyqt5, python3-bs4, python3-lxml, python3-requests
+Enhances: python3-socks, shadowsocks-qt5
 Description: TV show link scraper + downloader for Scene-RLS.com with a modern PyQt5 GUI
  PyQt5 based desktop widget for scraping and downloading TV shows from Scene-RLS.com
  .

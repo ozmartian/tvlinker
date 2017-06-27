@@ -1,6 +1,6 @@
 import binascii
 
-from pyjsparser import PyJsParser
+from tvlinker.pyjsparser import PyJsParser
 import six
 if six.PY3:
     basestring = str
