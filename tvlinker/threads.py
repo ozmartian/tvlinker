@@ -7,8 +7,7 @@ import sys
 import time
 
 import requests
-
-from PyQt5.QtCore import QObject, QSettings, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, qApp
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
@@ -30,48 +29,6 @@ class ShadowSocks:
     def proxy() -> dict:
         return dict(http='socks5://127.0.0.1:1080', https='socks5://127.0.0.1:1080')\
             if ShadowSocks.is_running() else dict()
-
-
-class ScrapeWorker(QObject):
-    addRow = pyqtSignal(list)
-    workFinished = pyqtSignal()
-
-    def __init__(self, source_url: str, useragent: str, maxpages: int):
-        super(ScrapeWorker, self).__init__()
-        self.maxpages = maxpages
-        self.source_url = source_url
-        self.user_agent = useragent
-        self.proxy = ShadowSocks.proxy()
-        self.complete = False
-
-    def scrape(self, pagenum: int) -> None:
-        try:
-            url = self.source_url.format(pagenum + 1)
-            req = requests.get(url, headers={'User-Agent': self.user_agent}, proxies=self.proxy)
-            bs = BeautifulSoup(req.text, 'lxml')
-            posts = bs('div', class_='post')
-            for post in posts:
-                dlsize = post.find('h2').get_text().strip()
-                table_row = [
-                    post.find('div', class_='p-c p-c-time').get_text().strip(),
-                    post.find('a', class_='p-title').get('href').strip(),
-                    post.find('a', class_='p-title').get_text().strip(),
-                    dlsize[dlsize.rfind('(') + 1:len(dlsize) - 1]
-                ]
-                self.addRow.emit(table_row)
-        except HTTPError:
-            sys.stderr.write(sys.exc_info()[0])
-            QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info()[0])
-            # self.exit()
-
-    @pyqtSlot()
-    def begin(self):
-        for page in range(self.maxpages):
-            if QThread.currentThread().isInterruptionRequested():
-                return
-            self.scrape(page)
-        self.complete = True
-        self.workFinished.emit()
 
 
 class HostersThread(QThread):

@@ -22,8 +22,9 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox
 from tvlinker.direct_download import DirectDownload
 from tvlinker.hosters import HosterLinks
 from tvlinker.pyload import PyloadConnection
+from tvlinker.scraper import ScrapeManager, ScrapeWorker
 from tvlinker.settings import Settings
-from tvlinker.threads import Aria2Thread, DownloadThread, HostersThread, RealDebridThread, ScrapeWorker
+from tvlinker.threads import Aria2Thread, DownloadThread, HostersThread, RealDebridThread
 import tvlinker.assets
 import sip
 
@@ -57,6 +58,9 @@ class TVLinker(QWidget):
         self.init_styles()
         self.init_settings()
         self.init_icons()
+
+        self.scrape_manager = ScrapeManager(self, settings.value('source_url'))
+
         if sys.platform.startswith('linux'):
             notify.init(qApp.applicationName())
         layout = QVBoxLayout()
@@ -92,18 +96,20 @@ class TVLinker(QWidget):
             if hasattr(self, 'scrapeThread'):
                 if not sip.isdeleted(self.scrapeThread) and self.scrapeThread.isRunning():
                     self.scrapeThread.requestInterruption()
-            self.scrapeThread = QThread(self)
-            self.scrapeWorker = ScrapeWorker(self.source_url, self.user_agent, self.dl_pagecount)
-            self.scrapeThread.started.connect(self.show_progress)
-            self.scrapeThread.started.connect(self.scrapeWorker.begin)
-            self.scrapeWorker.moveToThread(self.scrapeThread)
-            self.scrapeWorker.addRow.connect(self.add_row)
-            self.scrapeWorker.workFinished.connect(self.scrape_finished)
-            self.scrapeWorker.workFinished.connect(self.scrapeWorker.deleteLater, Qt.DirectConnection)
-            self.scrapeWorker.workFinished.connect(self.scrapeThread.quit, Qt.DirectConnection)
-            self.scrapeThread.finished.connect(self.scrapeThread.deleteLater, Qt.DirectConnection)
-        elif threadtype == 'unrestrict':
-            pass
+
+            self.scrape_theadcount = self.dl_pagecount / 10
+            for index in range(1, self.scrape_threadcount):
+                scrapeThread = QThread(self)
+                scrapeWorker = ScrapeWorker(self.source_url, self.user_agent, (index * 10) - 9, index * 10)
+                scrapeThread.started.connect(self.show_progress)
+                scrapeThread.started.connect(scrapeWorker.begin)
+                scrapeWorker.moveToThread(scrapeThread)
+                scrapeWorker.addRow.connect(self.add_row)
+                scrapeWorker.workFinished.connect(self.scrape_finished)
+                scrapeWorker.workFinished.connect(scrapeWorker.deleteLater, Qt.DirectConnection)
+                scrapeWorker.workFinished.connect(scrapeThread.quit, Qt.DirectConnection)
+                scrapeThread.finished.connect(scrapeThread.deleteLater, Qt.DirectConnection)
+                self.scrape_threads.append((scrapeThread, scrapeWorker))
 
     @staticmethod
     def load_stylesheet(qssfile: str) -> None:

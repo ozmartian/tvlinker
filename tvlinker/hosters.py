@@ -34,7 +34,7 @@ class HosterLinks(QDialog):
     def show_hosters(self, links: list) -> None:
         self.links = links
         self.loading_progress.cancel()
-        self.setMinimumWidth(790)
+        self.setMinimumWidth(800)
         hosterswidget_layout = QVBoxLayout()
         for tag in self.links:
             title_label = QLabel(HosterLinks.bs_tag_to_string(tag.find_previous('p')), self)
@@ -74,9 +74,14 @@ class HosterLinks(QDialog):
                         border-radius: 0;
                         border: 1px solid #B9B9B9;
                     }
-                    QPushButton:pressed, QPushButton:hover {
+                    QPushButton:hover {
                         background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                                           stop: 0 #B9B9B9, stop: 1 #DADBDE);
+                    }
+                    QPushButton:pressed {
+                        border: 1px inset #B9B9B9;
+                        background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                          stop: 0 #DADBDE, stop: 1 #B9B9B9);
                     }
                     QPushButton::menu-indicator { left: -2000px; }
                 ''')
