@@ -28,7 +28,14 @@ def get_description(filename='README.md'):
 
 def get_install_requires():
     if packager == 'pypi':
-        return ['PyQt5', 'beautifulsoup4', 'lxml', 'requests', 'requests[socks]']
+        return ['PyQt5', 'beautifulsoup4', 'lxml', 'requests']
+    else:
+        return []
+
+
+def get_extra_requires():
+    if packager == 'pypi':
+        return ['requests[socks]']
     else:
         return []
 
@@ -44,7 +51,6 @@ def get_data_files():
 
 
 here = path.abspath(path.dirname(__file__))
-
 packager = get_value('packager')
 
 setup(
@@ -54,29 +60,19 @@ setup(
     author_email='pete@ozmartians.com',
     description='''Scene-RLS TV show link scraper integrated w/ real-debrid to unrestrict links + support for download
                    managers: Built-in (window/linux), Aria2 RPC Daemon (windows/linux), Internet Download Manager 
-                   (windows), KGet (linux), pyLoad (windows/linux), and Persepolis (windows/linux)''',
+                   (windows), KGet (linux), Persepolis (windows/linux) and pyLoad (windows/linux).''',
     long_description=get_description(),
     url='http://tvlinker.ozmartians.com',
     license='GPLv3+',
-
     packages=['tvlinker'],
-
     package_dir={'tvlinker': 'tvlinker'},
-
     setup_requires=['setuptools'],
-
     install_requires=get_install_requires(),
-
-    extras_require={ 'SOCKS4, SOCKS5 Proxy': ['requests[socks]'] },
-
-    package_data={ 'tvlinker': ['README.md', 'LICENSE', 'tvlinker/tvlinker.ini'] },
-
+    extra_requires=get_extra_requires(),
+    package_data={'tvlinker': ['README.md', 'LICENSE', 'tvlinker/tvlinker.ini']},
     data_files=get_data_files(),
-
     entry_points={'gui_scripts': ['tvlinker = tvlinker.__main__:main']},
-
-    keywords='tvlinker scraping tv-release filesharing internet',
-
+    keywords='tvlinker scraping Scene-RLS real-debrid filesharing internet tv-shows',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: X11 Applications :: Qt',
