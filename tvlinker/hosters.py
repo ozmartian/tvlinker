@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup, SoupStrainer, Tag
 
 from PyQt5.QtCore import QSize, QUrl, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon, QMouseEvent
-from PyQt5.QtWidgets import (QDialog, QGroupBox, QHBoxLayout, QLabel, QMenu, QProgressDialog, QPushButton, QScrollArea,
+from PyQt5.QtWidgets import (QDialog, QHBoxLayout, QLabel, QMenu, QProgressDialog, QPushButton, QScrollArea,
                              QStyleFactory, QVBoxLayout, QWidget, qApp)
 
 
@@ -16,12 +16,14 @@ class HosterLinks(QDialog):
     def __init__(self, parent, f=Qt.WindowCloseButtonHint):
         super(HosterLinks, self).__init__(parent, f)
         self.parent = parent
+        self.setObjectName('hosters')
         self.loading_progress = QProgressDialog('Retrieving hoster links...', None, 0, 0, self.parent,
                                                 Qt.WindowCloseButtonHint)
         self.loading_progress.setStyle(QStyleFactory.create('Fusion'))
         self.loading_progress.setWindowTitle('Hoster Links')
         self.loading_progress.setMinimumWidth(485)
         self.loading_progress.setWindowModality(Qt.ApplicationModal)
+        self.loading_progress.setStyleSheet('QProgressDialog::chunk { background-color:#6A687D; }')
         self.loading_progress.show()
         self.layout = QVBoxLayout()
         self.layout.setSpacing(15)
@@ -32,16 +34,14 @@ class HosterLinks(QDialog):
     def show_hosters(self, links: list) -> None:
         self.links = links
         self.loading_progress.cancel()
-        self.setMinimumSize(810, 600)
+        self.setMinimumSize(800, 600)
         hosterswidget_layout = QVBoxLayout()
         for tag in self.links:
             title_label = QLabel(HosterLinks.bs_tag_to_string(tag.find_previous('p')), self)
             title_label.setOpenExternalLinks(True)
             title_label.setAlignment(Qt.AlignCenter)
-            title_label.setStyleSheet('QLabel { font-size:15px; padding:8px; border:1px solid #A0A0A0; background-color:rgba(255, 255, 255, 0.9); }')
+            title_label.setStyleSheet('QLabel { margin: 0; color: #444; font-size: 14px; padding: 8px; border: 1px solid #C0C0C0; background-color: #FEFEFE; }')
             title_layout = QHBoxLayout()
-            title_layout.setContentsMargins(0, 0, 0, 0)
-            title_layout.setSpacing(5)
             title_layout.addStretch(1)
             bs = BeautifulSoup(HosterLinks.bs_tag_to_string(tag), 'lxml', parse_only=SoupStrainer('a'))
             for anchor in bs:
@@ -60,19 +60,18 @@ class HosterLinks(QDialog):
                 hoster_btn.setCursor(Qt.PointingHandCursor)
                 hoster_btn.setIcon(QIcon(self.parent.get_path('images/hosters/%s.png' % hoster_name)))
                 hoster_btn.setIconSize(QSize(100, 21))
-                hoster_btn.setStyleSheet('''
-                    QPushButton {
-                        /* background-color: #FCFCFC; */
-                        background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                          stop: 0 #dadbde, stop: 1 #f6f7fa);
-                        padding: 6px 0;
-                        border-radius: 3px;
-                        border: 1px solid #A0A0A0;
-                    }
-                    QPushButton:pressed, QPushButton:hover {
-                        background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                          stop: 0 #f6f7fa, stop: 1 #dadbde);
-                    }''')
+                hoster_btn.setStyleSheet('''QPushButton {
+                                                background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                                                  stop: 0 #FAFAFA, stop: 1 #FAFAFA);
+                                                padding: 6px 0;
+                                                border-radius: 3px;
+                                                border: 1px solid #A0A0A0;
+                                            }
+                                            QPushButton:pressed, QPushButton:hover {
+                                                background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                                                  stop: 0 #b9b9b9, stop: 1 #dadbde);
+                                            }
+                                            QPushButton::menu-indicator { left: -2000px; }''')
                 menu.setFixedWidth(118)
                 menu.setStyleSheet('''
                     QMenu {
@@ -93,13 +92,10 @@ class HosterLinks(QDialog):
             title_layout.addStretch(1)
             hoster_layout = QVBoxLayout()
             hoster_layout.addWidget(title_label)
-            hoster_layout.addSpacing(5)
             hoster_layout.addLayout(title_layout)
-            groupbox = QGroupBox(self)
-            groupbox.setObjectName('hosters')
-            groupbox.setContentsMargins(0, 0, 0, 0)
-            groupbox.setLayout(hoster_layout)
-            hosterswidget_layout.addWidget(groupbox)
+            hosterswidget_layout.addLayout(hoster_layout)
+            hosterswidget_layout.addSpacing(15)
+        
         hosters_widget = QWidget(self)
         hosters_widget.setLayout(hosterswidget_layout)
         scrollarea = QScrollArea(self)

@@ -46,11 +46,6 @@ QGroupBox#mainForm {
     background: rgba(152, 150, 171, 0.64);
 }
 
-QGroupBox#hosters {
-    border: 1px inset #CACACA;
-    background-color: rgba(152, 150, 171, 0.4);
-}
-
 QLabel#pages {
     color: #555;
     font-size: 7pt;
@@ -73,10 +68,6 @@ QDialogButtonBox {
     border: none;
     outline: none;
     margin: 10px;
-}
-
-#hosters QPushButton::menu-indicator {
-    left: -2000px;
 }
 
 #mainForm QPushButton#favesButton {
