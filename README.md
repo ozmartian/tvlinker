@@ -1,16 +1,8 @@
+![TVLinker](http://tvlinker.ozmartians.com/images/header-banner.png) 
 [![Latest Release](http://tvlinker.ozmartians.com/images/button-latest-release.png)](https://github.com/ozmartian/tvlinker/releases/latest)
-
-[![Build Status](https://travis-ci.org/ozmartian/tvlinker.svg?branch=master)](https://travis-ci.org/ozmartian/tvlinker)
-
-## TVLinker
-
-![TVLinker](http://tvlinker.ozmartians.com/images/header-logo.png)
-
-## Important Note
-
-Due to technical reasons, TVLinker now requires a local installation of NodeJS on your machine in order to run some JavaScript to get past CloudFlare's bot checks. This could be done with Qt but that would drag in the WebEngine (Chromium-based) dependency which is 3-4 times larger in size than a simple NodeJS server installation.
-
-You can install NodeJS without needing to think about it, just [download from the official site here](https://nodejs.org/en/download/current).
+&
+nbsp;&nbsp;&nbsp;&nbsp;[![Build Status](https://travis-ci.org/ozmartian/tvlinker.svg?branch=master)](https://travis-ci.org/ozmartian/tvlinker)
+# TVLinker
 
 ## Arch Linux AUR
 

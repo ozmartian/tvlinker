@@ -34,13 +34,14 @@ class HosterLinks(QDialog):
     def show_hosters(self, links: list) -> None:
         self.links = links
         self.loading_progress.cancel()
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(790, 600)
         hosterswidget_layout = QVBoxLayout()
         for tag in self.links:
             title_label = QLabel(HosterLinks.bs_tag_to_string(tag.find_previous('p')), self)
             title_label.setOpenExternalLinks(True)
             title_label.setAlignment(Qt.AlignCenter)
-            title_label.setStyleSheet('QLabel { margin: 0; color: #444; font-size: 14px; padding: 8px; border: 1px solid #C0C0C0; background-color: #FEFEFE; }')
+            title_label.setStyleSheet('QLabel { margin: 0; color: #444; font-size: 14px; padding: 8px; }')
+            # 'border: 1px solid #C0C0C0; background-color: #FEFEFE; }')
             title_layout = QHBoxLayout()
             title_layout.addStretch(1)
             bs = BeautifulSoup(HosterLinks.bs_tag_to_string(tag), 'lxml', parse_only=SoupStrainer('a'))
@@ -60,18 +61,20 @@ class HosterLinks(QDialog):
                 hoster_btn.setCursor(Qt.PointingHandCursor)
                 hoster_btn.setIcon(QIcon(self.parent.get_path('images/hosters/%s.png' % hoster_name)))
                 hoster_btn.setIconSize(QSize(100, 21))
-                hoster_btn.setStyleSheet('''QPushButton {
-                                                background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                                                  stop: 0 #FAFAFA, stop: 1 #FAFAFA);
-                                                padding: 6px 0;
-                                                border-radius: 3px;
-                                                border: 1px solid #A0A0A0;
-                                            }
-                                            QPushButton:pressed, QPushButton:hover {
-                                                background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                                                  stop: 0 #b9b9b9, stop: 1 #dadbde);
-                                            }
-                                            QPushButton::menu-indicator { left: -2000px; }''')
+                hoster_btn.setStyleSheet('''
+                    QPushButton {
+                        background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                          stop: 0 #FAFAFA, stop: 1 #FAFAFA);
+                        padding: 6px 0;
+                        border-radius: 3px;
+                        border: 1px solid #A0A0A0;
+                    }
+                    QPushButton:pressed, QPushButton:hover {
+                        background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                          stop: 0 #b9b9b9, stop: 1 #dadbde);
+                    }
+                    QPushButton::menu-indicator { left: -2000px; }
+                ''')
                 menu.setFixedWidth(118)
                 menu.setStyleSheet('''
                     QMenu {
@@ -105,6 +108,8 @@ class HosterLinks(QDialog):
         self.layout.addWidget(scrollarea)
         self.show()
         qApp.restoreOverrideCursor()
+
+        print('scrollarea size = %sx%s' % (scrollarea.width(), scrollarea.height()))
 
     @staticmethod
     def bs_tag_to_string(bstag: Tag) -> str:

@@ -54,6 +54,7 @@ class TVLinker(QWidget):
         self.rows, self.cols = 0, 0
         self.parent = parent
         self.settings = settings
+        TVLinker.init_environment()
         self.init_styles()
         self.init_settings()
         self.init_icons()
@@ -87,7 +88,11 @@ class TVLinker(QWidget):
         SUCCESS = ':assets/images/thumbsup.png'
         DEFAULT = ':assets/images/tvlinker.png'
 
-    def init_threads(self, threadtype: str = 'scrape'):
+    @staticmethod
+    def init_environment() -> None:
+        sys.path.insert(0, QFileInfo(__file__).absolutePath())
+
+    def init_threads(self, threadtype: str = 'scrape') -> None:
         if threadtype == 'scrape':
             if hasattr(self, 'scrapeThread'):
                 if not sip.isdeleted(self.scrapeThread) and self.scrapeThread.isRunning():
@@ -117,7 +122,7 @@ class TVLinker(QWidget):
             qss_stylesheet = self.get_path('%s_osx.qss' % qApp.applicationName().lower())
         else:
             qss_stylesheet = self.get_path('%s.qss' % qApp.applicationName().lower())
-        self.load_stylesheet(qss_stylesheet)
+        TVLinker.load_stylesheet(qss_stylesheet)
         QFontDatabase.addApplicationFont(':assets/fonts/opensans.ttf')
         QFontDatabase.addApplicationFont(':assets/fonts/opensans-bold.ttf')
         QFontDatabase.addApplicationFont(':assets/fonts/opensans-semibold.ttf')
