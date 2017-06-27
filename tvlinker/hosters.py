@@ -4,9 +4,9 @@
 from bs4 import BeautifulSoup, SoupStrainer, Tag
 
 from PyQt5.QtCore import QSize, QUrl, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon, QMouseEvent
-from PyQt5.QtWidgets import (QDialog, QHBoxLayout, QLabel, QMenu, QProgressDialog, QPushButton, QScrollArea,
-                             QStyleFactory, QVBoxLayout, QWidget, qApp)
+from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon
+from PyQt5.QtWidgets import (QDialog, QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QMenu, QProgressDialog,
+                             QPushButton, QScrollArea, QSizePolicy, QStyleFactory, QVBoxLayout, QWidget, qApp)
 
 
 class HosterLinks(QDialog):
@@ -40,8 +40,8 @@ class HosterLinks(QDialog):
             title_label = QLabel(HosterLinks.bs_tag_to_string(tag.find_previous('p')), self)
             title_label.setOpenExternalLinks(True)
             title_label.setAlignment(Qt.AlignCenter)
-            title_label.setStyleSheet('QLabel { margin: 0; color: #444; font-size: 14px; padding: 8px; }')
-            # 'border: 1px solid #C0C0C0; background-color: #FEFEFE; }')
+            title_label.setStyleSheet('QLabel { margin: 0; color: #444; font-size: 14px; padding: 8px; ' +
+                                      'border: 1px solid #C0C0C0; background-color: #FEFEFE; }')
             title_layout = QHBoxLayout()
             title_layout.addStretch(1)
             bs = BeautifulSoup(HosterLinks.bs_tag_to_string(tag), 'lxml', parse_only=SoupStrainer('a'))
@@ -53,8 +53,13 @@ class HosterLinks(QDialog):
                 menu.addAction('  COPY LINK', lambda: self.copy_link(link), 0)
                 menu.addAction('  OPEN LINK', lambda: self.open_link(link), 0)
                 menu.addAction(' DOWNLOAD', lambda: self.download_link(link), 0)
+                shadow = QGraphicsDropShadowEffect()
+                shadow.setColor(Qt.darkGray)
+                shadow.setBlurRadius(5)
+                shadow.setOffset(2, 2)
                 hoster_btn = QPushButton(self)
                 hoster_btn.setStyle(QStyleFactory.create('Fusion'))
+                hoster_btn.setGraphicsEffect(shadow)
                 hoster_btn.setDefault(False)
                 hoster_btn.setAutoDefault(False)
                 hoster_btn.setToolTip(hoster_name)
@@ -64,14 +69,14 @@ class HosterLinks(QDialog):
                 hoster_btn.setStyleSheet('''
                     QPushButton {
                         background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                          stop: 0 #FAFAFA, stop: 1 #FAFAFA);
+                                                          stop: 0 #FEFEFE, stop: 1 #FAFAFA);
                         padding: 6px 0;
-                        border-radius: 3px;
-                        border: 1px solid #A0A0A0;
+                        border-radius: 0;
+                        border: 1px solid #B9B9B9;
                     }
                     QPushButton:pressed, QPushButton:hover {
                         background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                          stop: 0 #b9b9b9, stop: 1 #dadbde);
+                                                          stop: 0 #B9B9B9, stop: 1 #DADBDE);
                     }
                     QPushButton::menu-indicator { left: -2000px; }
                 ''')
@@ -83,13 +88,8 @@ class HosterLinks(QDialog):
                         background-color: #FAFAFA;
                         color: #4C4C4C;
                     }
-                    QMenu::item {
-                        text-align: center;
-                    }
-                    QMenu::item:selected, QMenu::item:hover {
-                        background-color: #6A687D;
-                        color: #FFF;
-                    }''')
+                    QMenu::item { text-align: center; }
+                    QMenu::item:selected, QMenu::item:hover { background-color: #6A687D; color: #FFF; }''')
                 hoster_btn.setMenu(menu)
                 title_layout.addWidget(hoster_btn)
             title_layout.addStretch(1)
@@ -98,15 +98,25 @@ class HosterLinks(QDialog):
             hoster_layout.addLayout(title_layout)
             hosterswidget_layout.addLayout(hoster_layout)
             hosterswidget_layout.addSpacing(15)
-        
+
         hosters_widget = QWidget(self)
-        hosters_widget.setLayout(hosterswidget_layout)
+        hosters_widget.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.MinimumExpanding)
+        hosters_widget.setMinimumWidth(770)
+        stretch_layout = QHBoxLayout()
+        stretch_layout.addStretch(1)
+        stretch_layout.addLayout(hosterswidget_layout)
+        stretch_layout.addStretch(1)
+        hosters_widget.setLayout(stretch_layout)
         scrollarea = QScrollArea(self)
         scrollarea.setStyleSheet('QScrollArea { border:none; }')
         scrollarea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scrollarea.setWidget(hosters_widget)
         self.layout.addWidget(scrollarea)
-        self.setMinimumHeight(hosters_widget.height() + 10)
+        h = hosters_widget.height() + 10
+        if h <= 750:
+            self.setMinimumHeight(h)
+        else:
+            self.setMaximumHeight(750)
         self.show()
         qApp.restoreOverrideCursor()
 

@@ -54,7 +54,6 @@ class TVLinker(QWidget):
         self.rows, self.cols = 0, 0
         self.parent = parent
         self.settings = settings
-        TVLinker.init_environment()
         self.init_styles()
         self.init_settings()
         self.init_icons()
@@ -87,10 +86,6 @@ class TVLinker(QWidget):
     class NotifyIcon(Enum):
         SUCCESS = ':assets/images/thumbsup.png'
         DEFAULT = ':assets/images/tvlinker.png'
-
-    @staticmethod
-    def init_environment() -> None:
-        sys.path.insert(0, QFileInfo(__file__).absolutePath())
 
     def init_threads(self, threadtype: str = 'scrape') -> None:
         if threadtype == 'scrape':
