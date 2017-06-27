@@ -1,8 +1,7 @@
-![TVLinker](http://tvlinker.ozmartians.com/images/header-banner.png) 
 [![Latest Release](http://tvlinker.ozmartians.com/images/button-latest-release.png)](https://github.com/ozmartian/tvlinker/releases/latest)
-&
-nbsp;&nbsp;&nbsp;&nbsp;[![Build Status](https://travis-ci.org/ozmartian/tvlinker.svg?branch=master)](https://travis-ci.org/ozmartian/tvlinker)
+![TVLinker](http://tvlinker.ozmartians.com/images/header-banner.png) 
 # TVLinker
+[![Build Status](https://travis-ci.org/ozmartian/tvlinker.svg?branch=master)](https://travis-ci.org/ozmartian/tvlinker)
 
 ## Arch Linux AUR
 
