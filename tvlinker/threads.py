@@ -6,7 +6,6 @@ import os
 import sys
 import time
 
-import cfscrape
 import requests
 
 from PyQt5.QtCore import QObject, QSettings, QThread, pyqtSignal, pyqtSlot
@@ -16,6 +15,7 @@ from requests.exceptions import HTTPError
 from urllib.request import Request, urlopen
 
 from tvlinker.filesize import size, alternative
+import tvlinker.cfscrape as cfscrape
 
 
 class ShadowSocks:

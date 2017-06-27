@@ -28,9 +28,9 @@ def get_description(filename='README.md'):
 
 def get_install_requires():
     if packager == 'pypi':
-        return ['PyQt5', 'beautifulsoup4', 'lxml', 'requests', 'cfscrape']
+        return ['PyQt5', 'beautifulsoup4', 'lxml', 'requests', 'requests[socks]']
     else:
-        return ['cfscrape', 'requests[socks]']
+        return []
 
 
 def get_data_files():
