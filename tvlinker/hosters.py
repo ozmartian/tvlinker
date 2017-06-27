@@ -34,7 +34,7 @@ class HosterLinks(QDialog):
     def show_hosters(self, links: list) -> None:
         self.links = links
         self.loading_progress.cancel()
-        self.setMinimumSize(790, 600)
+        self.setMinimumWidth(790)
         hosterswidget_layout = QVBoxLayout()
         for tag in self.links:
             title_label = QLabel(HosterLinks.bs_tag_to_string(tag.find_previous('p')), self)
@@ -106,10 +106,9 @@ class HosterLinks(QDialog):
         scrollarea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scrollarea.setWidget(hosters_widget)
         self.layout.addWidget(scrollarea)
+        self.setMinimumHeight(hosters_widget.height() + 10)
         self.show()
         qApp.restoreOverrideCursor()
-
-        print('scrollarea size = %sx%s' % (scrollarea.width(), scrollarea.height()))
 
     @staticmethod
     def bs_tag_to_string(bstag: Tag) -> str:
