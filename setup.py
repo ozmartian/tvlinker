@@ -33,7 +33,7 @@ def get_install_requires():
         return []
 
 
-def get_extra_requires():
+def get_extras_require():
     if packager == 'pypi':
         return ['requests[socks]']
     else:
@@ -68,7 +68,7 @@ setup(
     package_dir={'tvlinker': 'tvlinker'},
     setup_requires=['setuptools'],
     install_requires=get_install_requires(),
-    extra_requires=get_extra_requires(),
+    # extras_require=get_extras_require(),
     package_data={'tvlinker': ['README.md', 'LICENSE', 'tvlinker/tvlinker.ini']},
     data_files=get_data_files(),
     entry_points={'gui_scripts': ['tvlinker = tvlinker.__main__:main']},
