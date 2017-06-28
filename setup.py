@@ -76,7 +76,7 @@ setup(
         'tvlinker.pyjsparser'
     ],
     setup_requires=['setuptools'],
-    install_requires=get_install_requires(),
+    install_requires=[], # get_install_requires(),
     # extras_require=get_extras_require(),
     package_data={'tvlinker': ['README.md', 'LICENSE', 'tvlinker/tvlinker.ini']},
     data_files=get_data_files(),
