@@ -3,8 +3,9 @@ Maintainer: Pete Alexandrou <pete@ozmartians.com>
 Section: net
 Priority: optional
 Build-Depends: dh-python, python3-setuptools, python3-all, python3-six, debhelper (>= 9)
-Standards-Version: 3.9.6
+Standards-Version: 3.9.8
 Homepage: http://tvlinker.ozmartians.com
+X-Python3-Version: >= 3.2
 
 Package: tvlinker
 Architecture: all
