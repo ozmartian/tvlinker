@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox
 
 from tvlinker.direct_download import DirectDownload
 from tvlinker.hosters import HosterLinks
+from tvlinker.progress import TaskbarProgress
 from tvlinker.pyload import PyloadConnection
 from tvlinker.settings import Settings
 from tvlinker.threads import Aria2Thread, DownloadThread, HostersThread, RealDebridThread, ScrapeWorker
@@ -54,6 +55,7 @@ class TVLinker(QWidget):
         self.rows, self.cols = 0, 0
         self.parent = parent
         self.settings = settings
+        self.taskbar = TaskbarProgress(self)
         self.init_styles()
         self.init_settings()
         self.init_icons()
@@ -215,6 +217,7 @@ class TVLinker(QWidget):
         self.meta_template = 'Total number of links retrieved: <b>%i</b> / <b>%i</b>'
         self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks),
                                      visible=False)
+        self.taskbar.setProgress(True, 0.0)
         if sys.platform == 'win32':
             self.win_taskbar_button = QWinTaskbarButton(self)
 
@@ -246,6 +249,7 @@ class TVLinker(QWidget):
         rowcount = self.table.rowCount()
         self.meta_label.setText(self.meta_template % (rowcount, self.dl_pagecount * self.dl_pagelinks))
         self.progress.setValue(rowcount)
+        self.taskbar.setProgress(True, rowcount / self.progress.maximum())
         if sys.platform == 'win32':
             self.win_taskbar_button.progress().setValue(self.progress.value())
         return True
@@ -297,6 +301,7 @@ class TVLinker(QWidget):
     @pyqtSlot()
     def show_progress(self):
         self.progress.show()
+        self.taskbar.setProgress(True, 0.0)
         if sys.platform == 'win32':
             self.win_taskbar_button.setWindow(self.windowHandle())
             self.win_taskbar_button.progress().setRange(0, self.dl_pagecount * self.dl_pagelinks)
@@ -306,6 +311,7 @@ class TVLinker(QWidget):
     @pyqtSlot()
     def scrape_finished(self) -> None:
         self.progress.hide()
+        self.taskbar.setProgress(False, 0.0)
         if sys.platform == 'win32':
             self.win_taskbar_button.progress().setVisible(False)
         self.table.setSortingEnabled(True)

@@ -17,7 +17,7 @@ class HosterLinks(QDialog):
         super(HosterLinks, self).__init__(parent, f)
         self.parent = parent
         self.setObjectName('hosters')
-        self.loading_progress = QProgressDialog('Retrieving hoster links...', None, 0, 0, self.parent,
+        self.loading_progress = QProgressDialog('Retrieving hoster links...', '', 0, 0, self.parent,
                                                 Qt.WindowCloseButtonHint)
         self.loading_progress.setStyle(QStyleFactory.create('Fusion'))
         self.loading_progress.setWindowTitle('Hoster Links')
@@ -52,9 +52,9 @@ class HosterLinks(QDialog):
                 hoster_name = HosterLinks.get_hoster_name(link)
                 menu = QMenu(self)
                 menu.setCursor(Qt.PointingHandCursor)
-                menu.addAction('  COPY LINK', lambda: self.copy_link(link), 0)
-                menu.addAction('  OPEN LINK', lambda: self.open_link(link), 0)
-                menu.addAction(' DOWNLOAD', lambda: self.download_link(link), 0)
+                menu.addAction('  COPY LINK', lambda dl=link: self.copy_link(dl), 0)
+                menu.addAction('  OPEN LINK', lambda dl=link: self.open_link(dl), 0)
+                menu.addAction(' DOWNLOAD', lambda dl=link: self.download_link(dl), 0)
                 shadow = QGraphicsDropShadowEffect()
                 shadow.setColor(Qt.gray)
                 shadow.setBlurRadius(10)
