@@ -17,7 +17,7 @@ class HosterLinks(QDialog):
         super(HosterLinks, self).__init__(parent, f)
         self.parent = parent
         self.setObjectName('hosters')
-        self.loading_progress = QProgressDialog('Retrieving hoster links...', '', 0, 0, self.parent,
+        self.loading_progress = QProgressDialog('Retrieving hoster links...', None, 0, 0, self.parent,
                                                 Qt.WindowCloseButtonHint)
         self.loading_progress.setStyle(QStyleFactory.create('Fusion'))
         self.loading_progress.setWindowTitle('Hoster Links')
