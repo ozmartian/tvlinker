@@ -7,23 +7,23 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{481211DA-28E0-4AA6-B316-C03482701DD7}
 AppName=TVLinker
-AppVersion=4.0.0
+AppVersion=4.0.5
 AppVerName=TVLinker
 AppPublisher=Pete Alexandrou
 AppPublisherURL=http://tvlinker.ozmartians.com
 DefaultDirName={pf}\TVLinker
 DefaultGroupName=TVLinker
-OutputBaseFilename=TVLinker-4.0.0-setup-x86
+OutputBaseFilename=TVLinker-4.0.5-setup-x86
 SetupIconFile=C:\DEV\tvlinker\data\icons\tvlinker.ico
 UninstallDisplayIcon={app}\tvlinker.exe
 Compression=lzma2
 SolidCompression=yes
 ShowLanguageDialog=no
-VersionInfoVersion=4.0.0
+VersionInfoVersion=4.0.5
 VersionInfoCompany=ozmartians.com
 VersionInfoCopyright=(c) 2017 Pete Alexandrou
 VersionInfoProductName=TVLinker x86
-VersionInfoProductVersion=4.0.0
+VersionInfoProductVersion=4.0.5
 
 [InstallDelete]
 Type: filesandordirs; Name: "{app}"
