@@ -86,7 +86,7 @@ class TVLinker(QWidget):
         UNKNOWN_ERROR = 5
 
     class NotifyIcon(Enum):
-        SUCCESS = ':assets/images/thumbsup.png'
+        SUCCESS = ':assets/images/tvlinker.png'
         DEFAULT = ':assets/images/tvlinker.png'
 
     def init_threads(self, threadtype: str = 'scrape') -> None:
