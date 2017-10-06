@@ -71,7 +71,6 @@ class TVLinker(QWidget):
         layout.addWidget(self.init_table())
         layout.addLayout(self.init_metabar())
         self.setLayout(layout)
-        self.setWindowTitle('%s :: Scene-RLS' % qApp.applicationName())
         qApp.setWindowIcon(self.icon_app)
         self.resize(FixedSettings.windowSize)
         self.show()
@@ -135,7 +134,8 @@ class TVLinker(QWidget):
         self.icon_updates = QIcon(':assets/images/cloud.png')
 
     def init_settings(self) -> None:
-        self.source_url = 'http://scene-rls.com/releases/index.php?p={0}&cat=TV%20Shows'
+        self.provider = 'Scene-RLS'
+        self.select_provider(0)
         self.user_agent = self.settings.value('user_agent')
         self.dl_pagecount = self.settings.value('dl_pagecount', 20, int)
         self.dl_pagelinks = FixedSettings.linksPerPage
@@ -170,9 +170,17 @@ class TVLinker(QWidget):
                                            objectName='menuButton', cursor=Qt.PointingHandCursor)
         self.settings_button.setMenu(self.settings_menu())
         layout = QHBoxLayout(spacing=10)
-        logo = QLabel(self)
-        logo.setPixmap(QPixmap(':assets/images/logo.png'))
-        layout.addWidget(logo)
+        providerCombo = QComboBox(self, toolTip='Provider', editable=False, cursor=Qt.PointingHandCursor)
+        providerCombo.addItem(QIcon(':assets/images/provider-scenerls.png'), '')
+        providerCombo.addItem(QIcon(':assets/images/provider-tvrelease.png'), '')
+        providerCombo.setIconSize(QSize(146, 36))
+        providerCombo.setMinimumSize(QSize(160, 40))
+        providerCombo.setStyleSheet('''
+            QComboBox { background-color: transparent; }
+            QComboBox QAbstractItemView { selection-background-color: #dddde4; }
+        ''')
+        providerCombo.currentIndexChanged.connect(self.select_provider)
+        layout.addWidget(providerCombo)
         layout.addWidget(self.search_field)
         layout.addWidget(self.favorites_button)
         layout.addWidget(self.refresh_button)
@@ -180,6 +188,16 @@ class TVLinker(QWidget):
         layout.addWidget(self.dlpages_field)
         layout.addWidget(self.settings_button)
         return layout
+
+    @pyqtSlot(int)
+    def select_provider(self, index: int):
+        if index == 0:
+            self.provider = 'Scene-RLS'
+            self.source_url = 'http://scene-rls.com/releases/index.php?p={0}&cat=TV%20Shows'
+        elif index == 1:
+            self.provider = 'TV-Release'
+            self.source_url = 'http://tv-release.pw/?cat=TV'
+        self.setWindowTitle('%s :: %s' % (qApp.applicationName(), self.provider))
 
     def settings_menu(self) -> QMenu:
         settings_action = QAction(self.icon_settings, 'Settings', self, triggered=self.show_settings)

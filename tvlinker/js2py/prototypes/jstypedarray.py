@@ -1,14 +1,10 @@
 # this is based on jsarray.py
 
 import six
-try:
-    import numpy
-except:
-    pass
+import functools
 
-if six.PY3:
-    xrange = range
-    import functools
+xrange = range
+
 
 def to_arr(this):
     """Returns Python array from Js array"""

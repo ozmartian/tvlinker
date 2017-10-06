@@ -4,7 +4,7 @@ import re
 
 from .translators.friendly_nodes import REGEXP_CONVERTER
 from .utils.injector import fix_js_args
-from types import FunctionType, ModuleType, GeneratorType, BuiltinFunctionType, MethodType, BuiltinMethodType
+from types import FunctionType, BuiltinFunctionType, MethodType, BuiltinMethodType
 import traceback
 try:
     import numpy

@@ -43,11 +43,13 @@ class ScrapeWorker(QObject):
         self.user_agent = useragent
         self.proxy = ShadowSocks.proxy()
         self.complete = False
+        self.scraper = cfscrape.create_scraper(sess=requests.session)
 
     def scrape(self, pagenum: int) -> None:
         try:
             url = self.source_url.format(pagenum + 1)
-            req = requests.get(url, headers={'User-Agent': self.user_agent}, proxies=self.proxy)
+            # req = requests.get(url, headers={'User-Agent': self.user_agent}, proxies=self.proxy)
+            req = self.scraper.get(url)
             bs = BeautifulSoup(req.text, 'lxml')
             posts = bs('div', class_='post')
             for post in posts:
@@ -83,14 +85,15 @@ class HostersThread(QThread):
         self.link_url = link_url
         self.user_agent = useragent
         self.proxy = ShadowSocks.proxy()
-        self.scraper = cfscrape.create_scraper()
+        self.scraper = cfscrape.create_scraper(sess=requests.session)
 
     def __del__(self) -> None:
         self.wait()
 
     def get_hoster_links(self) -> None:
         try:
-            req = self.scraper.get(self.link_url, proxies=self.proxy)
+            req = self.scraper.get(self.link_url)
+            # req = requests.get(self.link_url, header()s={'User-Agent': self.user_agent}, proxies=self.proxy)
             bs = BeautifulSoup(req.text, 'lxml')
             links = bs.select('div.post h2[style="text-align: center;"]')
             self.setHosters.emit(links)
@@ -110,6 +113,8 @@ class RealDebridThread(QThread):
     unrestrictedLink = pyqtSignal(str)
     supportedHosts = pyqtSignal(dict)
     hostStatus = pyqtSignal(dict)
+
+    userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
 
     class RealDebridAction:
         UNRESTRICT_LINK = 0,
@@ -134,7 +139,8 @@ class RealDebridThread(QThread):
             headers = {
                 'Authorization': 'Bearer %s' % self.api_token,
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'Cache-Control': 'no-cache'
+                'Cache-Control': 'no-cache',
+                'User-Agent': self.userAgent
             }
             res = requests.post('%s%s' % (self.api_url, endpoint), headers=headers, data=payload,
                                 proxies=self.proxy, verify=False)

@@ -1,16 +1,15 @@
-from time import sleep
 import logging
 import random
 import re
-from requests.sessions import Session
+
 from copy import deepcopy
+from requests.sessions import Session
+from time import sleep
+from urllib.parse import urlparse
+
 
 import tvlinker.js2py as js2py
 
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
 
 DEFAULT_USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36",
