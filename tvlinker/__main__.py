@@ -13,7 +13,7 @@ from signal import SIGINT, SIGTERM, SIG_DFL, signal
 
 from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, QTextStream,
                           QThread, QUrl, Qt, pyqtSignal, pyqtSlot)
-from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
+from PyQt5.QtGui import QCloseEvent, QColor, QDesktopServices, QFont, QFontDatabase, QIcon, QPalette, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QFileDialog, QGroupBox,
                              QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar,
                              QProxyStyle, QPushButton, QSizePolicy, QStyle, QStyleFactory, QStyleHintReturn,
@@ -25,7 +25,7 @@ from tvlinker.progress import TaskbarProgress
 from tvlinker.pyload import PyloadConnection
 from tvlinker.settings import Settings
 from tvlinker.threads import Aria2Thread, DownloadThread, HostersThread, RealDebridThread, ScrapeWorker
-import tvlinker.assets
+import tvlinker.assets as assets
 import sip
 
 
@@ -63,7 +63,7 @@ class TVLinker(QWidget):
             notify.init(qApp.applicationName())
         layout = QVBoxLayout()
         layout.setSpacing(0)
-        layout.setContentsMargins(10, 10, 10, 0)
+        layout.setContentsMargins(15, 15, 15, 0)
 
         form_groupbox = QGroupBox(self, objectName='mainForm')
         form_groupbox.setLayout(self.init_form())
@@ -170,17 +170,19 @@ class TVLinker(QWidget):
                                            objectName='menuButton', cursor=Qt.PointingHandCursor)
         self.settings_button.setMenu(self.settings_menu())
         layout = QHBoxLayout(spacing=10)
-        providerCombo = QComboBox(self, toolTip='Provider', editable=False, cursor=Qt.PointingHandCursor)
-        providerCombo.addItem(QIcon(':assets/images/provider-scenerls.png'), '')
-        providerCombo.addItem(QIcon(':assets/images/provider-tvrelease.png'), '')
-        providerCombo.setIconSize(QSize(146, 36))
-        providerCombo.setMinimumSize(QSize(160, 40))
-        providerCombo.setStyleSheet('''
-            QComboBox { background-color: transparent; }
-            QComboBox QAbstractItemView { selection-background-color: #dddde4; }
-        ''')
-        providerCombo.currentIndexChanged.connect(self.select_provider)
-        layout.addWidget(providerCombo)
+        # providerCombo = QComboBox(self, toolTip='Provider', editable=False, cursor=Qt.PointingHandCursor)
+        # providerCombo.setObjectName('providercombo')
+        # providerCombo.addItem(QIcon(':assets/images/provider-scenerls.png'), '')
+        # providerCombo.addItem(QIcon(':assets/images/provider-tvrelease.png'), '')
+        # providerCombo.setIconSize(QSize(146, 36))
+        # providerCombo.setMinimumSize(QSize(160, 40))
+        # providerCombo.setStyleSheet('''
+        #     QComboBox, QComboBox::drop-down { background-color: transparent; border: none; margin: 5px; }
+        #     QComboBox::down-arrow { image: url(:assets/images/down_arrow.png); }
+        #     QComboBox QAbstractItemView { selection-background-color: #DDDDE4; }
+        # ''')
+        # providerCombo.currentIndexChanged.connect(self.select_provider)
+        layout.addWidget(QLabel(pixmap=QPixmap(':assets/images/provider-scenerls.png')))
         layout.addWidget(self.search_field)
         layout.addWidget(self.favorites_button)
         layout.addWidget(self.refresh_button)
@@ -193,7 +195,7 @@ class TVLinker(QWidget):
     def select_provider(self, index: int):
         if index == 0:
             self.provider = 'Scene-RLS'
-            self.source_url = 'http://scene-rls.com/releases/index.php?p={0}&cat=TV%20Shows'
+            self.source_url = 'http://scene-rls.net/releases/index.php?p={0}&cat=TV%20Shows'
         elif index == 1:
             self.provider = 'TV-Release'
             self.source_url = 'http://tv-release.pw/?cat=TV'
@@ -235,7 +237,7 @@ class TVLinker(QWidget):
         self.meta_template = 'Total number of links retrieved: <b>%i</b> / <b>%i</b>'
         self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks),
                                      visible=False)
-        self.taskbar.setProgress(True, 0.0)
+        self.taskbar.setProgress(0.0, True)
         if sys.platform == 'win32':
             self.win_taskbar_button = QWinTaskbarButton(self)
 
@@ -246,13 +248,6 @@ class TVLinker(QWidget):
         layout.addWidget(self.progress, Qt.AlignLeft)
         layout.addWidget(self.meta_label, Qt.AlignRight)
         return layout
-
-    def init_win_taskbar_progress(self):
-        self.win_taskbar_button.setWindow(self.windowHandle())
-        # self.win_taskbar_button.setOverlayIcon()
-        self.win_taskbar_progress = self.win_taskbar_button.progress()
-        self.win_taskbar_progress.setRange(0, self.dl_pagecount * self.dl_pagelinks)
-        # self.win_taskbar_progress.setVisible(False)
 
     @pyqtSlot()
     def check_update(self) -> None:
@@ -267,7 +262,7 @@ class TVLinker(QWidget):
         rowcount = self.table.rowCount()
         self.meta_label.setText(self.meta_template % (rowcount, self.dl_pagecount * self.dl_pagelinks))
         self.progress.setValue(rowcount)
-        self.taskbar.setProgress(True, rowcount / self.progress.maximum())
+        self.taskbar.setProgress(rowcount / self.progress.maximum())
         if sys.platform == 'win32':
             self.win_taskbar_button.progress().setValue(self.progress.value())
         return True
@@ -319,7 +314,7 @@ class TVLinker(QWidget):
     @pyqtSlot()
     def show_progress(self):
         self.progress.show()
-        self.taskbar.setProgress(True, 0.0)
+        self.taskbar.setProgress(0.0, True)
         if sys.platform == 'win32':
             self.win_taskbar_button.setWindow(self.windowHandle())
             self.win_taskbar_button.progress().setRange(0, self.dl_pagecount * self.dl_pagelinks)
@@ -329,7 +324,7 @@ class TVLinker(QWidget):
     @pyqtSlot()
     def scrape_finished(self) -> None:
         self.progress.hide()
-        self.taskbar.setProgress(False, 0.0)
+        self.taskbar.setProgress(0.0, False)
         if sys.platform == 'win32':
             self.win_taskbar_button.progress().setVisible(False)
         self.table.setSortingEnabled(True)

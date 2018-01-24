@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import simplejson as json
+import json
 import os
 import sys
 import time
@@ -12,6 +12,7 @@ from PyQt5.QtCore import QObject, QSettings, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox, qApp
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
+from urllib.request import Request, urlopen
 
 from tvlinker.filesize import size, alternative
 import tvlinker.cfscrape as cfscrape
@@ -41,14 +42,14 @@ class ScrapeWorker(QObject):
         self.source_url = source_url
         self.user_agent = useragent
         self.proxy = ShadowSocks.proxy()
-        self.scraper = cfscrape.create_scraper()
         self.complete = False
+        self.scraper = cfscrape.create_scraper(sess=requests.session)
 
     def scrape(self, pagenum: int) -> None:
         try:
             url = self.source_url.format(pagenum + 1)
-            req = self.scraper.get(url, proxies=self.proxy)
             # req = requests.get(url, headers={'User-Agent': self.user_agent}, proxies=self.proxy)
+            req = self.scraper.get(url)
             bs = BeautifulSoup(req.text, 'lxml')
             posts = bs('div', class_='post')
             for post in posts:
@@ -84,14 +85,15 @@ class HostersThread(QThread):
         self.link_url = link_url
         self.user_agent = useragent
         self.proxy = ShadowSocks.proxy()
-        self.scraper = cfscrape.create_scraper()
+        self.scraper = cfscrape.create_scraper(sess=requests.session)
 
     def __del__(self) -> None:
         self.wait()
 
     def get_hoster_links(self) -> None:
         try:
-            req = self.scraper.get(self.link_url, proxies=self.proxy)
+            req = self.scraper.get(self.link_url)
+            # req = requests.get(self.link_url, header()s={'User-Agent': self.user_agent}, proxies=self.proxy)
             bs = BeautifulSoup(req.text, 'lxml')
             links = bs.select('div.post h2[style="text-align: center;"]')
             self.setHosters.emit(links)
@@ -111,6 +113,8 @@ class RealDebridThread(QThread):
     unrestrictedLink = pyqtSignal(str)
     supportedHosts = pyqtSignal(dict)
     hostStatus = pyqtSignal(dict)
+
+    userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
 
     class RealDebridAction:
         UNRESTRICT_LINK = 0,
@@ -132,7 +136,14 @@ class RealDebridThread(QThread):
 
     def connect(self, endpoint: str, payload: object=None) -> object:
         try:
-            res = requests.post('{0}{1}?auth_token={2}'.format(self.api_url, endpoint, self.api_token), data=payload)
+            headers = {
+                'Authorization': 'Bearer %s' % self.api_token,
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Cache-Control': 'no-cache',
+                'User-Agent': self.userAgent
+            }
+            res = requests.post('%s%s' % (self.api_url, endpoint), headers=headers, data=payload,
+                                proxies=self.proxy, verify=False)
             return res.json()
         except HTTPError:
             print(sys.exc_info())
@@ -145,7 +156,7 @@ class RealDebridThread(QThread):
             # self.exit()
 
     def unrestrict_link(self) -> None:
-        jsonres = self.connect(endpoint='/unrestrict/link', payload={'link': self.link_url, 'remote': 1})
+        jsonres = self.connect(endpoint='/unrestrict/link', payload={'link': self.link_url})
         # if 'download' in jsonres.keys():
         self.unrestrictedLink.emit(jsonres['download'])
 
@@ -195,8 +206,6 @@ class Aria2Thread(QThread):
                               'params': ['%s:%s' % (user, passwd), [self.link_url]]},
                              sort_keys=False).encode('utf-8')
         try:
-            from urllib.parse import urlencode
-            from urllib.request import Request, urlopen
             req = Request(aria2_endpoint, headers=headers, data=payload)
             res = urlopen(req).read().decode('utf-8')
             jsonres = json.loads(res)

@@ -10,6 +10,7 @@ class TaskbarProgress(QWidget):
     def __init__(self, parent=None):
         super(TaskbarProgress, self).__init__(parent)
         self._desktopfile = 'application://{}.desktop'.format(qApp.applicationName().lower())
+        self._sessionbus = QDBusConnection.sessionBus()
         self.clear()
 
     @pyqtSlot()
@@ -18,8 +19,7 @@ class TaskbarProgress(QWidget):
 
     @pyqtSlot(float, bool)
     def setProgress(self, value: float, visible: bool=True):
-        sessionbus = QDBusConnection.sessionBus()
         signal = QDBusMessage.createSignal('/com/canonical/unity/launcherentry/337963624',
                                            'com.canonical.Unity.LauncherEntry', 'Update')
         message = signal << self._desktopfile << {'progress-visible': visible, 'progress': value}
-        sessionbus.send(message)
+        self._sessionbus.send(message)

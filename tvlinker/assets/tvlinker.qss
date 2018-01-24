@@ -1,4 +1,4 @@
-QHeaderView::section, QTableCornerButton::section {
+QHeaderView::section {
     background-color: #6A687D;
     color: #FFF;
     font-weight: 800;
@@ -9,6 +9,7 @@ QHeaderView::section, QTableCornerButton::section {
 
 QHeaderView {
     background-color: #6A687D;
+    selection-background-color: #6A687D;
 }
 
 QHeaderView::down-arrow {
@@ -26,12 +27,13 @@ QTableView {
     margin-bottom: 0;
     background: #FFF url(:assets/images/watermark.png) no-repeat center center;
     background-attachment: fixed;
+    selection-background-color: rgba(114, 108, 128, 0.75);
     alternate-background-color: rgba(0, 0, 0, 0.05);
 }
 
 QTableView::item:selected {
-    background-color: #898989;
     color: #FFF;
+    background-color: rgba(114, 108, 128, 0.75);
 }
 
 QGroupBox {
@@ -62,6 +64,10 @@ QLineEdit:read-only {
 
 QDialogButtonBox {
     dialogbuttonbox-buttons-have-icons: 0;
+}
+
+QDialog#hosters {
+    background-color: #EFEFEF;
 }
 
 #mainForm QPushButton {

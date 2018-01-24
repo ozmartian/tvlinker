@@ -113,22 +113,15 @@ class HosterLinks(QDialog):
         hosters_widget = QWidget(self)
         hosters_widget.setLayout(stretch_layout)
         scrollarea = QScrollArea(self)
-        scrollarea.setStyleSheet('QScrollArea { border:none; }')
+        scrollarea.setFrameShape(QScrollArea.NoFrame)
         scrollarea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scrollarea.setWidget(hosters_widget)
         scrollarea.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         scrollarea.setMinimumWidth(hosters_widget.geometry().width() + 20)
         self.layout.addWidget(scrollarea)
-        w = hosters_widget.geometry().width() + 15
-        if w <= 810:
-            self.setMinimumWidth(w)
-        else:
-            self.setMaximumWidth(810)
+        w = scrollarea.width() + 15
         h = hosters_widget.geometry().height() + 10
-        if h <= 750:
-            self.setMinimumHeight(h)
-        else:
-            self.setMaximumHeight(750)
+        self.setFixedSize(w if w <= 810 else 810, h if h <= 750 else 750)
         self.show()
         qApp.restoreOverrideCursor()
 
