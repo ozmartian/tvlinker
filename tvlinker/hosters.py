@@ -38,6 +38,8 @@ class HosterLinks(QDialog):
         hosterswidget_layout = QVBoxLayout()
         for tag in self.links:
             title_label = QLabel(HosterLinks.bs_tag_to_string(tag.find_previous('p')), self)
+            title_label.setTextInteractionFlags(Qt.TextBrowserInteraction)
+            title_label.setCursor(Qt.IBeamCursor)
             title_label.setOpenExternalLinks(True)
             title_label.setAlignment(Qt.AlignCenter)
             title_label.setStyleSheet('QLabel { margin: 0; color: #444; font-size: 14px; padding: 8px; ' +
