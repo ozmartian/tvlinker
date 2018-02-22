@@ -217,20 +217,20 @@ class TVLinker(QWidget):
     def init_table(self) -> QTableWidget:
         self.table = QTableWidget(0, 4, self)
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.table.hideColumn(1)
         self.table.verticalHeader().hide()
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'SIZE'))
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.horizontalHeader().setMinimumSectionSize(100)
         if sys.platform == 'win32':
             self.table.setStyle(QStyleFactory.create('Fusion'))
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.sortByColumn(0, Qt.DescendingOrder)
         self.table.doubleClicked.connect(self.show_hosters)
+        self.table.setColumnHidden(1, True)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         return self.table
 
     def init_metabar(self) -> QHBoxLayout:
@@ -607,7 +607,6 @@ def main():
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)
     app.setQuitOnLastWindowClosed(True)
-    app.setAttribute(Qt.AA_NativeWindows, True)
     tvlinker = TVLinker(FixedSettings.get_app_settings())
     sys.exit(app.exec_())
 

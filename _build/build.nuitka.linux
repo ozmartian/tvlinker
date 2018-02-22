@@ -1,5 +1,5 @@
 #!/bin/bash
 
-cd ..
+cd ../tvlinker
 nuitka --recurse-all --remove-output tvlinker.py
 mv tvlinker.exe tvlinker
