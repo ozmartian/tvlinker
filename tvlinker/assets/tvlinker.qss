@@ -1,5 +1,5 @@
-QHeaderView::section {
-    background-color: #6A687D;
+QHeaderView::section, QHeaderView::section:checked {
+    background: #6A687D;
     color: #FFF;
     font-weight: 800;
     font-size: 9pt;
@@ -8,7 +8,7 @@ QHeaderView::section {
 }
 
 QHeaderView {
-    background-color: #6A687D;
+    background: #6A687D;
     selection-background-color: #6A687D;
 }
 

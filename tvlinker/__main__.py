@@ -220,14 +220,13 @@ class TVLinker(QWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'SIZE'))
         self.table.horizontalHeader().setMinimumSectionSize(100)
-        if sys.platform == 'win32':
-            self.table.setStyle(QStyleFactory.create('Fusion'))
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.sortByColumn(0, Qt.DescendingOrder)
         self.table.doubleClicked.connect(self.show_hosters)
         self.table.setColumnHidden(1, True)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.table.setStyle(QStyleFactory.create('Fusion'))
         return self.table
 
     def init_metabar(self) -> QHBoxLayout:
@@ -546,6 +545,7 @@ class TVLinker(QWidget):
         caller = inspect.stack()[1].function
         self.realdebrid = RealDebridThread(settings=self.settings, api_url=FixedSettings.realdebrid_api_url,
                                            link_url=link, action=RealDebridThread.RealDebridAction.UNRESTRICT_LINK)
+        self.realdebrid.errorMsg.connect(self.error_handler)
         if download:
             self.realdebrid.unrestrictedLink.connect(self.download_link)
         else:
@@ -558,6 +558,9 @@ class TVLinker(QWidget):
                 self.scrapeThread.requestInterruption()
                 self.scrapeThread.quit()
         qApp.quit()
+
+    def error_handler(self, props: list) -> None:
+        QMessageBox.critical(self, props[0], props[1], QMessageBox.Ok)
 
     @staticmethod
     def get_path(path: str = None, override: bool = False) -> str:

@@ -62,7 +62,7 @@ class ScrapeWorker(QObject):
                 self.addRow.emit(table_row)
         except HTTPError:
             sys.stderr.write(sys.exc_info()[0])
-            QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info()[0])
+            QMessageBox.critical(None, 'ERROR NOTIFICATION', sys.exc_info()[0])
             # self.exit()
 
     @pyqtSlot()
@@ -97,7 +97,7 @@ class HostersThread(QThread):
             self.setHosters.emit(links)
         except HTTPError:
             print(sys.exc_info()[0])
-            QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info()[0])
+            QMessageBox.critical(None, 'ERROR NOTIFICATION', sys.exc_info()[0])
             QThread.currentThread().quit()
         except IndexError:
             self.noLinks.emit()
@@ -111,6 +111,7 @@ class RealDebridThread(QThread):
     unrestrictedLink = pyqtSignal(str)
     supportedHosts = pyqtSignal(dict)
     hostStatus = pyqtSignal(dict)
+    errorMsg = pyqtSignal(list)
 
     class RealDebridAction:
         UNRESTRICT_LINK = 0,
@@ -136,12 +137,11 @@ class RealDebridThread(QThread):
             return res.json()
         except HTTPError:
             print(sys.exc_info())
-            QMessageBox.critical(self, 'ERROR NOTIFICATION',
-                                 '<h3>Real-Debrid API Error</h3>' +
-                                 'A problem occurred whilst communicating with Real-Debrid. Please check your '
-                                 'Internet connection.<br/><br/>' +
-                                 '<b>ERROR LOG:</b><br/>(Error Code %s) %s<br/>%s'
-                                 % (qApp.applicationName(), HTTPError.code, HTTPError.reason), QMessageBox.Ok)
+            self.errorMsg.emit(['ERROR NOTIFICATION', '<h3>Real-Debrid API Error</h3>'
+                               'A problem occurred whilst communicating with Real-Debrid. Please check your '
+                               'Internet connection.<br/><br/>'
+                               '<b>ERROR LOG:</b><br/>(Error Code %s) %s<br/>%s'
+                               % (qApp.applicationName(), HTTPError.code, HTTPError.reason)])
             # self.exit()
 
     def unrestrict_link(self) -> None:
@@ -149,8 +149,8 @@ class RealDebridThread(QThread):
         if 'download' in jsonres.keys():
             self.unrestrictedLink.emit(jsonres['download'])
         else:
-            QMessageBox.critical(self, 'REALDEBRID ERROR', '<h3>Could not unrestrict link<h3>.'
-                                 'The hoster is most likely down, please try again later.', QMessageBox.Ok)
+            self.errorMsg.emit(['REALDEBRID ERROR', '<h3>Could not unrestrict link</h3>The hoster is most likely '
+                               'down, please try again later.'])
 
     def supported_hosts(self) -> None:
         jsonres = self.connect(endpoint='/hosts')
@@ -208,7 +208,7 @@ class Aria2Thread(QThread):
             self.aria2Confirmation.emit('result' in jsonres.keys())
         except HTTPError:
             print(sys.exc_info())
-            QMessageBox.critical(self, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
+            QMessageBox.critical(None, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
             self.aria2Confirmation.emit(False)
             # self.exit()
 
