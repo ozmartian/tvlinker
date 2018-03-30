@@ -48,8 +48,6 @@ class OverrideStyle(QProxyStyle):
 
 
 class TVLinker(QWidget):
-    errorSignal = pyqtSignal()
-
     def __init__(self, settings: QSettings, parent=None):
         super(TVLinker, self).__init__(parent)
         self.rows, self.cols = 0, 0
@@ -64,7 +62,6 @@ class TVLinker(QWidget):
         layout = QVBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(15, 15, 15, 0)
-
         form_groupbox = QGroupBox(self, objectName='mainForm')
         form_groupbox.setLayout(self.init_form())
         layout.addWidget(form_groupbox)
