@@ -560,7 +560,7 @@ class TVLinker(QWidget):
         qApp.quit()
 
     def error_handler(self, props: list) -> None:
-    	qApp.restoreOverrideCursor()
+        qApp.restoreOverrideCursor()
         QMessageBox.critical(self, props[0], props[1], QMessageBox.Ok)
 
     @staticmethod
