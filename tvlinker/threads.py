@@ -19,11 +19,13 @@ import tvlinker.cfscrape as cfscrape
 
 class ShadowSocks:
     @staticmethod
-    def is_running(process='ss-qt5') -> bool:
+    def is_running(plist=['ss-qt5', 'sslocal']) -> bool:
         if sys.platform.startswith('linux'):
-            return os.popen('ps -Af').read().count(process) > 0
-        else:
-            return False
+            ps = os.popen('ps -Af').read()
+            for proc in plist:
+                if ps.count(proc) > 0:
+                    return True
+        return False
 
     @staticmethod
     def proxy() -> dict:
@@ -118,8 +120,12 @@ class RealDebridThread(QThread):
         SUPPORTED_HOSTS = 1,
         HOST_STATUS = 2
 
-    def __init__(self, settings: QSettings, api_url: str, link_url: str,
-                 action: RealDebridAction = RealDebridAction.UNRESTRICT_LINK, check_host: str = None):
+    def __init__(self,
+                 settings: QSettings,
+                 api_url: str,
+                 link_url: str,
+                 action: RealDebridAction = RealDebridAction.UNRESTRICT_LINK,
+                 check_host: str = None):
         QThread.__init__(self)
         self.api_url = api_url
         self.api_token = settings.value('realdebrid_apitoken')
@@ -131,26 +137,35 @@ class RealDebridThread(QThread):
     def __del__(self):
         self.wait()
 
-    def connect(self, endpoint: str, payload: object=None) -> object:
+    def connect(self, endpoint: str, payload: object = None) -> object:
         try:
-            res = requests.post('{0}{1}?auth_token={2}'.format(self.api_url, endpoint, self.api_token), data=payload)
+            res = requests.post(
+                '{0}{1}?auth_token={2}'.format(self.api_url, endpoint, self.api_token),
+                data=payload)
             return res.json()
         except HTTPError:
             print(sys.exc_info())
-            self.errorMsg.emit(['ERROR NOTIFICATION', '<h3>Real-Debrid API Error</h3>'
-                               'A problem occurred whilst communicating with Real-Debrid. Please check your '
-                               'Internet connection.<br/><br/>'
-                               '<b>ERROR LOG:</b><br/>(Error Code %s) %s<br/>%s'
-                               % (qApp.applicationName(), HTTPError.code, HTTPError.reason)])
+            self.errorMsg.emit([
+                'ERROR NOTIFICATION',
+                '<h3>Real-Debrid API Error</h3>'
+                'A problem occurred whilst communicating with Real-Debrid. Please check your '
+                'Internet connection.<br/><br/>'
+                '<b>ERROR LOG:</b><br/>(Error Code %s) %s<br/>%s' %
+                (qApp.applicationName(), HTTPError.code, HTTPError.reason)
+            ])
             # self.exit()
 
     def unrestrict_link(self) -> None:
-        jsonres = self.connect(endpoint='/unrestrict/link', payload={'link': self.link_url, 'remote': 1})
+        # jsonres = self.connect(endpoint='/unrestrict/link', payload={'link': self.link_url, 'remote': 1})
+        jsonres = self.connect(endpoint='/unrestrict/link', payload={'link': self.link_url})
         if 'download' in jsonres.keys():
             self.unrestrictedLink.emit(jsonres['download'])
         else:
-            self.errorMsg.emit(['REALDEBRID ERROR', '<h3>Could not unrestrict link</h3>The hoster is most likely '
-                               'down, please try again later.'])
+            self.errorMsg.emit([
+                'REALDEBRID ERROR',
+                '<h3>Could not unrestrict link</h3>The hoster is most likely '
+                'down, please try again later.'
+            ])
 
     def supported_hosts(self) -> None:
         jsonres = self.connect(endpoint='/hosts')
@@ -194,9 +209,14 @@ class Aria2Thread(QThread):
             passwd = self.rpc_secret
         aria2_endpoint = '%s:%s/jsonrpc' % (self.rpc_host, self.rpc_port)
         headers = {'Content-Type': 'application/json'}
-        payload = json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'aria2.addUri',
-                              'params': ['%s:%s' % (user, passwd), [self.link_url]]},
-                             sort_keys=False).encode('utf-8')
+        payload = json.dumps(
+            {
+                'jsonrpc': '2.0',
+                'id': 1,
+                'method': 'aria2.addUri',
+                'params': ['%s:%s' % (user, passwd), [self.link_url]]
+            },
+            sort_keys=False).encode('utf-8')
         try:
             from urllib.parse import urlencode
             from urllib.request import Request, urlopen
@@ -208,7 +228,8 @@ class Aria2Thread(QThread):
             self.aria2Confirmation.emit('result' in jsonres.keys())
         except HTTPError:
             print(sys.exc_info())
-            QMessageBox.critical(None, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
+            QMessageBox.critical(None, 'ERROR NOTIFICATION', sys.exc_info(),
+                                 QMessageBox.Ok)
             self.aria2Confirmation.emit(False)
             # self.exit()
 
@@ -247,7 +268,7 @@ class DownloadThread(QThread):
                 downloadedChunk += len(chunk)
                 progress = float(downloadedChunk) / filesize
                 self.dlProgress.emit(progress * 100)
-                dlspeed = downloadedChunk//(time.clock() - start) / 1000
+                dlspeed = downloadedChunk // (time.clock() - start) / 1000
                 progressTxt = '<b>Downloading {0}</b>:<br/>{1} of <b>{3}</b> [{2:.2%}] [{4} kbps]' \
                     .format(filename, downloadedChunk, progress, size(filesize, system=alternative), dlspeed)
                 self.dlProgressTxt.emit(progressTxt)
