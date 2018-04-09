@@ -2450,7 +2450,7 @@ class PyJsRegExp(PyJs):
                         reg = reg.replace(fix, rep)
                        # print 'Fix', fix, '->', rep, '=', reg
                 else:
-                    raise
+                    raise Exception
                 REGEXP_DB[regexp] = self.pat
         except:
             #print 'Invalid pattern but fuck it', self.value, comp

@@ -19,7 +19,9 @@ import tvlinker.cfscrape as cfscrape
 
 class ShadowSocks:
     @staticmethod
-    def is_running(plist=['ss-qt5', 'sslocal']) -> bool:
+    def is_running(plist=None) -> bool:
+        if plist is None:
+            plist = ['ss-qt5', 'sslocal']
         if sys.platform.startswith('linux'):
             ps = os.popen('ps -Af').read()
             for proc in plist:
@@ -28,9 +30,9 @@ class ShadowSocks:
         return False
 
     @staticmethod
-    def proxy() -> dict:
-        return dict(http='socks5://127.0.0.1:1080', https='socks5://127.0.0.1:1080')\
-            if ShadowSocks.is_running() else dict()
+    def proxies() -> dict:
+        if ShadowSocks.is_running():
+            return {'http': 'socks5://127.0.0.1:1080', 'https': 'socks5://127.0.0.1:1080'}
 
 
 class ScrapeWorker(QObject):
@@ -42,15 +44,14 @@ class ScrapeWorker(QObject):
         self.maxpages = maxpages
         self.source_url = source_url
         self.user_agent = useragent
-        self.proxy = ShadowSocks.proxy()
         self.scraper = cfscrape.create_scraper()
+        self.scraper.proxies = ShadowSocks.proxies()
         self.complete = False
 
     def scrape(self, pagenum: int) -> None:
         try:
             url = self.source_url.format(pagenum + 1)
-            req = self.scraper.get(url, proxies=self.proxy)
-            # req = requests.get(url, headers={'User-Agent': self.user_agent}, proxies=self.proxy)
+            req = self.scraper.get(url)
             bs = BeautifulSoup(req.text, 'lxml')
             posts = bs('div', class_='post')
             for post in posts:
@@ -85,15 +86,15 @@ class HostersThread(QThread):
         QThread.__init__(self)
         self.link_url = link_url
         self.user_agent = useragent
-        self.proxy = ShadowSocks.proxy()
         self.scraper = cfscrape.create_scraper()
+        self.scraper.proxies = ShadowSocks.proxies()
 
     def __del__(self) -> None:
         self.wait()
 
     def get_hoster_links(self) -> None:
         try:
-            req = self.scraper.get(self.link_url, proxies=self.proxy)
+            req = self.scraper.get(self.link_url)
             bs = BeautifulSoup(req.text, 'lxml')
             links = bs.select('div.post h2[style="text-align: center;"]')
             self.setHosters.emit(links)
@@ -132,16 +133,16 @@ class RealDebridThread(QThread):
         self.link_url = link_url
         self.action = action
         self.check_host = check_host
-        self.proxy = ShadowSocks.proxy()
+        self.proxies = ShadowSocks.proxies()
 
     def __del__(self):
         self.wait()
 
-    def connect(self, endpoint: str, payload: object = None) -> object:
+    def post(self, endpoint: str, payload: object = None) -> dict:
         try:
-            res = requests.post(
-                '{0}{1}?auth_token={2}'.format(self.api_url, endpoint, self.api_token),
-                data=payload)
+            res = requests.post('{0}{1}?auth_token={2}'.format(self.api_url, endpoint, self.api_token),
+                                data=payload,
+                                proxies=self.proxies)
             return res.json()
         except HTTPError:
             print(sys.exc_info())
@@ -157,7 +158,7 @@ class RealDebridThread(QThread):
 
     def unrestrict_link(self) -> None:
         # jsonres = self.connect(endpoint='/unrestrict/link', payload={'link': self.link_url, 'remote': 1})
-        jsonres = self.connect(endpoint='/unrestrict/link', payload={'link': self.link_url})
+        jsonres = self.post(endpoint='/unrestrict/link', payload={'link': self.link_url})
         if 'download' in jsonres.keys():
             self.unrestrictedLink.emit(jsonres['download'])
         else:
@@ -168,11 +169,11 @@ class RealDebridThread(QThread):
             ])
 
     def supported_hosts(self) -> None:
-        jsonres = self.connect(endpoint='/hosts')
+        jsonres = self.post(endpoint='/hosts')
         self.supportedHosts.emit(jsonres)
 
     def host_status(self, host: str) -> None:
-        jsonres = self.connect(endpoint='/hosts/status')
+        jsonres = self.post(endpoint='/hosts/status')
         self.hostStatus.emit(jsonres)
 
     def run(self) -> None:
@@ -228,8 +229,7 @@ class Aria2Thread(QThread):
             self.aria2Confirmation.emit('result' in jsonres.keys())
         except HTTPError:
             print(sys.exc_info())
-            QMessageBox.critical(None, 'ERROR NOTIFICATION', sys.exc_info(),
-                                 QMessageBox.Ok)
+            QMessageBox.critical(None, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
             self.aria2Confirmation.emit(False)
             # self.exit()
 
@@ -247,13 +247,13 @@ class DownloadThread(QThread):
         self.download_link = link_url
         self.download_path = dl_path
         self.cancel_download = False
-        self.proxy = ShadowSocks.proxy()
+        self.proxies = ShadowSocks.proxies()
 
     def __del__(self) -> None:
         self.wait()
 
     def download_file(self) -> None:
-        req = requests.get(self.download_link, stream=True, proxies=self.proxy)
+        req = requests.get(self.download_link, stream=True, proxies=self.proxies)
         filesize = int(req.headers['Content-Length'])
         filename = os.path.basename(self.download_path)
         downloadedChunk = 0

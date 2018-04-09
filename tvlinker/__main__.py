@@ -12,8 +12,8 @@ from enum import Enum
 from signal import SIGINT, SIGTERM, SIG_DFL, signal
 
 from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, QTextStream,
-                          QThread, QUrl, Qt, pyqtSignal, pyqtSlot)
-from PyQt5.QtGui import QCloseEvent, QColor, QDesktopServices, QFont, QFontDatabase, QIcon, QPalette, QPixmap
+                          QThread, QUrl, Qt, pyqtSlot)
+from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QFileDialog, QGroupBox,
                              QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar,
                              QProxyStyle, QPushButton, QSizePolicy, QStyle, QStyleFactory, QStyleHintReturn,
@@ -30,6 +30,7 @@ import sip
 
 
 if sys.platform == 'win32':
+    # noinspection PyUnresolvedReferences
     from PyQt5.QtWinExtras import QWinTaskbarButton
 
 if sys.platform.startswith('linux'):
