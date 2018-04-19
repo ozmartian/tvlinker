@@ -5,7 +5,7 @@ import sys
 
 from PyQt5.QtCore import pyqtSlot, QSettings, QSize, Qt
 from PyQt5.QtGui import QCloseEvent, QIcon, QKeyEvent, QPixmap
-from PyQt5.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
+from PyQt5.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
                              QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton,
                              QSizePolicy, QStackedWidget, QTabWidget, QVBoxLayout, QWidget, qApp)
 
@@ -63,7 +63,12 @@ class GeneralTab(QWidget):
         realdebrid_apitoken_link = QLabel(text=apitoken_link, textFormat=Qt.RichText, openExternalLinks=True)
         realdebrid_formLayout = QFormLayout(labelAlignment=Qt.AlignRight)
         realdebrid_formLayout.addRow('API Token:', self.realdebridtoken_lineEdit)
-        if not len(self.settings.value('realdebrid_apitoken')):
+        if len(self.realdebridtoken_lineEdit.text()):
+            self.realdebridproxy_checkBox = QCheckBox('Use ShadowSocks proxy for API connections', self)
+            self.realdebridproxy_checkBox.setChecked(self.settings.value('realdebrid_apiproxy', False, bool))
+            self.realdebridproxy_checkBox.setCursor(Qt.PointingHandCursor)
+            realdebrid_formLayout.addRow('', self.realdebridproxy_checkBox)
+        else:
             realdebrid_formLayout.addRow('', realdebrid_apitoken_link)
         realdebrid_layout = QHBoxLayout()
         realdebrid_layout.addWidget(realdebrid_logo)
@@ -203,6 +208,7 @@ class GeneralTab(QWidget):
     def save(self) -> None:
         # self.settings.setValue('dl_pagecount', self.dlpagecount_comboBox.currentText())
         self.settings.setValue('realdebrid_apitoken', self.realdebridtoken_lineEdit.text())
+        self.settings.setValue('realdebrid_apiproxy', self.realdebridproxy_checkBox.isChecked())
         self.settings.setValue('download_manager', self.dlmanager_comboBox.currentText().lower())
         if self.dlmanager_comboBox.currentText() == 'aria2':
             self.settings.setValue('aria2_rpc_host', self.aria2rpchost_lineEdit.text())

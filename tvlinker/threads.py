@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import simplejson as json
 import os
 import sys
 import time
 
 import requests
-
 from PyQt5.QtCore import QObject, QSettings, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox, qApp
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
 
-from tvlinker.filesize import size, alternative
 import tvlinker.cfscrape as cfscrape
+from tvlinker.filesize import alternative, size
+
+try:
+    # noinspection PyPackageRequirements
+    import simplejson as json
+except ImportError:
+    import json
 
 
 class ShadowSocks:
@@ -65,6 +69,7 @@ class ScrapeWorker(QObject):
                 self.addRow.emit(table_row)
         except HTTPError:
             sys.stderr.write(sys.exc_info()[0])
+            # noinspection PyTypeChecker
             QMessageBox.critical(None, 'ERROR NOTIFICATION', sys.exc_info()[0])
             # self.exit()
 
@@ -100,6 +105,7 @@ class HostersThread(QThread):
             self.setHosters.emit(links)
         except HTTPError:
             print(sys.exc_info()[0])
+            # noinspection PyTypeChecker
             QMessageBox.critical(None, 'ERROR NOTIFICATION', sys.exc_info()[0])
             QThread.currentThread().quit()
         except IndexError:
@@ -130,10 +136,11 @@ class RealDebridThread(QThread):
         QThread.__init__(self)
         self.api_url = api_url
         self.api_token = settings.value('realdebrid_apitoken')
+        self.api_proxy = settings.value('realdebrid_apiproxy', False, bool)
         self.link_url = link_url
         self.action = action
         self.check_host = check_host
-        self.proxies = ShadowSocks.proxies()
+        self.proxies = ShadowSocks.proxies() if self.api_proxy else {}
 
     def __del__(self):
         self.wait()
@@ -141,8 +148,7 @@ class RealDebridThread(QThread):
     def post(self, endpoint: str, payload: object = None) -> dict:
         try:
             res = requests.post('{0}{1}?auth_token={2}'.format(self.api_url, endpoint, self.api_token),
-                                data=payload,
-                                proxies=self.proxies)
+                                data=payload, proxies=self.proxies)
             return res.json()
         except HTTPError:
             print(sys.exc_info())
@@ -172,17 +178,17 @@ class RealDebridThread(QThread):
         jsonres = self.post(endpoint='/hosts')
         self.supportedHosts.emit(jsonres)
 
-    def host_status(self, host: str) -> None:
-        jsonres = self.post(endpoint='/hosts/status')
-        self.hostStatus.emit(jsonres)
+    # def host_status(self, host: str) -> None:
+    #     jsonres = self.post(endpoint='/hosts/status')
+    #     self.hostStatus.emit(jsonres)
 
     def run(self) -> None:
         if self.action == RealDebridThread.RealDebridAction.UNRESTRICT_LINK:
             self.unrestrict_link()
         elif self.action == RealDebridThread.RealDebridAction.SUPPORTED_HOSTS:
             self.supported_hosts()
-        elif self.action == RealDebridThread.HOST_STATUS:
-            self.host_status(self.check_host)
+        # elif self.action == RealDebridThread.HOST_STATUS:
+        #     self.host_status(self.check_host)
 
 
 class Aria2Thread(QThread):
@@ -229,6 +235,7 @@ class Aria2Thread(QThread):
             self.aria2Confirmation.emit('result' in jsonres.keys())
         except HTTPError:
             print(sys.exc_info())
+            # noinspection PyTypeChecker
             QMessageBox.critical(None, 'ERROR NOTIFICATION', sys.exc_info(), QMessageBox.Ok)
             self.aria2Confirmation.emit(False)
             # self.exit()

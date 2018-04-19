@@ -138,6 +138,7 @@ class TVLinker(QWidget):
         self.dl_pagecount = self.settings.value('dl_pagecount', 20, int)
         self.dl_pagelinks = FixedSettings.linksPerPage
         self.realdebrid_api_token = self.settings.value('realdebrid_apitoken')
+        self.realdebrid_api_proxy = self.settings.value('realdebrid_apiproxy')
         self.download_manager = self.settings.value('download_manager')
         self.persepolis_cmd = self.settings.value('persepolis_cmd')
         self.pyload_host = self.settings.value('pyload_host')
