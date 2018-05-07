@@ -6,7 +6,6 @@ import os
 import platform
 import re
 import sys
-import warnings
 from datetime import datetime
 from enum import Enum
 from signal import SIGINT, SIGTERM, SIG_DFL, signal
@@ -38,12 +37,15 @@ if sys.platform.startswith('linux'):
 
 signal(SIGINT, SIG_DFL)
 signal(SIGTERM, SIG_DFL)
-warnings.filterwarnings('ignore')
 
 
 class OverrideStyle(QProxyStyle):
     def styleHint(self, hint, option: QStyleOption=0, widget: QWidget=0, returnData: QStyleHintReturn=0) -> int:
-        if hint in {QStyle.SH_UnderlineShortcut, QStyle.SH_DialogButtons_DefaultButton}:
+        if hint in {
+            QStyle.SH_UnderlineShortcut,
+            QStyle.SH_DialogButtons_DefaultButton,
+            QStyle.SH_DialogButtonBox_ButtonsHaveIcons
+        }:
             return 0
         return QProxyStyle.styleHint(self, hint, option, widget, returnData)
 
@@ -51,6 +53,7 @@ class OverrideStyle(QProxyStyle):
 class TVLinker(QWidget):
     def __init__(self, settings: QSettings, parent=None):
         super(TVLinker, self).__init__(parent)
+        self.firstrun = True
         self.rows, self.cols = 0, 0
         self.parent = parent
         self.settings = settings
@@ -73,6 +76,7 @@ class TVLinker(QWidget):
         self.resize(FixedSettings.windowSize)
         self.show()
         self.start_scraping()
+        self.firstrun = False
 
     class ProcError(Enum):
         FAILED_TO_START = 0
@@ -90,7 +94,9 @@ class TVLinker(QWidget):
         if threadtype == 'scrape':
             if hasattr(self, 'scrapeThread'):
                 if not sip.isdeleted(self.scrapeThread) and self.scrapeThread.isRunning():
-                    self.scrapeThread.requestInterruption()
+                    self.scrapeThread.terminate()
+                    del self.scrapeWorker
+                    del self.scrapeThread
             self.scrapeThread = QThread(self)
             self.scrapeWorker = ScrapeWorker(self.source_url, self.user_agent, self.dl_pagecount)
             self.scrapeThread.started.connect(self.show_progress)
@@ -162,7 +168,7 @@ class TVLinker(QWidget):
         self.refresh_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
                                           objectName='refreshButton', toolTip='Refresh', clicked=self.start_scraping)
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
-        self.dlpages_field.addItems(('10', '20', '30', '40', '50'))
+        self.dlpages_field.addItems(('10', '20', '30', '40', '50', '60', '70', '80'))
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
         self.dlpages_field.currentIndexChanged.connect(self.update_pagecount)
         self.settings_button = QPushButton(parent=self, flat=True, toolTip='Menu',
@@ -222,13 +228,15 @@ class TVLinker(QWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'SIZE'))
         self.table.horizontalHeader().setMinimumSectionSize(100)
-        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  
         self.table.sortByColumn(0, Qt.DescendingOrder)
         self.table.doubleClicked.connect(self.show_hosters)
         self.table.setColumnHidden(1, True)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        savestyle = self.table.style()
         self.table.setStyle(QStyleFactory.create('Fusion'))
+        self.table.verticalScrollBar().setStyle(savestyle)
         return self.table
 
     def init_metabar(self) -> QHBoxLayout:
@@ -307,6 +315,8 @@ class TVLinker(QWidget):
         self.settings.setValue('dl_pagecount', self.dl_pagecount)
         if sys.platform == 'win32':
             self.win_taskbar_button.progress().setMaximum(self.dl_pagecount * self.dl_pagelinks)
+        if self.scrapeThread.isRunning():
+            self.scrapeThread.requestInterruption()
         self.start_scraping()
 
     @pyqtSlot()
@@ -330,7 +340,9 @@ class TVLinker(QWidget):
 
     @pyqtSlot(list)
     def add_row(self, row: list) -> None:
-        if not self.scrapeThread.isInterruptionRequested():
+        if self.scrapeThread.isInterruptionRequested():
+            self.scrapeThread.terminate()
+        else:
             self.cols = 0
             self.table.setRowCount(self.rows + 1)
             if self.table.cursor() != Qt.PointingHandCursor:
@@ -380,11 +392,13 @@ class TVLinker(QWidget):
     @pyqtSlot(bool)
     def filter_faves(self, checked: bool) -> None:
         self.settings.setValue('faves_filter', checked)
-        if hasattr(self, 'scrapeWorker') and (sip.isdeleted(self.scrapeWorker) or self.scrapeWorker.complete):
-            self.filter_table(text='')
+        # if hasattr(self, 'scrapeWorker') and (sip.isdeleted(self.scrapeWorker) or self.scrapeWorker.complete):
+        if not self.firstrun:
+            self.filter_table()
 
     @pyqtSlot(str)
-    def filter_table(self, text: str) -> None:
+    @pyqtSlot()
+    def filter_table(self, text: str='') -> None:
         filters = []
         if self.favorites_button.isChecked():
             filters = self.favorites
