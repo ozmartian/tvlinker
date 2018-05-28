@@ -163,7 +163,6 @@ class RealDebridThread(QThread):
             # self.exit()
 
     def unrestrict_link(self) -> None:
-        # jsonres = self.connect(endpoint='/unrestrict/link', payload={'link': self.link_url, 'remote': 1})
         jsonres = self.post(endpoint='/unrestrict/link', payload={'link': self.link_url})
         if 'download' in jsonres.keys():
             self.unrestrictedLink.emit(jsonres['download'])
@@ -171,7 +170,7 @@ class RealDebridThread(QThread):
             self.errorMsg.emit([
                 'REALDEBRID ERROR',
                 '<h3>Could not unrestrict link</h3>The hoster is most likely '
-                'down, please try again later.'
+                'down, please try again later.<br/><br/>{}'.format(jsonres)
             ])
 
     def supported_hosts(self) -> None:

@@ -443,7 +443,8 @@ class TVLinker(QWidget):
 
     @pyqtSlot(str)
     def download_link(self, link: str) -> None:
-        if len(self.realdebrid_api_token) > 0 and 'real-debrid.com' not in link:
+        if len(self.realdebrid_api_token) > 0 and 'real-debrid.com' not in link \
+            and 'rdeb.io' not in link:
             qApp.setOverrideCursor(Qt.BusyCursor)
             self.unrestrict_link(link, True)
         else:
@@ -548,7 +549,8 @@ class TVLinker(QWidget):
 
     @pyqtSlot(str)
     def copy_download_link(self, link: str) -> None:
-        if len(self.realdebrid_api_token) > 0 and 'real-debrid.com' not in link:
+        if len(self.realdebrid_api_token) > 0 and 'real-debrid.com' not in link \
+            and 'rdeb.io' not in link:
             qApp.setOverrideCursor(Qt.BusyCursor)
             self.unrestrict_link(link, False)
         else:
