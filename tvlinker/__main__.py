@@ -10,13 +10,13 @@ from datetime import datetime
 from enum import Enum
 from signal import SIGINT, SIGTERM, SIG_DFL, signal
 
-from PyQt5.QtCore import (QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths, QTextStream,
-                          QThread, QUrl, Qt, pyqtSlot)
+from PyQt5.QtCore import (QEvent, QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths,
+                          QTextStream, QThread, QUrl, Qt, pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
-from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QComboBox, QFileDialog, QGroupBox,
-                             QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar,
-                             QProxyStyle, QPushButton, QSizePolicy, QStyle, QStyleFactory, QStyleHintReturn,
-                             QStyleOption, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, qApp)
+from PyQt5.QtWidgets import (QAction, QApplication, QComboBox, QFileDialog, QGroupBox, QHBoxLayout, QHeaderView,
+                             QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QProxyStyle, QPushButton,
+                             QSizePolicy, QStyle, QStyleFactory, QStyleHintReturn, QStyleOption, QTableWidget,
+                             QTableWidgetItem, QVBoxLayout, QWidget, qApp)
 
 from tvlinker.direct_download import DirectDownload
 from tvlinker.hosters import HosterLinks
@@ -41,13 +41,36 @@ signal(SIGTERM, SIG_DFL)
 
 class OverrideStyle(QProxyStyle):
     def styleHint(self, hint, option: QStyleOption=0, widget: QWidget=0, returnData: QStyleHintReturn=0) -> int:
-        if hint in {
+        if hint in {    
             QStyle.SH_UnderlineShortcut,
             QStyle.SH_DialogButtons_DefaultButton,
             QStyle.SH_DialogButtonBox_ButtonsHaveIcons
         }:
             return 0
         return QProxyStyle.styleHint(self, hint, option, widget, returnData)
+
+
+class TVLinkerTable(QTableWidget):
+    def __init__(self, rows: int, cols: int, parent=None):
+        super(TVLinkerTable, self).__init__(rows, cols, parent)
+        self.setMouseTracking(True)
+        self.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.verticalHeader().hide()
+        self.setAlternatingRowColors(True)
+        self.setSelectionMode(QTableWidget.SingleSelection)
+        self.setSelectionBehavior(QTableWidget.SelectRows)
+        self.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'SIZE'))
+        self.horizontalHeader().setMinimumSectionSize(100)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  
+        self.sortByColumn(0, Qt.DescendingOrder)
+        self.setColumnHidden(1, True)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        if sys.platform in {'win32', 'darwin'}:
+            _savestyle = self.style()
+            self.setStyle(QStyleFactory.create('Fusion'))
+            self.horizontalHeader().setStyle(_savestyle)
+            self.verticalScrollBar().setStyle(_savestyle)
 
 
 class TVLinker(QWidget):
@@ -68,8 +91,10 @@ class TVLinker(QWidget):
         layout.setContentsMargins(15, 15, 15, 0)
         form_groupbox = QGroupBox(self, objectName='mainForm')
         form_groupbox.setLayout(self.init_form())
+        self.table = TVLinkerTable(0, 4, self)
+        self.table.doubleClicked.connect(self.show_hosters)
         layout.addWidget(form_groupbox)
-        layout.addWidget(self.init_table())
+        layout.addWidget(self.table)
         layout.addLayout(self.init_metabar())
         self.setLayout(layout)
         qApp.setWindowIcon(self.icon_app)
@@ -218,26 +243,6 @@ class TVLinker(QWidget):
         menu.addAction(aboutqt_action)
         menu.addAction(about_action)
         return menu
-
-    def init_table(self) -> QTableWidget:
-        self.table = QTableWidget(0, 4, self)
-        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.table.verticalHeader().hide()
-        self.table.setAlternatingRowColors(True)
-        self.table.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.setHorizontalHeaderLabels(('DATE', 'URL', 'DESCRIPTION', 'SIZE'))
-        self.table.horizontalHeader().setMinimumSectionSize(100)
-        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  
-        self.table.sortByColumn(0, Qt.DescendingOrder)
-        self.table.doubleClicked.connect(self.show_hosters)
-        self.table.setColumnHidden(1, True)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
-        savestyle = self.table.style()
-        self.table.setStyle(QStyleFactory.create('Fusion'))
-        self.table.verticalScrollBar().setStyle(savestyle)
-        return self.table
 
     def init_metabar(self) -> QHBoxLayout:
         self.meta_template = 'Total number of links retrieved: <b>%i</b> / <b>%i</b>'
@@ -621,7 +626,7 @@ class FixedSettings:
 
 def main():
     app = QApplication(sys.argv)
-    app.setStyle(OverrideStyle())
+    # app.setStyle(OverrideStyle())
     app.setApplicationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)

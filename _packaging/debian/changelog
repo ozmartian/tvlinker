@@ -1,4 +1,8 @@
-tvlinker (4.0.0-0) stable; urgnecy=medium
+tvlinker (4.2.0-0) stable; urgency=medium
+  * ShadowSocks + v2ray local proxy support
+  * numerous fixes + enhancements
+
+tvlinker (4.0.0-0) stable; urgency=medium
   * massive overhaul of scraping code to use Scene-RLS.com as the TV
     show source website due to tv-release.net closing down.
   * supports cracking through CloudFlare.net bot-checker

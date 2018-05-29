@@ -6,6 +6,7 @@ import sys
 import time
 
 import requests
+
 from PyQt5.QtCore import QObject, QSettings, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox, qApp
 from bs4 import BeautifulSoup
@@ -41,21 +42,20 @@ class ShadowSocks:
 
     @staticmethod
     def detect() -> str:
-        ptype = ''
         if sys.platform.startswith('linux'):
             ptypes = ShadowSocks.config.keys()
             ps = os.popen('ps -Af').read()
             for ptype in ptypes:
                 procs = ShadowSocks.config[ptype]['procs']
                 for p in procs:
-                    if ps.count(p) > 0:
+                    if ps.count(p):
                         return ptype
-        return ptype
+        return None
 
     @staticmethod
     def proxies() -> dict:
         proxy_type = ShadowSocks.detect()
-        return ShadowSocks.config[proxy_type]['proxies'] if len(proxy_type) else {}
+        return ShadowSocks.config[proxy_type]['proxies'] if proxy_type is not None else {}
 
 
 class ScrapeWorker(QObject):

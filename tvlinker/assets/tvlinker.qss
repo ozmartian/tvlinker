@@ -1,17 +1,10 @@
-QHeaderView::section, QHeaderView::section:checked {
-    background: #6A687D;
-    color: #FFF;
-    font-weight: 800;
-    font-size: 9pt;
-    padding: 4px;
-    margin-top: 0;
+QHeaderView::section {
+    background-color: #EAEAEA;
+    font-weight: bold;
+    padding: 5px;
 }
 
-QHeaderView {
-    background: #6A687D;
-    selection-background-color: #6A687D;
-}
-
+/*
 QHeaderView::down-arrow {
     image: url(:assets/images/down_arrow.png);
 }
@@ -19,21 +12,20 @@ QHeaderView::down-arrow {
 QHeaderView::up-arrow {
     image: url(:assets/images/up_arrow.png);
 }
+*/
 
 QTableView {
-    color: #444;
     border: 1px solid #ADAACC;
     margin-top: 0;
     margin-bottom: 0;
     background: #FFF url(:assets/images/watermark.png) no-repeat center center;
     background-attachment: fixed;
-    selection-background-color: rgba(114, 108, 128, 0.75);
+    selection-background-color: rgba(114, 108, 128, 0.8);
     alternate-background-color: rgba(0, 0, 0, 0.05);
 }
 
 QTableView::item:selected {
     color: #FFF;
-    background-color: rgba(114, 108, 128, 0.75);
 }
 
 QGroupBox {

@@ -1,16 +1,11 @@
-QHeaderView::section, QTableCornerButton::section {
-    background-color: #6A687D;
-    color: #FFF;
-    font-weight: 800;
-    font-size: 12pt;
-    padding: 4px;
-    margin-top: 0;
-}
-
 QHeaderView {
-    background-color: #6A687D;
+    background-color: pallete(highlight);
+    color: pallete(highlighted-text);
+    font-weight: bold;
+    padding: 4px;
 }
 
+/*
 QHeaderView::down-arrow {
     image: url(:assets/images/down_arrow.png);
 }
@@ -18,6 +13,7 @@ QHeaderView::down-arrow {
 QHeaderView::up-arrow {
     image: url(:assets/images/up_arrow.png);
 }
+*/
 
 QTableView {
     color: #444;
@@ -26,12 +22,8 @@ QTableView {
     margin-bottom: 0;
     background: #FFF url(:assets/images/watermark.png) no-repeat center center;
     background-attachment: fixed;
+    selection-background-color: rgba(114, 108, 128, 0.75);
     alternate-background-color: rgba(0, 0, 0, 0.05);
-}
-
-QTableView::item:selected {
-    background-color: #898989;
-    color: #FFF;
 }
 
 QGroupBox {
