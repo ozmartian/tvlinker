@@ -22,21 +22,40 @@ except ImportError:
 
 
 class ShadowSocks:
+    config = {
+        'ssocks': {
+            'procs': ['ss-qt5', 'sslocal'],
+            'proxies': {
+                'http': 'socks5://127.0.0.1:1080',
+                'https': 'socks5://127.0.0.1:1080'
+            },
+        },
+        'v2ray': {
+            'procs': ['v2ray'],
+            'proxies': {
+                'http': 'socks5://127.0.0.1:10808',
+                'https': 'socks5://127.0.0.1:10808'
+            }
+        }
+    }
+
     @staticmethod
-    def is_running(plist=None) -> bool:
-        if plist is None:
-            plist = ['ss-qt5', 'sslocal']
+    def detect() -> str:
+        ptype = ''
         if sys.platform.startswith('linux'):
+            ptypes = ShadowSocks.config.keys()
             ps = os.popen('ps -Af').read()
-            for proc in plist:
-                if ps.count(proc) > 0:
-                    return True
-        return False
+            for ptype in ptypes:
+                procs = ShadowSocks.config[ptype]['procs']
+                for p in procs:
+                    if ps.count(p) > 0:
+                        return ptype
+        return ptype
 
     @staticmethod
     def proxies() -> dict:
-        if ShadowSocks.is_running():
-            return {'http': 'socks5://127.0.0.1:1080', 'https': 'socks5://127.0.0.1:1080'}
+        proxy_type = ShadowSocks.detect()
+        return ShadowSocks.config[proxy_type]['proxies'] if len(proxy_type) else {}
 
 
 class ScrapeWorker(QObject):
