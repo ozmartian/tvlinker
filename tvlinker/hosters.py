@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
+
 from bs4 import BeautifulSoup, SoupStrainer, Tag
 
 from PyQt5.QtCore import QSize, QUrl, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QDesktopServices, QIcon
-from PyQt5.QtWidgets import (QDialog, QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QMenu, QProgressDialog,
-                             QPushButton, QScrollArea, QSizePolicy, QStyleFactory, QVBoxLayout, QWidget, qApp)
+from PyQt5.QtGui import QCloseEvent, QColor, QDesktopServices, QIcon, QPalette
+from PyQt5.QtWidgets import (QDialog, QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QMenu, QProgressBar,
+                             QProgressDialog, QPushButton, QScrollArea, QSizePolicy, QStyleFactory,
+                             QVBoxLayout, QWidget, qApp)
 
 
 class HosterLinks(QDialog):
@@ -17,14 +20,8 @@ class HosterLinks(QDialog):
         super(HosterLinks, self).__init__(parent, f)
         self.parent = parent
         self.setObjectName('hosters')
-        self.loading_progress = QProgressDialog('Retrieving hoster links...', None, 0, 0, self.parent,
-                                                Qt.WindowCloseButtonHint)
-        self.loading_progress.setStyle(QStyleFactory.create('Fusion'))
-        self.loading_progress.setWindowTitle('Hoster Links')
-        self.loading_progress.setMinimumWidth(485)
-        self.loading_progress.setWindowModality(Qt.ApplicationModal)
-        self.loading_progress.setStyleSheet('QProgressDialog::chunk { background-color:#6A687D; }')
-        self.loading_progress.show()
+        self.loading_progress = HosterProgress('Retrieving hoster links...', 0, 0, self.parent,
+                                               Qt.WindowCloseButtonHint)
         self.layout = QVBoxLayout()
         self.layout.setSpacing(15)
         self.setLayout(self.layout)
@@ -155,3 +152,21 @@ class HosterLinks(QDialog):
         self.deleteLater()
         qApp.restoreOverrideCursor()
         super(QDialog, self).closeEvent(event)
+
+
+class HosterProgress(QProgressDialog):
+    def __init__(self, label: str, minval: int, maxval: int, parent: QWidget, flags: Qt.WindowFlags):
+        super(HosterProgress, self).__init__(label, None, minval, maxval, parent, flags)
+        self.setWindowTitle('Hoster Links')
+        self.setMinimumWidth(485)
+        self.setWindowModality(Qt.ApplicationModal)
+        self.setLabelText(label)
+        bar = QProgressBar(self)
+        bar.setRange(minval, maxval)
+        bar.setValue(minval)
+        bar.setStyle(QStyleFactory.create('Fusion'))
+        p = bar.palette()
+        p.setColor(QPalette.Highlight, QColor(100, 44, 104, 185))
+        bar.setPalette(p)
+        self.setBar(bar)
+        self.show()

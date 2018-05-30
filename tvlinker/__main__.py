@@ -626,7 +626,7 @@ class FixedSettings:
 
 def main():
     app = QApplication(sys.argv)
-    # app.setStyle(OverrideStyle())
+    app.setStyle(OverrideStyle())
     app.setApplicationName(FixedSettings.applicationName)
     app.setOrganizationDomain(FixedSettings.organizationDomain)
     app.setApplicationVersion(FixedSettings.applicationVersion)
