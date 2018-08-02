@@ -1,7 +1,7 @@
 QHeaderView::section {
     background-color: #EAEAEA;
     font-weight: bold;
-    padding: 5px;
+    /* padding: 5px; */
 }
 
 /*
