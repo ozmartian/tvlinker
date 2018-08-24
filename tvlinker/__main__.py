@@ -66,11 +66,10 @@ class TVLinkerTable(QTableWidget):
         self.setColumnHidden(1, True)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
-        if sys.platform in {'win32', 'darwin'}:
-            _savestyle = self.style()
-            self.setStyle(QStyleFactory.create('Fusion'))
-            self.horizontalHeader().setStyle(_savestyle)
-            self.verticalScrollBar().setStyle(_savestyle)
+        _savestyle = self.style()
+        self.setStyle(QStyleFactory.create('Fusion'))
+        # self.horizontalHeader().setStyle(_savestyle)
+        self.verticalScrollBar().setStyle(_savestyle)
 
 
 class TVLinker(QWidget):
