@@ -6,6 +6,14 @@ QHeaderView::section {
     font-weight: bold;
 }
 
+QHeaderView::down-arrow {
+    image: url(:assets/images/down_arrow.png);
+}
+
+QHeaderView::up-arrow {
+    image: url(:assets/images/up_arrow.png);
+}
+
 QTableView {
     color: #444;
     border: 1px solid #ADAACC;
