@@ -1,17 +1,7 @@
 QHeaderView::section {
-    background-color: rgba(114, 108, 128, 0.8);
-    color: #FAFAFA;
     padding: 3px;
     font-family: "Open Sans", sans-serif;
     font-weight: bold;
-}
-
-QHeaderView::down-arrow {
-    image: url(:assets/images/down_arrow.png);
-}
-
-QHeaderView::up-arrow {
-    image: url(:assets/images/up_arrow.png);
 }
 
 QTableView {
@@ -21,7 +11,6 @@ QTableView {
     margin-bottom: 0;
     background: #FFF url(:assets/images/watermark.png) no-repeat center center;
     background-attachment: fixed;
-    selection-background-color: rgba(114, 108, 128, 0.4);
     alternate-background-color: rgba(0, 0, 0, 0.05);
 }
 
