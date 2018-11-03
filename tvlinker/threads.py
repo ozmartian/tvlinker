@@ -5,6 +5,10 @@ import os
 import sys
 import time
 
+from datetime import datetime, timedelta
+from tzlocal import get_localzone
+
+import pytz
 import requests
 
 from PyQt5.QtCore import QObject, QSettings, QThread, pyqtSignal, pyqtSlot
@@ -69,6 +73,8 @@ class ScrapeWorker(QObject):
         self.user_agent = useragent
         self.scraper = cfscrape.create_scraper()
         self.scraper.proxies = ShadowSocks.proxies()
+        self.tz_format = '%b %d %Y %H:%M'
+        self.tz_local = get_localzone()
         self.complete = False
 
     def scrape(self, pagenum: int) -> None:
@@ -78,9 +84,12 @@ class ScrapeWorker(QObject):
             bs = BeautifulSoup(req.text, 'lxml')
             posts = bs('div', class_='post')
             for post in posts:
+                dt_utc = datetime.strptime(post.find('div', class_='p-c p-c-time').get_text().strip(), self.tz_format)
+                # TODO: fix hardcoded DST adjustment
+                dt_local = dt_utc.replace(tzinfo=pytz.utc).astimezone(self.tz_local) - timedelta(hours=1)
                 dlsize = post.find('h2').get_text().strip()
                 table_row = [
-                    post.find('div', class_='p-c p-c-time').get_text().strip(),
+                    dt_local.strftime(self.tz_format),
                     post.find('a', class_='p-title').get('href').strip(),
                     post.find('a', class_='p-title').get_text().strip(),
                     dlsize[dlsize.rfind('(') + 1:len(dlsize) - 1]
