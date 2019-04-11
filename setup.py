@@ -62,19 +62,9 @@ setup(
                    managers: Built-in (window/linux), Aria2 RPC Daemon (windows/linux), Internet Download Manager 
                    (windows), KGet (linux), Persepolis (windows/linux) and pyLoad (windows/linux).''',
     long_description=get_description(),
-    url='http://tvlinker.ozmartians.com',
+    url='https://tvlinker.ozmartians.com',
     license='GPLv3+',
-    packages=[
-        'tvlinker',
-        'tvlinker.js2py',
-        'tvlinker.js2py.constructors',
-        'tvlinker.js2py.es6',
-        'tvlinker.js2py.host',
-        'tvlinker.js2py.prototypes',
-        'tvlinker.js2py.translators',
-        'tvlinker.js2py.utils',
-        'tvlinker.pyjsparser'
-    ],
+    packages=['tvlinker'],
     setup_requires=['setuptools'],
     install_requires=[], # get_install_requires(),
     # extras_require=get_extras_require(),
