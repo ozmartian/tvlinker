@@ -131,7 +131,7 @@ class HosterLinks(QDialog):
     @staticmethod
     def get_hoster_name(link: str) -> str:
         name = QUrl(link).host().replace('www.', '').replace('.com', '').replace('.net', '') \
-            .replace('.org', '').replace('.co', '')
+            .replace('.org', '').replace('.co', '').replace('.to', '')
         if name == 'businessnewscurrent.online':
             name = 'cloudyfiles'
         return 'uploaded' if name == 'ul.to' else name
