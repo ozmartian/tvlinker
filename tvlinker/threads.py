@@ -16,7 +16,8 @@ from PyQt5.QtWidgets import QMessageBox, qApp
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
 
-import tvlinker.cfscrape as cfscrape
+import cloudscraper
+
 from tvlinker.filesize import alternative, size
 
 try:
@@ -71,7 +72,7 @@ class ScrapeWorker(QObject):
         self.maxpages = maxpages
         self.source_url = source_url
         self.user_agent = useragent
-        self.scraper = cfscrape.create_scraper()
+        self.scraper = cloudscraper.create_scraper()
         self.scraper.proxies = ShadowSocks.proxies()
         self.tz_format = '%b %d %Y %H:%M'
         self.tz_local = get_localzone()
@@ -119,7 +120,7 @@ class HostersThread(QThread):
         QThread.__init__(self)
         self.link_url = link_url
         self.user_agent = useragent
-        self.scraper = cfscrape.create_scraper()
+        self.scraper = cloudscraper.create_scraper()
         self.scraper.proxies = ShadowSocks.proxies()
 
     def __del__(self) -> None:
