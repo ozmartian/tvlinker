@@ -295,7 +295,7 @@ class TVLinker(QWidget):
     <p style="font-size:24pt; font-weight:bold; color:#6A687D;">%s</p>
     <p>
         <span style="font-size:13pt;"><b>Version: %s</b></span>
-        <span style="font-size:10pt;position:relative;left:5px;">( %s )</span>
+        <span style="font-size:10pt;position:relative;left:5px;">(%s)</span>
     </p>
     <p style="font-size:13px;">
         Copyright &copy; %s <a href="mailto:pete@ozmartians.com">Pete Alexandrou</a>
