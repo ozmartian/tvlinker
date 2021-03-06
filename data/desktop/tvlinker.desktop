@@ -2,7 +2,7 @@
 Name=TVLinker
 GenericName=TV link scraper + downloader
 X-GNOME-FullName=TVLinker
-Comment=TV link scraper and downloader for tv-release.net
+Comment=TV link scraper and downloader
 Exec=tvlinker
 Terminal=false
 Type=Application
