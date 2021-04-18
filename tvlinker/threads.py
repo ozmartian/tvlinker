@@ -87,7 +87,7 @@ class ScrapeWorker(QObject):
             for post in posts:
                 dt_utc = datetime.strptime(post.find('div', class_='p-c p-c-time').get_text().strip(), self.tz_format)
                 # TODO: fix hardcoded DST adjustment
-                dt_local = dt_utc.replace(tzinfo=pytz.utc).astimezone(self.tz_local) - timedelta(hours=1)
+                dt_local = dt_utc.replace(tzinfo=pytz.utc).astimezone(self.tz_local) - timedelta(hours=2)
                 dlsize = post.find('h2').get_text().strip()
                 table_row = [
                     dt_local.strftime(self.tz_format),
