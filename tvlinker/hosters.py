@@ -131,10 +131,16 @@ class HosterLinks(QDialog):
     @staticmethod
     def get_hoster_name(link: str) -> str:
         name = QUrl(link).host().replace('www.', '').replace('.com', '').replace('.net', '') \
-            .replace('.org', '').replace('.co', '').replace('.to', '')
+            .replace('.org', '').replace('.co', '').replace('.to', '').replace('.download', '')
         if name == 'businessnewscurrent.online':
             name = 'cloudyfiles'
-        return 'uploaded' if name == 'ul.to' else name
+        elif name == 'drop':
+            name = 'dropapk'
+        elif name == 'nitro':
+            name = 'nitroflare'
+        elif name == 'ul':
+            name = 'uploaded'
+        return name
 
     @pyqtSlot(str)
     def copy_link(self, link: str) -> None:
