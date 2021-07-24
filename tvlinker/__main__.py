@@ -353,7 +353,7 @@ class TVLinker(QWidget):
                 self.table.setCursor(Qt.PointingHandCursor)
             for item in row:
                 table_item = QTableWidgetItem(item)
-                table_item.setToolTip('%s\n\nDouble-click to view hoster links.' % row[1])
+                # table_item.setToolTip('%s\n\nDouble-click to view hoster links.' % row[1])
                 table_item.setFont(QFont('Open Sans', weight=QFont.Normal))
                 if self.cols == 2:
                     if sys.platform == 'win32':
@@ -376,14 +376,15 @@ class TVLinker(QWidget):
 
     @pyqtSlot(QModelIndex)
     def show_hosters(self, index: QModelIndex) -> None:
-        qApp.setOverrideCursor(Qt.BusyCursor)
-        self.hosters_win = HosterLinks(self)
-        self.hosters_win.downloadLink.connect(self.download_link)
-        self.hosters_win.copyLink.connect(self.copy_download_link)
-        self.links = HostersThread(self.table.item(self.table.currentRow(), 1).text(), self.user_agent)
-        self.links.setHosters.connect(self.add_hosters)
-        self.links.noLinks.connect(self.no_links)
-        self.links.start()
+        QDesktopServices.openUrl(QUrl('http://scene-rls.net/releases/' + self.table.item(self.table.currentRow(), 1).text()))
+        # qApp.setOverrideCursor(Qt.BusyCursor)
+        # self.hosters_win = HosterLinks(self)
+        # self.hosters_win.downloadLink.connect(self.download_link)
+        # self.hosters_win.copyLink.connect(self.copy_download_link)
+        # self.links = HostersThread(self.table.item(self.table.currentRow(), 1).text(), self.user_agent)
+        # self.links.setHosters.connect(self.add_hosters)
+        # self.links.noLinks.connect(self.no_links)
+        # self.links.start()
 
     @pyqtSlot()
     def no_links(self) -> None:
@@ -605,7 +606,7 @@ class TVLinker(QWidget):
 class FixedSettings:
     applicationName = 'TVLinker'
     applicationVersion = TVLinker.get_version()
-    organizationDomain = 'http://tvlinker.ozmartians.com'
+    organizationDomain = 'https://tvlinker.ozmartians.com'
     windowSize = QSize(1000, 785)
     linksPerPage = 20
     latest_release_url = 'https://github.com/ozmartian/tvlinker/releases/latest'
