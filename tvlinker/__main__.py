@@ -12,7 +12,7 @@ from signal import SIGINT, SIGTERM, SIG_DFL, signal
 
 from PyQt5.QtCore import (QEvent, QFile, QFileInfo, QModelIndex, QProcess, QSettings, QSize, QStandardPaths,
                           QTextStream, QThread, QUrl, Qt, pyqtSlot)
-from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap
+from PyQt5.QtGui import QCloseEvent, QDesktopServices, QFont, QFontDatabase, QIcon, QKeyEvent, QPixmap
 from PyQt5.QtWidgets import (QAction, QApplication, QComboBox, QFileDialog, QGroupBox, QHBoxLayout, QHeaderView,
                              QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar, QProxyStyle, QPushButton,
                              QSizePolicy, QStyle, QStyleFactory, QStyleHintReturn, QStyleOption, QTableWidget,
@@ -602,6 +602,10 @@ class TVLinker(QWidget):
                 if m:
                     return m.group(1)
 
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() in {Qt.Key_Q, Qt.Key_W} and event.modifiers() == Qt.ControlModifier:
+            qApp.quit()
+            return
 
 class FixedSettings:
     applicationName = 'TVLinker'
