@@ -58,9 +58,7 @@ setup(
     version=get_value('version'),
     author='Pete Alexandrou',
     author_email='pete@ozmartians.com',
-    description='''Scene-RLS TV show link scraper integrated w/ real-debrid to unrestrict links + support for download
-                   managers: Built-in (window/linux), Aria2 RPC Daemon (windows/linux), Internet Download Manager 
-                   (windows), KGet (linux), Persepolis (windows/linux) and pyLoad (windows/linux).''',
+    description='TV show link scraper + downloader for Scene-RLS.com w/ debrid link unrestricting and support for a number of download managers across all platforms + ShadowSocks & v2ray local proxies.',
     long_description=get_description(),
     url='https://tvlinker.ozmartians.com',
     license='GPLv3+',
