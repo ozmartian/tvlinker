@@ -70,7 +70,7 @@ class Downloader(QDialog):
                 target_path, target_file = os.path.split(aria_install)
                 extracted_path = archive.extract(target_file, path=target_path)
                 if extracted_path == aria_install and os.path.exists(extracted_path):
-                    if sys.platform is not 'win32':
+                    if sys.platform != 'win32':
                         os.chmod(extracted_path, 0o755)
                     return True
         return False
