@@ -278,6 +278,11 @@ class TVLinker(QWidget):
         return True
 
     def start_scraping(self) -> None:
+        if hasattr(self, 'scrapeThread'):
+            if not sip.isdeleted(self.scrapeThread) and self.scrapeThread.isRunning():
+                self.scrapeThread.terminate()
+                del self.scrapeWorker
+                del self.scrapeThread
         self.init_threads('scrape')
         self.rows = 0
         self.table.clearContents()
