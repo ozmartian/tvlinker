@@ -70,6 +70,7 @@ class TVLinkerTable(QTableWidget):
         self.setStyle(QStyleFactory.create('Fusion'))
         # self.horizontalHeader().setStyle(_savestyle)
         self.verticalScrollBar().setStyle(_savestyle)
+        self.setFocus()
 
 
 class TVLinker(QWidget):
@@ -182,7 +183,7 @@ class TVLinker(QWidget):
         self.search_field = QLineEdit(self, clearButtonEnabled=True, placeholderText='Enter search criteria')
         self.search_field.setObjectName('searchInput')
         self.search_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.search_field.setFocus()
+        # self.search_field.setFocus()
         self.search_field.textChanged.connect(self.clear_filters)
         self.search_field.returnPressed.connect(lambda: self.filter_table(self.search_field.text()))
         self.favorites_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
@@ -608,6 +609,9 @@ class TVLinker(QWidget):
                     return m.group(1)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key_F5:
+            self.start_scraping()
+            return
         if event.key() in {Qt.Key_Q, Qt.Key_W} and event.modifiers() == Qt.ControlModifier:
             qApp.quit()
             return
