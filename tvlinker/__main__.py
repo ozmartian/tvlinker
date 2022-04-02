@@ -191,7 +191,7 @@ class TVLinker(QWidget):
                                             toggled=self.filter_faves,
                                             checked=self.settings.value('faves_filter', False, bool))
         self.refresh_button = QPushButton(parent=self, flat=True, cursor=Qt.PointingHandCursor,
-                                          objectName='refreshButton', toolTip='Refresh', clicked=self.start_scraping)
+                                          objectName='refreshButton', toolTip='Refresh  [F5]', clicked=self.start_scraping)
         self.dlpages_field = QComboBox(self, toolTip='Pages', editable=False, cursor=Qt.PointingHandCursor)
         self.dlpages_field.addItems(('10', '20', '30', '40', '50', '60', '70', '80'))
         self.dlpages_field.setCurrentIndex(self.dlpages_field.findText(str(self.dl_pagecount), Qt.MatchFixedString))
