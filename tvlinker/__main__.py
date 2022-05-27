@@ -245,7 +245,7 @@ class TVLinker(QWidget):
         return menu
 
     def init_metabar(self) -> QHBoxLayout:
-        self.meta_template = 'Total number of links retrieved: <b>%i</b> / <b>%i</b>'
+        self.meta_template = 'Links: <b>%i</b> / <b>%i</b>'
         self.progress = QProgressBar(parent=self, minimum=0, maximum=(self.dl_pagecount * self.dl_pagelinks),
                                      visible=False)
         self.taskbar.setProgress(0.0, True)
