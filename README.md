@@ -7,9 +7,7 @@
 
 Just use your favourite AUR helper script/app and look for AUR package named 'tvlinker-git'. Example:
 
-    pacaur -S tvlinker
-          or
-    yaourt -S tvlinker
+    yay -S tvlinker-git
 
 ## Ubuntu/Mint/Debian and all other Ubuntu derivatives
 
