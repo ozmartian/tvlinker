@@ -5,7 +5,7 @@
 
 ## Arch Linux AUR
 
-Just use your favourite AUR helper script/app and look for AUR package named 'tvlinker'. Example:
+Just use your favourite AUR helper script/app and look for AUR package named 'tvlinker-git'. Example:
 
     pacaur -S tvlinker
           or
