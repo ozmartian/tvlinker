@@ -1,3 +1,5 @@
+## NOTE: Doesn't work anymore due to CloudFlare changes and python-cloudscraper dependency not supporting it no more. R.I.P.
+
 [![Build Status](https://travis-ci.org/ozmartian/tvlinker.svg?branch=master)](https://travis-ci.org/ozmartian/tvlinker)
 
 ![TVLinker](http://tvlinker.ozmartians.com/images/header-banner.png) 
